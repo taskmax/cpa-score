@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CPA Terminal</title>
+    <!-- iOSホーム画面用設定 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://api.dicebear.com/7.x/shapes/svg?seed=CPA&backgroundColor=10b981">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, query, onSnapshot, addDoc, deleteDoc, updateDoc, doc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase設定
+        const firebaseConfig = {
+            apiKey: "AIzaSy_DUMMY_KEY_REPLACE_IF_NEEDED", 
+            projectId: "cpa-terminal-demo",
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = 'cpa-terminal-v2-stable';
+
+        window.fb = { auth, db, appId, collection, query, onSnapshot, addDoc, deleteDoc, updateDoc, doc, writeBatch, signInAnonymously, onAuthStateChanged };
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;900&family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #050505; color: #cbd5e1; -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .animate-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        ::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useCallback, useRef } = React;
+        
+        // --- アイコンコンポーネント ---
+        const Icon = ({ name, size = 24, className = "" }) => {
+            const iconRef = useRef(null);
+
+            useEffect(() => {
+                if (window.lucide && window.lucide.icons[name] && iconRef.current) {
+                    iconRef.current.innerHTML = '';
+                    const svgElement = window.lucide.createElement(window.lucide.icons[name]);
+                    svgElement.setAttribute('width', size);
+                    svgElement.setAttribute('height', size);
+                    if (className) svgElement.setAttribute('class', className);
+                    iconRef.current.appendChild(svgElement);
+                }
+            }, [name, size, className]);
+
+            return <span ref={iconRef} className={`inline-flex items-center justify-center ${className}`} />;
+        };
+
+        const SUBJECTS = ['財務会計論(計算)', '財務会計論(理論)', '管理会計論', '企業法', '監査論', '答練', 'その他'];
+        const HOUR_OPTIONS = Array.from({ length: 60 }, (_, i) => (i + 1) * 0.25);
+        const QUALITY_OPTIONS = Array.from({ length: 11 }, (_, i) => 50 + (i * 5));
+
+        const INITIAL_SCORE = 10000; 
+        const GOAL_SCORE = 300000;    
+        const DAILY_DECAY = 300;      
+        const TARGET_NET_INCREASE = 550; 
+        const DECAY_PER_MS = DAILY_DECAY / (24 * 60 * 60 * 1000); 
+
+        const S_VALUES = [20, 35, 67, 148, 468]; 
+        const getMemoryRetention = (hours, reviewCount) => {
+            if (hours <= 0) return 100;
+            const s = S_VALUES[Math.min(reviewCount, S_VALUES.length - 1)];
+            const rate = 100 * Math.exp(-hours / s);
+            return Math.max(20, rate); 
+        };
+
+        const getHoursSince = (isoString) => {
+            if (!isoString) return 0;
+            const d = new Date(isoString);
+            return Math.max(0, (new Date() - d) / (1000 * 60 * 60));
+        };
+
+        function App() {
+            const [user, setUser] = useState(null);
+            const [entries, setEntries] = useState([]);
+            const [topics, setTopics] = useState([]); 
+            const [loading, setLoading] = useState(true);
+            const [view, setView] = useState('dashboard');
+            const [isSubmitting, setIsSubmitting] = useState(false);
+            const [livePrice, setLivePrice] = useState(INITIAL_SCORE);
+            const [refreshKey, setRefreshKey] = useState(0); 
+            
+            const [currentSlide, setCurrentSlide] = useState(0);
+            const [touchStart, setTouchStart] = useState(null);
+            const [touchEnd, setTouchEnd] = useState(null);
+            
+            const [formData, setFormData] = useState({ subject: '財務会計論(計算)', hours: '1.0', quality: '80', date: new Date().toISOString().split('T')[0], note: '' });
+            const [memoryFormData, setMemoryFormData] = useState({ title: '', subject: '財務会計論(計算)' });
+            const [expandedSubjects, setExpandedSubjects] = useState(SUBJECTS.reduce((acc, sub) => ({ ...acc, [sub]: true }), {}));
+
+            useEffect(() => {
+                if (window.fb) {
+                    const { auth, signInAnonymously, onAuthStateChanged } = window.fb;
+                    signInAnonymously(auth).catch(e => console.log("Auth Offline fallback", e));
+                    return onAuthStateChanged(auth, setUser);
+                }
+            }, []);
+
+            useEffect(() => {
+                if (!user || !window.fb) { setLoading(false); return; }
+                const { db, appId, collection, query, onSnapshot } = window.fb;
+                try {
+                    const unsubLogs = onSnapshot(query(collection(db, 'artifacts', appId, 'users', user.uid, 'cpa_logs')), (snapshot) => {
+                        const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                        setEntries(data.sort((a, b) => new Date(a.date) - new Date(b.date)));
+                        setLoading(false);
+                    }, () => setLoading(false));
+
+                    const unsubMemory = onSnapshot(query(collection(db, 'artifacts', appId, 'users', user.uid, 'cpa_memory')), (snapshot) => {
+                        const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                        setTopics(data.sort((a, b) => new Date(b.lastStudiedAt) - new Date(a.lastStudiedAt)));
+                    }, () => {});
+                    return () => { unsubLogs(); unsubMemory(); };
+                } catch(e) { setLoading(false); }
+            }, [user, refreshKey]);
+
+            const refreshData = useCallback(() => setRefreshKey(prev => prev + 1), []);
+
+            const groupedTopics = useMemo(() => {
+                const groups = {}; SUBJECTS.forEach(sub => groups[sub] = []);
+                topics.forEach(t => { const s = t.subject || 'その他'; if(groups[s]) groups[s].push(t); else groups['その他'].push(t); });
+                return groups;
+            }, [topics]);
+
+            const toggleSubject = (sub) => setExpandedSubjects(prev => ({...prev, [sub]: !prev[sub]}));
+
+            const marketBase = useMemo(() => {
+                const now = new Date(); const todayStr = now.toISOString().split('T')[0];
+                const chartWindow = Array.from({length: 30}, (_, i) => {
+                    const d = new Date(); d.setDate(now.getDate() - (29 - i)); return d.toISOString().split('T')[0];
+                });
+
+                const gainsMap = entries.reduce((acc, e) => { acc[e.date] = (acc[e.date] || 0) + (Number(e.hours) * Number(e.quality)); return acc; }, {});
+
+                let cumulative = INITIAL_SCORE; const fullHistory = []; let yesterdayCumulative = INITIAL_SCORE;
+                
+                const firstDate = entries.length > 0 ? new Date(entries[0].date) : new Date(chartWindow[0]);
+                let currentPos = new Date(Math.min(firstDate, new Date(chartWindow[0]))); currentPos.setHours(0,0,0,0);
+                const yesterdayEnd = new Date(now); yesterdayEnd.setDate(now.getDate() - 1); yesterdayEnd.setHours(0,0,0,0);
+
+                while (currentPos <= yesterdayEnd) {
+                    const dStr = currentPos.toISOString().split('T')[0];
+                    cumulative = cumulative + (gainsMap[dStr] || 0) - DAILY_DECAY;
+                    fullHistory.push({ date: dStr, value: cumulative });
+                    currentPos.setDate(currentPos.getDate() + 1);
+                }
+                yesterdayCumulative = cumulative;
+                const todayGain = gainsMap[todayStr] || 0;
+                const finalCumulative = yesterdayCumulative + todayGain;
+                fullHistory.push({ date: todayStr, value: finalCumulative });
+
+                const bySubject = entries.reduce((acc, curr) => { acc[curr.subject] = (acc[curr.subject] || 0) + (Number(curr.hours) * Number(curr.quality)); return acc; }, {});
+
+                const historyMap = fullHistory.reduce((acc, h) => { acc[h.date] = h.value; return acc; }, {});
+                const chart = chartWindow.map(date => ({
+                    date, label: date.split('-')[2], value: historyMap[date] ?? (date < todayStr ? 0 : yesterdayCumulative) 
+                }));
+
+                const getAchievement = (days) => {
+                    if (fullHistory.length < 2) return { actual: 0, percent: 0 };
+                    const current = finalCumulative;
+                    const prevDateObj = new Date(now); prevDateObj.setDate(now.getDate() - days);
+                    const prevEntry = fullHistory.find(h => h.date === prevDateObj.toISOString().split('T')[0]);
+                    const actualIncrease = current - (prevEntry ? prevEntry.value : INITIAL_SCORE);
+                    return { actual: actualIncrease, percent: Math.round((actualIncrease / (TARGET_NET_INCREASE * days)) * 100) };
+                };
+
+                return { 
+                    yesterdayCumulative, todayInput: todayGain, change: finalCumulative - yesterdayCumulative, 
+                    isUp: todayGain > DAILY_DECAY, chart, bySubject, staticCurrent: finalCumulative, fullHistory,
+                    weekly: getAchievement(7), monthly: getAchievement(30)
+                };
+            }, [entries]);
+
+            useEffect(() => {
+                const timer = setInterval(() => {
+                    const now = new Date();
+                    const ms = (now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()) * 1000 + now.getMilliseconds();
+                    setLivePrice(marketBase.yesterdayCumulative - (ms * DECAY_PER_MS) + marketBase.todayInput);
+                }, 50);
+                return () => clearInterval(timer);
+            }, [marketBase]);
+
+            useEffect(() => {
+                const timer = setInterval(() => setCurrentSlide(s => (s + 1) % 3), 6000);
+                return () => clearInterval(timer);
+            }, [touchStart]);
+
+            const handleTouchEnd = () => {
+                if (!touchStart || !touchEnd) return;
+                const d = touchStart - touchEnd;
+                if (d > 50) setCurrentSlide(s => (s + 1) % 3);
+                if (d < -50) setCurrentSlide(s => (s - 1 + 3) % 3);
+            };
+
+            const handleAddLog = async (e) => {
+                e.preventDefault(); if (!user || isSubmitting) return; setIsSubmitting(true);
+                try {
+                    await window.fb.addDoc(window.fb.collection(window.fb.db, 'artifacts', appId, 'users', user.uid, 'cpa_logs'), {
+                        ...formData, hours: Number(formData.hours), quality: Number(formData.quality), createdAt: new Date().toISOString()
+                    });
+                    setView('dashboard'); setFormData({ subject: '財務会計論(計算)', hours: '1.0', quality: '80', date: new Date().toISOString().split('T')[0], note: '' });
+                } finally { setIsSubmitting(false); }
+            };
+
+            const handleAddTopic = async (e) => {
+                e.preventDefault(); if (!user || !memoryFormData.title.trim() || isSubmitting) return; setIsSubmitting(true);
+                try {
+                    await window.fb.addDoc(window.fb.collection(window.fb.db, 'artifacts', appId, 'users', user.uid, 'cpa_memory'), {
+                        title: memoryFormData.title.trim(), subject: memoryFormData.subject, lastStudiedAt: new Date().toISOString(), reviewCount: 0, createdAt: new Date().toISOString()
+                    });
+                    setMemoryFormData({ ...memoryFormData, title: '' }); setExpandedSubjects(prev => ({...prev, [memoryFormData.subject]: true}));
+                } finally { setIsSubmitting(false); }
+            };
+
+            const handleAction = async (action, id, data) => {
+                if (!user) return;
+                const { db, doc, deleteDoc, updateDoc } = window.fb;
+                const ref = doc(db, 'artifacts', appId, 'users', user.uid, data.col, id);
+                if (action === 'delete') { if (window.confirm("削除しますか？")) await deleteDoc(ref); }
+                if (action === 'update') await updateDoc(ref, data.updates);
+                refreshData();
+            };
+
+            if (loading) return <div className="h-screen flex items-center justify-center text-emerald-500 mono text-xs animate-pulse">CONNECTING...</div>;
+
+            const slides = [
+                { type: 'week', title: '今週の目標純増スコア', target: TARGET_NET_INCREASE * 7, actual: marketBase.weekly.actual, ach: marketBase.weekly.percent },
+                { type: 'month', title: '今月の目標純増スコア', target: TARGET_NET_INCREASE * 30, actual: marketBase.monthly.actual, ach: marketBase.monthly.percent },
+                { type: 'total', title: '全体の目標累計スコア', target: GOAL_SCORE, actual: Math.floor(livePrice), ach: ((marketBase.staticCurrent / GOAL_SCORE) * 100).toFixed(1) }
+            ];
+
+            const renderChart = (type) => {
+                const days = type === 'week' ? 7 : 30; 
+                const hist = marketBase.fullHistory.slice(-days);
+                if (hist.length < 2) return null;
+                const start = hist[0].value; const base = type === 'total' ? start : 0;
+                const data = hist.map((d, i) => ({ act: type === 'total' ? d.value : d.value - start, tgt: base + (TARGET_NET_INCREASE * i) }));
+                const max = Math.max(...data.map(d=>d.act), ...data.map(d=>d.tgt), type==='total'?1000:100);
+                const min = Math.min(...data.map(d=>d.act), ...data.map(d=>d.tgt), type==='total'?-1000:0);
+                const range = max - min || 1;
+                const ptsAct = data.map((d, i) => `${(i/(hist.length-1))*400},${90-((d.act-min)/range)*80}`).join(' ');
+                const ptsTgt = data.map((d, i) => `${(i/(hist.length-1))*400},${90-((d.tgt-min)/range)*80}`).join(' ');
+
+                return (
+                    <svg viewBox="0 0 400 100" className="w-full h-full preserve-3d" preserveAspectRatio="none">
+                        <defs><linearGradient id={`g-${type}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={marketBase.isUp ? "#10b981" : "#ef4444"} stopOpacity="0.2" /><stop offset="100%" stopColor="transparent" stopOpacity="0" /></linearGradient></defs>
+                        <polyline fill="none" stroke="#ffffff" strokeWidth="1.5" strokeDasharray="4,4" points={ptsTgt} className="opacity-60" />
+                        <path d={`M 0 100 ${ptsAct} L 400 100 Z`} fill={`url(#g-${type})`} />
+                        <polyline fill="none" stroke={marketBase.isUp ? "#10b981" : "#ef4444"} strokeWidth="3" strokeLinejoin="round" points={ptsAct} />
+                    </svg>
+                );
+            };
+
+            const TopicCard = ({ t }) => {
+                const hrs = getHoursSince(t.lastStudiedAt); const ret = getMemoryRetention(hrs, t.reviewCount);
+                const pts = Array.from({length:85}, (_,i)=>`${(i*2/168)*200},${50-(getMemoryRetention(i*2, t.reviewCount)/100)*40}`).join(' ');
+                const isGood = ret >= 70; const isWarn = ret >= 40;
+                return (
+                    <div className="bg-[#111] rounded-2xl border border-white/10 p-5 flex flex-col gap-4 shadow-lg">
+                        <div className="flex justify-between items-start">
+                            <div><h3 className="text-base font-bold text-white leading-tight">{t.title}</h3><p className="text-xs text-slate-400 mono mt-1">復習回数: {t.reviewCount} 回</p></div>
+                            <div className="text-right"><span className="text-xs font-bold text-white block mono mb-1">現在の定着率</span><span className={`text-2xl font-black mono tracking-tighter ${isGood?'text-emerald-400':isWarn?'text-yellow-400':'text-red-400'}`}>{Math.floor(ret)}%</span></div>
+                        </div>
+                        <div className="h-20 w-full relative bg-black/50 rounded-xl border border-white/5 p-2 overflow-visible z-10">
+                            <svg viewBox="0 0 200 50" className="w-full h-full overflow-visible"><line x1="0" y1="30" x2="200" y2="30" stroke="#fff" strokeOpacity="0.2" strokeDasharray="2,2" /><polyline fill="none" stroke="#6366f1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" points={pts} opacity="0.6"/><circle cx={(Math.min(hrs,168)/168)*200} cy={50-(ret/100)*40} r="4" fill={isGood?'#34d399':isWarn?'#facc15':'#f87171'} stroke="#000" strokeWidth="1.5" className="transition-all duration-300" /></svg>
+                            <div className="absolute bottom-1 left-2 right-2 flex justify-between text-[9px] mono text-slate-500 font-bold"><span>0h</span><span>7 days</span></div>
+                        </div>
+                        <div className="flex justify-between items-center mt-1 z-10">
+                            <button onClick={()=>handleAction('delete',t.id,{col:'cpa_memory'})} className="text-slate-500 hover:text-red-400 p-2"><Icon name="X" size={18} /></button>
+                            <button onClick={()=>handleAction('update',t.id,{col:'cpa_memory',updates:{lastStudiedAt:new Date().toISOString(),reviewCount:(t.reviewCount||0)+1}})} className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold mono py-2.5 px-6 rounded-xl shadow-lg active:scale-95 transition-all text-sm flex items-center gap-2"><Icon name="Brain" size={18} /> 復習した！</button>
+                        </div>
+                    </div>
+                );
+            };
+
+            return (
+                <div className="min-h-screen pb-32">
+                    <header className="bg-black/95 border-b border-white/10 p-6 shadow-2xl">
+                        <div className="max-w-md mx-auto">
+                            <div className="flex justify-between items-start mb-4">
+                                <h1 className="text-xs font-black text-white uppercase tracking-widest mono flex items-center gap-2"><Icon name="Activity" size={14} className="text-emerald-500" /> CPA Market Terminal</h1>
+                                <div className="flex gap-2 items-center">
+                                    <button onClick={refreshData} className="p-1 text-white hover:text-emerald-400"><Icon name="RefreshCw" size={16} className={isSubmitting?"animate-spin text-emerald-400":""}/></button>
+                                    <div className="px-2 py-1 rounded bg-red-500/20 text-red-400 text-xs mono border border-red-500/20 text-center uppercase font-bold tracking-tighter">忘却減少値<br/>-300/day</div>
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+
+                    <main className="max-w-md mx-auto p-6 space-y-6 animate-in">
+                        {view === 'dashboard' && (
+                            <div className="space-y-6">
+                                {/* スライダー */}
+                                <div className="relative overflow-hidden w-full rounded-[2rem] bg-black/40 border border-white/10 shadow-2xl" onTouchStart={e=>{setTouchEnd(null);setTouchStart(e.targetTouches[0].clientX);}} onTouchMove={e=>setTouchEnd(e.targetTouches[0].clientX)} onTouchEnd={handleTouchEnd}>
+                                    <div className="flex transition-transform duration-700 ease-in-out" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
+                                        {slides.map((s, i) => (
+                                            <div key={i} className="w-full shrink-0 p-6 flex flex-col gap-6">
+                                                <div className="flex justify-between items-end">
+                                                    <div>
+                                                        <span className="text-xs mono font-bold text-white uppercase tracking-widest block mb-2">{s.title}</span>
+                                                        <span className={`text-3xl font-black mono tracking-tight ${s.type==='total'&&s.actual<0?'text-red-500':'text-white'}`}>{s.target.toLocaleString()} <span className="text-sm font-bold text-slate-400">pts</span></span>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className="text-[10px] mono font-bold text-white uppercase tracking-widest block mb-1">実績</span>
+                                                        <span className={`text-xl font-black mono ${s.actual<0?'text-red-500':'text-emerald-400'}`}>{s.actual.toLocaleString()}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="h-28 w-full relative bg-white/[0.02] rounded-xl border border-white/5 overflow-hidden">
+                                                    {renderChart(s.type)}
+                                                    <div className="absolute bottom-1.5 left-2 flex items-center gap-1.5"><div className="w-3 h-0.5 bg-white opacity-60 border-dashed border-b"></div><span className="text-[8px] mono font-bold text-white uppercase tracking-widest">目標ライン</span></div>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex-1 h-2 bg-black rounded-full overflow-hidden border border-white/10"><div className={`h-full transition-all duration-700 ${s.ach>=100?'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]':'bg-red-500'}`} style={{width:`${Math.max(0,Math.min(s.ach,100))}%`}}></div></div>
+                                                    <span className={`text-sm font-black mono ${s.ach>=100?'text-emerald-400':'text-red-400'}`}>{s.ach}%</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2">
+                                        {slides.map((_, i) => <button key={i} onClick={()=>setCurrentSlide(i)} className={`h-1.5 rounded-full transition-all duration-500 ${i===currentSlide?'w-6 bg-white':'w-2 bg-white/20'}`} />)}
+                                    </div>
+                                </div>
+
+                                <div className={`p-6 rounded-[2rem] border border-white/10 bg-black/40 shadow-xl ${marketBase.isUp ? 'border-l-4 border-l-emerald-500' : 'border-l-4 border-l-red-500'}`}>
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div><p className="text-[10px] font-black text-white uppercase mono tracking-widest mb-1">現在の学習トレンド</p><h2 className={`text-2xl font-black tracking-tight ${marketBase.isUp ? 'text-emerald-400' : 'text-red-400'}`}>{marketBase.isUp ? '順調な推移' : '警告：累計スコア減少'}</h2></div>
+                                        <div className={`p-3 rounded-2xl ${marketBase.isUp ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}><Icon name={marketBase.isUp ? 'Zap' : 'AlertCircle'} size={24} /></div>
+                                    </div>
+                                    <p className="text-xs text-white font-bold leading-relaxed italic opacity-80">
+                                        {livePrice < 0 ? '注意：現在スコアがマイナスです。早急な学習によるスコア回復が必要です。' : marketBase.monthly.percent >= 100 ? '素晴らしいです。1.5年合格ライン（日次+550）を維持しています。' : '直近のペースが目標ラインを下回っています。巻き返しのために記録が必要です。'}
+                                    </p>
+                                </div>
+
+                                <section>
+                                    <h3 className="text-sm font-black text-white uppercase tracking-[0.2em] mono mb-4 text-center mt-8">科目別累計スコア</h3>
+                                    <div className="grid grid-cols-1 gap-3">
+                                        {SUBJECTS.map(sub => {
+                                            const pts = marketBase.bySubject[sub] || 0; const r = Math.min((pts/50000)*100, 100);
+                                            return (
+                                                <div key={sub} className="bg-[#111] p-5 rounded-2xl border border-white/10 flex items-center justify-between shadow-lg">
+                                                    <div className="flex-1 mr-4">
+                                                        <div className="flex justify-between mb-2"><span className="text-sm font-bold text-white">{sub}</span><span className="text-sm mono font-bold text-white">{Math.floor(pts).toLocaleString()} pts</span></div>
+                                                        <div className="h-1.5 bg-black rounded-full overflow-hidden border border-white/5"><div className="h-full bg-indigo-500 transition-all duration-700" style={{ width: `${r}%` }}></div></div>
+                                                    </div>
+                                                    {pts > 10000 && <Icon name="CheckCircle2" size={18} className="text-emerald-500" />}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </section>
+                            </div>
+                        )}
+
+                        {view === 'ebbinghaus' && (
+                            <div className="space-y-8 animate-in slide-in-from-left-4">
+                                <div className="flex justify-between items-center mb-2"><h2 className="text-2xl font-black mono text-white">分野別 忘却管理</h2><Icon name="Brain" size={28} className="text-indigo-400" /></div>
+                                <p className="text-sm text-slate-300 font-bold leading-relaxed">細かい論点の記憶を管理します。復習を重ねるほど、忘却曲線のカーブが緩やかになり忘れにくくなります。</p>
+                                <form onSubmit={handleAddTopic} className="bg-[#111] p-5 rounded-3xl border border-white/10 flex flex-col gap-4 shadow-lg">
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-black text-white uppercase mono tracking-widest ml-1">科目を選択</label>
+                                        <select className="w-full bg-black border border-white/20 p-4 rounded-xl outline-none font-bold text-white text-sm" value={memoryFormData.subject} onChange={e=>setMemoryFormData({...memoryFormData, subject: e.target.value})}>{SUBJECTS.map(o=><option key={o} value={o}>{o}</option>)}</select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-black text-white uppercase mono tracking-widest ml-1">論点を追加</label>
+                                        <div className="flex gap-2">
+                                            <input type="text" placeholder="例: 有価証券、リース" className="flex-1 bg-black border border-white/20 p-4 rounded-xl outline-none font-bold text-white text-base" value={memoryFormData.title} onChange={e=>setMemoryFormData({...memoryFormData, title: e.target.value})} required />
+                                            <button type="submit" disabled={isSubmitting} className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 rounded-xl font-bold flex items-center justify-center transition-colors"><Icon name="Plus" size={24} /></button>
+                                        </div>
+                                    </div>
+                                </form>
+                                <div className="space-y-4">
+                                    {SUBJECTS.filter(s=>groupedTopics[s].length>0).length===0 ? (
+                                        <div className="text-center py-16 text-white mono text-sm font-bold border-2 border-dashed border-white/10 rounded-3xl">論点を登録して記憶をトラッキングしましょう</div>
+                                    ) : (
+                                        SUBJECTS.filter(s=>groupedTopics[s].length>0).map(sub => (
+                                            <div key={sub} className="bg-[#111]/50 rounded-3xl border border-white/10 overflow-hidden shadow-lg">
+                                                <button onClick={()=>toggleSubject(sub)} className="w-full flex items-center justify-between p-5 bg-black/40 hover:bg-black/60">
+                                                    <div className="flex items-center gap-3"><Icon name="FolderTree" size={20} className="text-indigo-400" /><span className="font-bold text-white text-base">{sub}</span><span className="bg-white/10 text-white text-xs mono font-bold px-2 py-0.5 rounded-full">{groupedTopics[sub].length}</span></div>
+                                                    <Icon name={expandedSubjects[sub] ? 'ChevronUp' : 'ChevronDown'} size={24} className="text-slate-400" />
+                                                </button>
+                                                {expandedSubjects[sub] && <div className="p-4 space-y-4 border-t border-white/5">{groupedTopics[sub].map(t => <TopicCard key={t.id} t={t} />)}</div>}
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {view === 'add' && (
+                            <form onSubmit={handleAddLog} className="bg-[#111] p-8 rounded-[2.5rem] border border-white/10 shadow-2xl space-y-6 animate-in">
+                                <div className="flex justify-between items-center mb-4"><h2 className="text-3xl font-black mono text-white">学習を記録</h2><button type="button" onClick={()=>setView('dashboard')} className="text-slate-400 hover:text-white bg-white/5 rounded-full p-2"><Icon name="X" size={24}/></button></div>
+                                <div className="space-y-2"><label className="text-xs font-black text-white uppercase mono ml-1">科目</label><select className="w-full bg-black border-2 border-white/10 p-5 rounded-2xl outline-none font-bold text-white" value={formData.subject} onChange={e=>setFormData({...formData, subject: e.target.value})}>{SUBJECTS.map(o=><option key={o} value={o}>{o}</option>)}</select></div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2"><label className="text-xs font-black text-white uppercase mono ml-1">時間</label><select className="w-full bg-black border-2 border-white/10 p-5 rounded-2xl outline-none font-black text-white mono" value={formData.hours} onChange={e=>setFormData({...formData, hours: e.target.value})} required>{HOUR_OPTIONS.map(h=><option key={h} value={h}>{h} h</option>)}</select></div>
+                                    <div className="space-y-2"><label className="text-xs font-black text-white uppercase mono ml-1">集中度</label><select className="w-full bg-black border-2 border-white/10 p-5 rounded-2xl outline-none font-black text-white mono" value={formData.quality} onChange={e=>setFormData({...formData, quality: e.target.value})} required>{QUALITY_OPTIONS.map(q=><option key={q} value={q}>{q} %</option>)}</select></div>
+                                </div>
+                                <div className="space-y-2"><label className="text-xs font-black text-white uppercase mono ml-1">日付</label><input type="date" className="w-full bg-black border-2 border-white/10 p-5 rounded-2xl outline-none font-bold text-white mono" value={formData.date} onChange={e=>setFormData({...formData, date: e.target.value})} /></div>
+                                <button type="submit" disabled={isSubmitting} className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:bg-emerald-900/20 text-white font-black py-6 rounded-2xl shadow-xl active:scale-[0.98] transition-all mono text-lg">{isSubmitting ? '保存中...' : '記録を保存する'}</button>
+                            </form>
+                        )}
+
+                        {view === 'logs' && (
+                            <div className="space-y-4 animate-in slide-in-from-right-4">
+                                <div className="flex items-center gap-3 mb-6"><button onClick={()=>setView('dashboard')} className="p-3 bg-white/10 rounded-2xl text-white"><Icon name="X" size={24}/></button><h2 className="text-2xl font-black mono text-white">学習履歴</h2></div>
+                                {entries.length === 0 ? (
+                                    <div className="text-center py-24 text-white mono text-sm font-bold uppercase">記録がありません</div>
+                                ) : (
+                                    entries.slice().reverse().map(e => (
+                                        <div key={e.id} className="bg-[#111] p-6 rounded-3xl border border-white/10 shadow-lg">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <span className="text-xs font-black text-indigo-300 bg-indigo-500/20 px-3 py-1.5 rounded-lg border border-indigo-500/30 uppercase mono">{e.subject}</span>
+                                                <button onClick={()=>handleAction('delete',e.id,{col:'cpa_logs'})} className="text-slate-500 hover:text-red-400 p-1"><Icon name="X" size={20}/></button>
+                                            </div>
+                                            <div className="flex items-end justify-between">
+                                                <div className="space-y-1">
+                                                    <div className="flex items-baseline gap-2"><span className="text-4xl font-black mono text-white">+{(Number(e.hours)*Number(e.quality)).toLocaleString()}</span><span className="text-xs font-bold text-emerald-400 mono">pts</span></div>
+                                                    <div className="flex gap-4 text-xs text-white mono font-bold mt-2">
+                                                        <span className="flex items-center gap-1.5"><Icon name="Clock" size={14}/>{e.hours}h</span>
+                                                        <span className="flex items-center gap-1.5"><Icon name="Target" size={14}/>質:{e.quality}%</span>
+                                                        <span className="flex items-center gap-1.5"><Icon name="Calendar" size={14}/>{e.date}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        )}
+                    </main>
+
+                    <nav className="fixed bottom-6 left-4 right-4 h-24 bg-black/95 backdrop-blur-3xl rounded-[2.5rem] border border-white/10 flex justify-between items-center px-4 z-50 shadow-2xl">
+                        <button onClick={()=>setView('dashboard')} className={`p-2 transition-all flex flex-col items-center gap-2 ${view==='dashboard'?'text-emerald-400 scale-110':'text-slate-400 hover:text-white'}`}><Icon name="LayoutGrid" size={24}/><span className="text-[10px] font-black mono uppercase">Home</span></button>
+                        <button onClick={()=>setView('ebbinghaus')} className={`p-2 transition-all flex flex-col items-center gap-2 ${view==='ebbinghaus'?'text-indigo-400 scale-110':'text-slate-400 hover:text-white'}`}><Icon name="Brain" size={24}/><span className="text-[10px] font-black mono uppercase">Memory</span></button>
+                        <button onClick={()=>setView('add')} className="bg-emerald-500 text-black w-16 h-16 rounded-3xl flex items-center justify-center -mt-10 shadow-2xl shadow-emerald-500/40 border-4 border-[#050505] active:scale-90 transition-transform mx-2"><Icon name="Plus" size={32} className="stroke-[3]" /></button>
+                        <button onClick={()=>setView('logs')} className={`p-2 transition-all flex flex-col items-center gap-2 ${view==='logs'?'text-emerald-400 scale-110':'text-slate-400 hover:text-white'}`}><Icon name="History" size={24}/><span className="text-[10px] font-black mono uppercase">Logs</span></button>
+                    </nav>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
