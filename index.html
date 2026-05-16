@@ -16,18 +16,24 @@
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
         import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, query, onSnapshot, addDoc, deleteDoc, updateDoc, doc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // ※ 本番運用時はここをご自身の設定に置き換えてください
         const firebaseConfig = {
-            apiKey: "AIzaSy_DUMMY_KEY_REPLACE_IF_NEEDED", 
-            projectId: "score-chart-app",
+            apiKey: "AIzaSyAHvv2J4RXuayFasYSNRB90poh0k7SEQ0w",
+            authDomain: "study-app-57fe6.firebaseapp.com",
+            projectId: "study-app-57fe6",
+            storageBucket: "study-app-57fe6.firebasestorage.app",
+            messagingSenderId: "648009305814",
+            appId: "1:648009305814:web:e91f8744b14e13eed04377",
+            measurementId: "G-9KT48YMGJB"
         };
 
-        let app, auth, db;
+        let app, auth, db, analytics;
         try {
             app = initializeApp(firebaseConfig);
+            analytics = getAnalytics(app);
             auth = getAuth(app);
             db = getFirestore(app);
         } catch (e) {
