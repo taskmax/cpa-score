@@ -2,9 +2,8 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CPA Terminal</title>
-    <!-- iOSホーム画面用設定 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Score Chart</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="https://api.dicebear.com/7.x/shapes/svg?seed=CPA&backgroundColor=10b981">
@@ -13,8 +12,6 @@
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <script type="module">
@@ -22,17 +19,24 @@
         import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, query, onSnapshot, addDoc, deleteDoc, updateDoc, doc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase設定
+        // ※ 本番運用時はここをご自身の設定に置き換えてください
         const firebaseConfig = {
             apiKey: "AIzaSy_DUMMY_KEY_REPLACE_IF_NEEDED", 
-            projectId: "cpa-terminal-demo",
+            projectId: "score-chart-app",
         };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = 'cpa-terminal-v2-stable';
+        let app, auth, db;
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+        } catch (e) {
+            console.warn("Firebase not initialized", e);
+        }
+        
+        const appId = 'score-chart-stable';
 
+        // グローバルにFirebase機能をマウント
         window.fb = { auth, db, appId, collection, query, onSnapshot, addDoc, deleteDoc, updateDoc, doc, writeBatch, signInAnonymously, onAuthStateChanged };
     </script>
     <style>
@@ -42,6 +46,8 @@
         .animate-in { animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         ::-webkit-scrollbar { display: none; }
+        /* iPhoneの下部ホームバー対策としてパディングを入れる */
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
     </style>
 </head>
 <body>
@@ -50,33 +56,33 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, useCallback, useRef } = React;
         
-        // --- アイコンコンポーネント ---
+        // アイコンコンポーネント (エラー回避のためシンプル化)
         const Icon = ({ name, size = 24, className = "" }) => {
-            const iconRef = useRef(null);
-
+            const spanRef = useRef(null);
+            
             useEffect(() => {
-                if (window.lucide && window.lucide.icons[name] && iconRef.current) {
-                    iconRef.current.innerHTML = '';
-                    const svgElement = window.lucide.createElement(window.lucide.icons[name]);
-                    svgElement.setAttribute('width', size);
-                    svgElement.setAttribute('height', size);
-                    if (className) svgElement.setAttribute('class', className);
-                    iconRef.current.appendChild(svgElement);
+                if (spanRef.current && window.lucide && window.lucide.icons[name]) {
+                    spanRef.current.innerHTML = '';
+                    const iconNode = window.lucide.createElement(window.lucide.icons[name]);
+                    iconNode.setAttribute('width', size);
+                    iconNode.setAttribute('height', size);
+                    iconNode.setAttribute('class', className);
+                    spanRef.current.appendChild(iconNode);
                 }
             }, [name, size, className]);
-
-            return <span ref={iconRef} className={`inline-flex items-center justify-center ${className}`} />;
+            
+            return <span ref={spanRef} className={`inline-block ${className}`} />;
         };
 
-        const SUBJECTS = ['財務会計論(計算)', '財務会計論(理論)', '管理会計論', '企業法', '監査論', '答練', 'その他'];
+        const SUBJECTS = ['財務会計論(計算)', '財務会計論(理論)', '管理会計論', '企業法', '監査論', 'その他'];
         const HOUR_OPTIONS = Array.from({ length: 60 }, (_, i) => (i + 1) * 0.25);
         const QUALITY_OPTIONS = Array.from({ length: 11 }, (_, i) => 50 + (i * 5));
 
         const INITIAL_SCORE = 10000; 
         const GOAL_SCORE = 300000;    
-        const DAILY_DECAY = 300;      
         const TARGET_NET_INCREASE = 550; 
-        const DECAY_PER_MS = DAILY_DECAY / (24 * 60 * 60 * 1000); 
+        const RISK_PROBABILITY = 0.06; // 6%の確率
+        const RISK_PENALTY = 100; // -100pt
 
         const S_VALUES = [20, 35, 67, 148, 468]; 
         const getMemoryRetention = (hours, reviewCount) => {
@@ -90,6 +96,29 @@
             if (!isoString) return 0;
             const d = new Date(isoString);
             return Math.max(0, (new Date() - d) / (1000 * 60 * 60));
+        };
+
+        // シード付き乱数ジェネレーター（日付＋時間から一意な結果を出すため）
+        function mulberry32(a) {
+            return function() {
+              var t = a += 0x6D2B79F5;
+              t = Math.imul(t ^ t >>> 15, t | 1);
+              t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+              return ((t ^ t >>> 14) >>> 0) / 4294967296;
+            }
+        }
+
+        // ある日時の「30分枠」がハズレ(-100)かどうかを判定する関数
+        const checkPenaltyForTimeSlot = (dateStr, hour, minuteSlot) => {
+            // 例: "2024-05-15-14-1" (14時台の後半枠) という一意な文字列を作る
+            const seedStr = `${dateStr}-${hour}-${minuteSlot}`;
+            // 文字列から簡易的なハッシュ（シード値）を生成
+            let seed = 0;
+            for (let i = 0; i < seedStr.length; i++) {
+                seed = Math.imul(31, seed) + seedStr.charCodeAt(i) | 0;
+            }
+            const rand = mulberry32(seed)();
+            return rand < RISK_PROBABILITY; 
         };
 
         function App() {
@@ -110,30 +139,40 @@
             const [memoryFormData, setMemoryFormData] = useState({ title: '', subject: '財務会計論(計算)' });
             const [expandedSubjects, setExpandedSubjects] = useState(SUBJECTS.reduce((acc, sub) => ({ ...acc, [sub]: true }), {}));
 
+            // (1) 認証処理
             useEffect(() => {
-                if (window.fb) {
-                    const { auth, signInAnonymously, onAuthStateChanged } = window.fb;
-                    signInAnonymously(auth).catch(e => console.log("Auth Offline fallback", e));
-                    return onAuthStateChanged(auth, setUser);
+                if(window.fb && window.fb.auth) {
+                    window.fb.signInAnonymously(window.fb.auth).catch(e => console.log("Auth Offline fallback", e));
+                    return window.fb.onAuthStateChanged(window.fb.auth, setUser);
+                } else {
+                    // クラウドに繋がらない環境（プレビュー等）の場合はフェイクユーザーを作成して進める
+                    setUser({ uid: 'offline-test-user' });
                 }
             }, []);
 
+            // (2) データ取得
             useEffect(() => {
-                if (!user || !window.fb) { setLoading(false); return; }
-                const { db, appId, collection, query, onSnapshot } = window.fb;
-                try {
-                    const unsubLogs = onSnapshot(query(collection(db, 'artifacts', appId, 'users', user.uid, 'cpa_logs')), (snapshot) => {
-                        const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-                        setEntries(data.sort((a, b) => new Date(a.date) - new Date(b.date)));
-                        setLoading(false);
-                    }, () => setLoading(false));
+                if (!user) { setLoading(false); return; }
+                
+                if (window.fb && window.fb.db) {
+                    const { db, appId, collection, query, onSnapshot } = window.fb;
+                    try {
+                        const unsubLogs = onSnapshot(query(collection(db, 'artifacts', appId, 'users', user.uid, 'cpa_logs')), (snapshot) => {
+                            const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                            setEntries(data.sort((a, b) => new Date(a.date) - new Date(b.date)));
+                            setLoading(false);
+                        }, () => setLoading(false));
 
-                    const unsubMemory = onSnapshot(query(collection(db, 'artifacts', appId, 'users', user.uid, 'cpa_memory')), (snapshot) => {
-                        const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-                        setTopics(data.sort((a, b) => new Date(b.lastStudiedAt) - new Date(a.lastStudiedAt)));
-                    }, () => {});
-                    return () => { unsubLogs(); unsubMemory(); };
-                } catch(e) { setLoading(false); }
+                        const unsubMemory = onSnapshot(query(collection(db, 'artifacts', appId, 'users', user.uid, 'cpa_memory')), (snapshot) => {
+                            const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                            setTopics(data.sort((a, b) => new Date(b.lastStudiedAt) - new Date(a.lastStudiedAt)));
+                        }, () => {});
+                        return () => { unsubLogs(); unsubMemory(); };
+                    } catch(e) { setLoading(false); }
+                } else {
+                    // オフラインテスト用の初期データがない場合はローディング解除
+                    setLoading(false);
+                }
             }, [user, refreshKey]);
 
             const refreshData = useCallback(() => setRefreshKey(prev => prev + 1), []);
@@ -144,31 +183,66 @@
                 return groups;
             }, [topics]);
 
-            const toggleSubject = (sub) => setExpandedSubjects(prev => ({...prev, [sub]: !prev[sub]}));
-
+            // (3) メインの計算ロジック（ランダムペナルティ込み）
             const marketBase = useMemo(() => {
-                const now = new Date(); const todayStr = now.toISOString().split('T')[0];
+                const now = new Date(); 
+                const todayStr = now.toISOString().split('T')[0];
+                
                 const chartWindow = Array.from({length: 30}, (_, i) => {
                     const d = new Date(); d.setDate(now.getDate() - (29 - i)); return d.toISOString().split('T')[0];
                 });
 
-                const gainsMap = entries.reduce((acc, e) => { acc[e.date] = (acc[e.date] || 0) + (Number(e.hours) * Number(e.quality)); return acc; }, {});
+                const gainsMap = entries.reduce((acc, e) => { 
+                    acc[e.date] = (acc[e.date] || 0) + (Number(e.hours) * Number(e.quality)); 
+                    return acc; 
+                }, {});
 
-                let cumulative = INITIAL_SCORE; const fullHistory = []; let yesterdayCumulative = INITIAL_SCORE;
+                let cumulative = INITIAL_SCORE; 
+                const fullHistory = []; 
+                let yesterdayCumulative = INITIAL_SCORE;
                 
                 const firstDate = entries.length > 0 ? new Date(entries[0].date) : new Date(chartWindow[0]);
-                let currentPos = new Date(Math.min(firstDate, new Date(chartWindow[0]))); currentPos.setHours(0,0,0,0);
-                const yesterdayEnd = new Date(now); yesterdayEnd.setDate(now.getDate() - 1); yesterdayEnd.setHours(0,0,0,0);
+                let currentPos = new Date(Math.min(firstDate, new Date(chartWindow[0]))); 
+                currentPos.setHours(0,0,0,0);
+                
+                const yesterdayEnd = new Date(now); 
+                yesterdayEnd.setDate(now.getDate() - 1); 
+                yesterdayEnd.setHours(0,0,0,0);
 
+                // --- 過去の確定した日々のペナルティを計算 ---
                 while (currentPos <= yesterdayEnd) {
                     const dStr = currentPos.toISOString().split('T')[0];
-                    cumulative = cumulative + (gainsMap[dStr] || 0) - DAILY_DECAY;
+                    let dailyPenalty = 0;
+                    // その日の 48枠（24時間×2枠）をすべて計算
+                    for (let h = 0; h < 24; h++) {
+                        for (let slot = 0; slot < 2; slot++) {
+                            if (checkPenaltyForTimeSlot(dStr, h, slot)) dailyPenalty += RISK_PENALTY;
+                        }
+                    }
+
+                    cumulative = cumulative + (gainsMap[dStr] || 0) - dailyPenalty;
                     fullHistory.push({ date: dStr, value: cumulative });
                     currentPos.setDate(currentPos.getDate() + 1);
                 }
                 yesterdayCumulative = cumulative;
+
+                // --- 今日の計算（開いた時点までの確定分） ---
                 const todayGain = gainsMap[todayStr] || 0;
-                const finalCumulative = yesterdayCumulative + todayGain;
+                let todayConfirmedPenalty = 0;
+                const currentHour = now.getHours();
+                const currentSlot = now.getMinutes() >= 30 ? 1 : 0;
+
+                for (let h = 0; h <= currentHour; h++) {
+                    const maxSlot = (h === currentHour) ? currentSlot - 1 : 1; 
+                    for (let slot = 0; slot <= maxSlot; slot++) {
+                        if (checkPenaltyForTimeSlot(todayStr, h, slot)) todayConfirmedPenalty += RISK_PENALTY;
+                    }
+                }
+                
+                // 現在進行中の枠（まだ終わっていない30分枠）がハズレかどうか
+                const isCurrentSlotPenalty = checkPenaltyForTimeSlot(todayStr, currentHour, currentSlot);
+
+                const finalCumulative = yesterdayCumulative + todayGain - todayConfirmedPenalty;
                 fullHistory.push({ date: todayStr, value: finalCumulative });
 
                 const bySubject = entries.reduce((acc, curr) => { acc[curr.subject] = (acc[curr.subject] || 0) + (Number(curr.hours) * Number(curr.quality)); return acc; }, {});
@@ -180,29 +254,52 @@
 
                 const getAchievement = (days) => {
                     if (fullHistory.length < 2) return { actual: 0, percent: 0 };
-                    const current = finalCumulative;
                     const prevDateObj = new Date(now); prevDateObj.setDate(now.getDate() - days);
                     const prevEntry = fullHistory.find(h => h.date === prevDateObj.toISOString().split('T')[0]);
-                    const actualIncrease = current - (prevEntry ? prevEntry.value : INITIAL_SCORE);
+                    const actualIncrease = finalCumulative - (prevEntry ? prevEntry.value : INITIAL_SCORE);
                     return { actual: actualIncrease, percent: Math.round((actualIncrease / (TARGET_NET_INCREASE * days)) * 100) };
                 };
 
                 return { 
-                    yesterdayCumulative, todayInput: todayGain, change: finalCumulative - yesterdayCumulative, 
-                    isUp: todayGain > DAILY_DECAY, chart, bySubject, staticCurrent: finalCumulative, fullHistory,
+                    yesterdayCumulative, 
+                    todayInput: todayGain, 
+                    todayConfirmedPenalty,
+                    isCurrentSlotPenalty,
+                    change: finalCumulative - yesterdayCumulative, 
+                    isUp: todayGain > todayConfirmedPenalty, 
+                    chart, 
+                    bySubject, 
+                    staticCurrent: finalCumulative, fullHistory,
                     weekly: getAchievement(7), monthly: getAchievement(30)
                 };
             }, [entries]);
 
+            // (4) リアルタイム更新ループ
             useEffect(() => {
                 const timer = setInterval(() => {
                     const now = new Date();
-                    const ms = (now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()) * 1000 + now.getMilliseconds();
-                    setLivePrice(marketBase.yesterdayCumulative - (ms * DECAY_PER_MS) + marketBase.todayInput);
+                    const minutes = now.getMinutes();
+                    const seconds = now.getSeconds();
+                    
+                    // 現在の30分枠の中で、何ミリ秒経過しているか
+                    const msIntoCurrentSlot = ((minutes % 30) * 60 + seconds) * 1000 + now.getMilliseconds();
+                    
+                    // 現在の枠がハズレ（ペナルティあり）の場合のみ、30分かけてジワジワ減らす
+                    let ongoingDecay = 0;
+                    if (marketBase.isCurrentSlotPenalty) {
+                        const decayRate = msIntoCurrentSlot / (30 * 60 * 1000); // 0.0 ~ 1.0
+                        ongoingDecay = RISK_PENALTY * decayRate;
+                    }
+                    
+                    // 昨日の終わり + 今日のインプット - 今日確定したペナルティ - 現在進行中のジワジワ減るペナルティ
+                    const calculatedLive = marketBase.yesterdayCumulative + marketBase.todayInput - marketBase.todayConfirmedPenalty - ongoingDecay;
+                    
+                    setLivePrice(calculatedLive);
                 }, 50);
                 return () => clearInterval(timer);
             }, [marketBase]);
 
+            // スライダー自動再生
             useEffect(() => {
                 const timer = setInterval(() => setCurrentSlide(s => (s + 1) % 3), 6000);
                 return () => clearInterval(timer);
@@ -215,36 +312,62 @@
                 if (d < -50) setCurrentSlide(s => (s - 1 + 3) % 3);
             };
 
+            // 保存（オフライン対応版）
             const handleAddLog = async (e) => {
-                e.preventDefault(); if (!user || isSubmitting) return; setIsSubmitting(true);
+                e.preventDefault(); if (isSubmitting) return; setIsSubmitting(true);
+                const newLog = { ...formData, hours: Number(formData.hours), quality: Number(formData.quality), createdAt: new Date().toISOString() };
                 try {
-                    await window.fb.addDoc(window.fb.collection(window.fb.db, 'artifacts', appId, 'users', user.uid, 'cpa_logs'), {
-                        ...formData, hours: Number(formData.hours), quality: Number(formData.quality), createdAt: new Date().toISOString()
-                    });
-                    setView('dashboard'); setFormData({ subject: '財務会計論(計算)', hours: '1.0', quality: '80', date: new Date().toISOString().split('T')[0], note: '' });
+                    if (user && window.fb && window.fb.db) {
+                        const { db, appId, collection, addDoc } = window.fb;
+                        await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'cpa_logs'), newLog);
+                    } else {
+                        // クラウド未接続時は画面上だけで仮保存してテストできるようにする
+                        setEntries(prev => [...prev, { id: Date.now().toString(), ...newLog }]);
+                    }
+                    setView('dashboard'); 
+                    setFormData({ subject: '財務会計論(計算)', hours: '1.0', quality: '80', date: new Date().toISOString().split('T')[0], note: '' });
+                    refreshData();
                 } finally { setIsSubmitting(false); }
             };
 
             const handleAddTopic = async (e) => {
-                e.preventDefault(); if (!user || !memoryFormData.title.trim() || isSubmitting) return; setIsSubmitting(true);
+                e.preventDefault(); if (!memoryFormData.title.trim() || isSubmitting) return; setIsSubmitting(true);
+                const newTopic = { title: memoryFormData.title.trim(), subject: memoryFormData.subject, lastStudiedAt: new Date().toISOString(), reviewCount: 0, createdAt: new Date().toISOString() };
                 try {
-                    await window.fb.addDoc(window.fb.collection(window.fb.db, 'artifacts', appId, 'users', user.uid, 'cpa_memory'), {
-                        title: memoryFormData.title.trim(), subject: memoryFormData.subject, lastStudiedAt: new Date().toISOString(), reviewCount: 0, createdAt: new Date().toISOString()
-                    });
-                    setMemoryFormData({ ...memoryFormData, title: '' }); setExpandedSubjects(prev => ({...prev, [memoryFormData.subject]: true}));
+                    if (user && window.fb && window.fb.db) {
+                        const { db, appId, collection, addDoc } = window.fb;
+                        await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'cpa_memory'), newTopic);
+                    } else {
+                        setTopics(prev => [...prev, { id: Date.now().toString(), ...newTopic }]);
+                    }
+                    setMemoryFormData({ ...memoryFormData, title: '' }); 
+                    setExpandedSubjects(prev => ({...prev, [memoryFormData.subject]: true}));
                 } finally { setIsSubmitting(false); }
             };
 
             const handleAction = async (action, id, data) => {
-                if (!user) return;
-                const { db, doc, deleteDoc, updateDoc } = window.fb;
-                const ref = doc(db, 'artifacts', appId, 'users', user.uid, data.col, id);
-                if (action === 'delete') { if (window.confirm("削除しますか？")) await deleteDoc(ref); }
-                if (action === 'update') await updateDoc(ref, data.updates);
+                if (action === 'delete') { 
+                    if (!window.confirm("削除しますか？")) return;
+                    if (user && window.fb && window.fb.db) {
+                        const { db, doc, deleteDoc, appId } = window.fb;
+                        await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, data.col, id));
+                    } else {
+                        if (data.col === 'cpa_logs') setEntries(prev => prev.filter(e => e.id !== id));
+                        if (data.col === 'cpa_memory') setTopics(prev => prev.filter(e => e.id !== id));
+                    }
+                }
+                if (action === 'update') { 
+                    if (user && window.fb && window.fb.db) {
+                        const { db, doc, updateDoc, appId } = window.fb;
+                        await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, data.col, id), data.updates);
+                    } else {
+                        if (data.col === 'cpa_memory') setTopics(prev => prev.map(t => t.id === id ? { ...t, ...data.updates } : t));
+                    }
+                }
                 refreshData();
             };
 
-            if (loading) return <div className="h-screen flex items-center justify-center text-emerald-500 mono text-xs animate-pulse">CONNECTING...</div>;
+            if (loading) return <div className="h-screen flex items-center justify-center text-emerald-500 mono text-xs animate-pulse">BOOTING MARKET...</div>;
 
             const slides = [
                 { type: 'week', title: '今週の目標純増スコア', target: TARGET_NET_INCREASE * 7, actual: marketBase.weekly.actual, ach: marketBase.weekly.percent },
@@ -297,20 +420,19 @@
             };
 
             return (
-                <div className="min-h-screen pb-32">
-                    <header className="bg-black/95 border-b border-white/10 p-6 shadow-2xl">
+                <div className="min-h-screen">
+                    <header className="bg-black/95 border-b border-white/10 p-6 shadow-2xl relative z-10">
                         <div className="max-w-md mx-auto">
                             <div className="flex justify-between items-start mb-4">
-                                <h1 className="text-xs font-black text-white uppercase tracking-widest mono flex items-center gap-2"><Icon name="Activity" size={14} className="text-emerald-500" /> CPA Market Terminal</h1>
+                                <h1 className="text-xs font-black text-white uppercase tracking-widest mono flex items-center gap-2"><Icon name="Activity" size={14} className="text-emerald-500" /> Score Chart</h1>
                                 <div className="flex gap-2 items-center">
                                     <button onClick={refreshData} className="p-1 text-white hover:text-emerald-400"><Icon name="RefreshCw" size={16} className={isSubmitting?"animate-spin text-emerald-400":""}/></button>
-                                    <div className="px-2 py-1 rounded bg-red-500/20 text-red-400 text-xs mono border border-red-500/20 text-center uppercase font-bold tracking-tighter">忘却減少値<br/>-300/day</div>
                                 </div>
                             </div>
                         </div>
                     </header>
 
-                    <main className="max-w-md mx-auto p-6 space-y-6 animate-in">
+                    <main className="max-w-md mx-auto p-6 space-y-6 pb-32 animate-in relative z-0">
                         {view === 'dashboard' && (
                             <div className="space-y-6">
                                 {/* スライダー */}
@@ -371,11 +493,39 @@
                                         })}
                                     </div>
                                 </section>
+                                
+                                <section className="pt-4 border-t border-white/10">
+                                    <h3 className="text-sm font-black text-white uppercase tracking-[0.2em] mono mb-4 text-center">最近の学習履歴</h3>
+                                    <div className="space-y-4">
+                                        {entries.length === 0 ? (
+                                            <div className="text-center py-12 text-slate-500 mono text-xs font-bold border border-dashed border-white/10 rounded-3xl">記録がありません</div>
+                                        ) : (
+                                            entries.slice(-5).reverse().map(e => (
+                                                <div key={e.id} className="bg-[#111]/50 p-5 rounded-2xl border border-white/5">
+                                                    <div className="flex justify-between items-start mb-3">
+                                                        <span className="text-[10px] font-black text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/20 uppercase mono">{e.subject}</span>
+                                                        <button onClick={()=>handleAction('delete',e.id,{col:'cpa_logs'})} className="text-slate-600 hover:text-red-400 p-1"><Icon name="X" size={14}/></button>
+                                                    </div>
+                                                    <div className="flex items-end justify-between">
+                                                        <div>
+                                                            <div className="flex items-baseline gap-2 mb-1"><span className="text-2xl font-black mono text-white">+{(Number(e.hours)*Number(e.quality)).toLocaleString()}</span><span className="text-[9px] font-bold text-emerald-500 mono">pts</span></div>
+                                                            <div className="flex gap-3 text-[10px] text-slate-400 mono font-bold mt-1">
+                                                                <span className="flex items-center gap-1"><Icon name="Clock" size={12}/>{e.hours}h</span>
+                                                                <span className="flex items-center gap-1"><Icon name="Target" size={12}/>平均集中度:{e.quality}%</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-[10px] text-slate-500 mono font-bold flex items-center gap-1"><Icon name="Calendar" size={10}/>{e.date}</div>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </section>
                             </div>
                         )}
 
                         {view === 'ebbinghaus' && (
-                            <div className="space-y-8 animate-in slide-in-from-left-4">
+                            <div className="space-y-8 animate-in">
                                 <div className="flex justify-between items-center mb-2"><h2 className="text-2xl font-black mono text-white">分野別 忘却管理</h2><Icon name="Brain" size={28} className="text-indigo-400" /></div>
                                 <p className="text-sm text-slate-300 font-bold leading-relaxed">細かい論点の記憶を管理します。復習を重ねるほど、忘却曲線のカーブが緩やかになり忘れにくくなります。</p>
                                 <form onSubmit={handleAddTopic} className="bg-[#111] p-5 rounded-3xl border border-white/10 flex flex-col gap-4 shadow-lg">
@@ -415,47 +565,36 @@
                                 <div className="space-y-2"><label className="text-xs font-black text-white uppercase mono ml-1">科目</label><select className="w-full bg-black border-2 border-white/10 p-5 rounded-2xl outline-none font-bold text-white" value={formData.subject} onChange={e=>setFormData({...formData, subject: e.target.value})}>{SUBJECTS.map(o=><option key={o} value={o}>{o}</option>)}</select></div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2"><label className="text-xs font-black text-white uppercase mono ml-1">時間</label><select className="w-full bg-black border-2 border-white/10 p-5 rounded-2xl outline-none font-black text-white mono" value={formData.hours} onChange={e=>setFormData({...formData, hours: e.target.value})} required>{HOUR_OPTIONS.map(h=><option key={h} value={h}>{h} h</option>)}</select></div>
-                                    <div className="space-y-2"><label className="text-xs font-black text-white uppercase mono ml-1">集中度</label><select className="w-full bg-black border-2 border-white/10 p-5 rounded-2xl outline-none font-black text-white mono" value={formData.quality} onChange={e=>setFormData({...formData, quality: e.target.value})} required>{QUALITY_OPTIONS.map(q=><option key={q} value={q}>{q} %</option>)}</select></div>
+                                    <div className="space-y-2"><label className="text-xs font-black text-white uppercase mono ml-1">平均集中度</label><select className="w-full bg-black border-2 border-white/10 p-5 rounded-2xl outline-none font-black text-white mono" value={formData.quality} onChange={e=>setFormData({...formData, quality: e.target.value})} required>{QUALITY_OPTIONS.map(q=><option key={q} value={q}>{q} %</option>)}</select></div>
                                 </div>
                                 <div className="space-y-2"><label className="text-xs font-black text-white uppercase mono ml-1">日付</label><input type="date" className="w-full bg-black border-2 border-white/10 p-5 rounded-2xl outline-none font-bold text-white mono" value={formData.date} onChange={e=>setFormData({...formData, date: e.target.value})} /></div>
                                 <button type="submit" disabled={isSubmitting} className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:bg-emerald-900/20 text-white font-black py-6 rounded-2xl shadow-xl active:scale-[0.98] transition-all mono text-lg">{isSubmitting ? '保存中...' : '記録を保存する'}</button>
                             </form>
                         )}
-
-                        {view === 'logs' && (
-                            <div className="space-y-4 animate-in slide-in-from-right-4">
-                                <div className="flex items-center gap-3 mb-6"><button onClick={()=>setView('dashboard')} className="p-3 bg-white/10 rounded-2xl text-white"><Icon name="X" size={24}/></button><h2 className="text-2xl font-black mono text-white">学習履歴</h2></div>
-                                {entries.length === 0 ? (
-                                    <div className="text-center py-24 text-white mono text-sm font-bold uppercase">記録がありません</div>
-                                ) : (
-                                    entries.slice().reverse().map(e => (
-                                        <div key={e.id} className="bg-[#111] p-6 rounded-3xl border border-white/10 shadow-lg">
-                                            <div className="flex justify-between items-start mb-4">
-                                                <span className="text-xs font-black text-indigo-300 bg-indigo-500/20 px-3 py-1.5 rounded-lg border border-indigo-500/30 uppercase mono">{e.subject}</span>
-                                                <button onClick={()=>handleAction('delete',e.id,{col:'cpa_logs'})} className="text-slate-500 hover:text-red-400 p-1"><Icon name="X" size={20}/></button>
-                                            </div>
-                                            <div className="flex items-end justify-between">
-                                                <div className="space-y-1">
-                                                    <div className="flex items-baseline gap-2"><span className="text-4xl font-black mono text-white">+{(Number(e.hours)*Number(e.quality)).toLocaleString()}</span><span className="text-xs font-bold text-emerald-400 mono">pts</span></div>
-                                                    <div className="flex gap-4 text-xs text-white mono font-bold mt-2">
-                                                        <span className="flex items-center gap-1.5"><Icon name="Clock" size={14}/>{e.hours}h</span>
-                                                        <span className="flex items-center gap-1.5"><Icon name="Target" size={14}/>質:{e.quality}%</span>
-                                                        <span className="flex items-center gap-1.5"><Icon name="Calendar" size={14}/>{e.date}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        )}
                     </main>
 
-                    <nav className="fixed bottom-6 left-4 right-4 h-24 bg-black/95 backdrop-blur-3xl rounded-[2.5rem] border border-white/10 flex justify-between items-center px-4 z-50 shadow-2xl">
-                        <button onClick={()=>setView('dashboard')} className={`p-2 transition-all flex flex-col items-center gap-2 ${view==='dashboard'?'text-emerald-400 scale-110':'text-slate-400 hover:text-white'}`}><Icon name="LayoutGrid" size={24}/><span className="text-[10px] font-black mono uppercase">Home</span></button>
-                        <button onClick={()=>setView('ebbinghaus')} className={`p-2 transition-all flex flex-col items-center gap-2 ${view==='ebbinghaus'?'text-indigo-400 scale-110':'text-slate-400 hover:text-white'}`}><Icon name="Brain" size={24}/><span className="text-[10px] font-black mono uppercase">Memory</span></button>
-                        <button onClick={()=>setView('add')} className="bg-emerald-500 text-black w-16 h-16 rounded-3xl flex items-center justify-center -mt-10 shadow-2xl shadow-emerald-500/40 border-4 border-[#050505] active:scale-90 transition-transform mx-2"><Icon name="Plus" size={32} className="stroke-[3]" /></button>
-                        <button onClick={()=>setView('logs')} className={`p-2 transition-all flex flex-col items-center gap-2 ${view==='logs'?'text-emerald-400 scale-110':'text-slate-400 hover:text-white'}`}><Icon name="History" size={24}/><span className="text-[10px] font-black mono uppercase">Logs</span></button>
+                    {/* 完全左右対称のボトムナビゲーション (iPhoneホームバー対応) */}
+                    <nav className="fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-3xl border-t border-white/10 z-50 pb-safe">
+                        <div className="max-w-md mx-auto h-20 flex justify-between items-center px-8 relative">
+                            {/* 左: HOME */}
+                            <button onClick={()=>setView('dashboard')} className={`p-2 transition-all flex flex-col items-center gap-1.5 w-16 ${view==='dashboard'?'text-emerald-400 scale-110':'text-slate-400 hover:text-white'}`}>
+                                <Icon name="LayoutGrid" size={24}/>
+                                <span className="text-[9px] font-black mono uppercase">Home</span>
+                            </button>
+                            
+                            {/* 中央: ＋ボタン (絶対配置で完全な中央) */}
+                            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[80%]">
+                                <button onClick={()=>setView('add')} className="bg-emerald-500 text-black w-16 h-16 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.3)] border-4 border-[#050505] active:scale-90 transition-transform">
+                                    <Icon name="Plus" size={32} className="stroke-[3]" />
+                                </button>
+                            </div>
+
+                            {/* 右: MEMORY */}
+                            <button onClick={()=>setView('ebbinghaus')} className={`p-2 transition-all flex flex-col items-center gap-1.5 w-16 ${view==='ebbinghaus'?'text-indigo-400 scale-110':'text-slate-400 hover:text-white'}`}>
+                                <Icon name="Brain" size={24}/>
+                                <span className="text-[9px] font-black mono uppercase">Memory</span>
+                            </button>
+                        </div>
                     </nav>
                 </div>
             );
