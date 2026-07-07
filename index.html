@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>復習管理</title>
+    <title>復習マネージャー</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
@@ -78,7 +78,7 @@
 
         body { font-family: 'Inter', sans-serif; background-color: var(--bg-app-to); color: var(--text-secondary); -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; transition: background-color .3s ease, color .3s ease; }
         .mono { font-family: 'JetBrains Mono', monospace; }
-        .mono-num { font-family: 'JetBrains Mono', monospace; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }
+        .mono-num { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }
         .animate-in { animation: fadeIn 0.35s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         ::-webkit-scrollbar { display: none; }
@@ -89,14 +89,48 @@
         input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.6; }
         html.light input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(0.6); }
 
-        @keyframes reviewSweep { 0% { transform: translateX(-110%); } 100% { transform: translateX(110%); } }
-        .review-sweep-el { position: absolute; inset: 0; pointer-events: none; overflow: hidden; border-radius: inherit; z-index: 5; }
-        .review-sweep-el::before {
-            content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 55%;
-            background: linear-gradient(90deg, rgba(239,68,68,0.75), rgba(129,140,248,0.75));
-            filter: blur(9px);
-            animation: reviewSweep 0.7s cubic-bezier(.2,.8,.2,1) forwards;
+        /* ===== 復習ゲージフィル演出（赤→青／左→右／1.5秒） ===== */
+        @keyframes reviewGaugeFill {
+            0% { clip-path: inset(0 100% 0 0); }
+            100% { clip-path: inset(0 0% 0 0); }
         }
+        @keyframes reviewEdgeMove {
+            0% { left: -4%; opacity: 0; }
+            6% { opacity: 1; }
+            94% { opacity: 1; }
+            100% { left: 100%; opacity: 0; }
+        }
+        .review-fill-el { position: absolute; inset: 0; pointer-events: none; overflow: hidden; border-radius: inherit; z-index: 5; }
+        .review-fill-el::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(90deg,
+                rgba(239,68,68,0.62) 0%, rgba(239,68,68,0.58) 14%,
+                rgba(167,139,250,0.55) 55%,
+                rgba(99,102,241,0.58) 86%, rgba(99,102,241,0.62) 100%);
+            clip-path: inset(0 100% 0 0);
+            animation: reviewGaugeFill 1.5s cubic-bezier(.22,.61,.36,1) forwards;
+        }
+        .review-fill-edge {
+            position: absolute; top: -10%; bottom: -10%; width: 12px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(165,180,252,0.9));
+            filter: blur(4px);
+            box-shadow: 0 0 18px 5px rgba(165,180,252,0.9), 0 0 30px 10px rgba(99,102,241,0.5);
+            animation: reviewEdgeMove 1.5s cubic-bezier(.22,.61,.36,1) forwards;
+        }
+
+        /* ===== iOS向け ヒットストップ＆シェイク（視覚的な衝撃） ===== */
+        @keyframes cardHitStopShake {
+            0%   { transform: scale(1) translate(0,0) rotate(0deg); }
+            7%   { transform: scale(0.982) translate(0,0) rotate(0deg); }
+            15%  { transform: scale(0.982) translate(0,0) rotate(0deg); }
+            26%  { transform: scale(1) translate(-4px,1px) rotate(-0.9deg); }
+            38%  { transform: scale(1) translate(4px,-1px) rotate(0.9deg); }
+            50%  { transform: scale(1) translate(-3px,1px) rotate(-0.5deg); }
+            63%  { transform: scale(1) translate(3px,-1px) rotate(0.5deg); }
+            78%  { transform: scale(1) translate(-1px,0) rotate(-0.2deg); }
+            100% { transform: scale(1) translate(0,0) rotate(0deg); }
+        }
+        .card-impact-shake { animation: cardHitStopShake 0.42s cubic-bezier(.36,.07,.19,.97) both; }
 
         @keyframes floatUp {
             0% { transform: translateY(0) scale(0.8); opacity: 0; }
@@ -104,12 +138,58 @@
             100% { transform: translateY(-42px) scale(1); opacity: 0; }
         }
         .recover-popup {
-            position: absolute; top: 10px; right: 16px; font-family: 'JetBrains Mono', monospace; font-weight: 900;
+            position: absolute; top: 10px; right: 16px; font-family: 'Inter', -apple-system, sans-serif; font-weight: 900;
             font-size: 1.05rem; color: #a5b4fc; text-shadow: 0 0 14px rgba(129,140,248,0.9);
-            animation: floatUp 0.9s ease-out forwards; pointer-events: none; z-index: 30;
+            animation: floatUp 1.1s ease-out forwards; pointer-events: none; z-index: 30;
         }
         @keyframes flamePulse { 0%,100% { opacity: 0.85; transform: scale(1); } 50% { opacity: 1; transform: scale(1.12); } }
         .flame-pulse { animation: flamePulse 1.6s ease-in-out infinite; }
+
+        /* ===== ランクバッジ オーラ演出 ===== */
+        .rank-aura-common { box-shadow: 0 0 6px -1px currentColor; }
+        .rank-aura-ss { animation: auraPulseSS 1.8s ease-in-out infinite; }
+        @keyframes auraPulseSS {
+            0%,100% { box-shadow: 0 0 8px rgba(232,121,249,0.4); }
+            50% { box-shadow: 0 0 18px rgba(232,121,249,0.85), 0 0 28px rgba(232,121,249,0.3); }
+        }
+        .rank-aura-s {
+            background: linear-gradient(135deg,#fef3c7,#fbbf24,#f59e0b);
+            color: #451a03; border-color: rgba(251,191,36,0.7); font-weight: 900;
+            animation: auraPulseGold 1.8s ease-in-out infinite;
+        }
+        @keyframes auraPulseGold {
+            0%,100% { box-shadow: 0 0 8px rgba(251,191,36,0.55); }
+            50% { box-shadow: 0 0 20px rgba(251,191,36,0.95), 0 0 32px rgba(251,191,36,0.45); }
+        }
+        .rank-aura-sss {
+            background: linear-gradient(90deg,#ff6b6b,#feca57,#1dd1a1,#54a0ff,#c56cf0,#ff6b6b);
+            background-size: 300% 100%;
+            color: #0b0b0f; border-color: rgba(255,255,255,0.6); font-weight: 900;
+            animation: rainbowShift 3.2s linear infinite, auraPulseRainbow 1.7s ease-in-out infinite;
+        }
+        @keyframes rainbowShift { to { background-position: 300% 50%; } }
+        @keyframes auraPulseRainbow {
+            0%,100% { box-shadow: 0 0 10px rgba(255,255,255,0.5); }
+            50% { box-shadow: 0 0 22px rgba(255,255,255,0.95), 0 0 36px rgba(180,140,255,0.55); }
+        }
+
+        /* ===== 「合計回復」カウントアップ演出 ===== */
+        .count-pop-flash { display: inline-block; animation: countPopFlash 0.55s ease-out; }
+        @keyframes countPopFlash {
+            0% { text-shadow: 0 0 0 rgba(129,140,248,0); transform: scale(1); }
+            30% { text-shadow: 0 0 20px rgba(129,140,248,0.95), 0 0 34px rgba(129,140,248,0.5); transform: scale(1.14); }
+            100% { text-shadow: 0 0 0 rgba(129,140,248,0); transform: scale(1); }
+        }
+
+        /* ===== パーフェクト（100%）演出 ===== */
+        .perfect-glow {
+            background: linear-gradient(90deg, #a5b4fc, #ffffff, #818cf8, #ffffff, #a5b4fc);
+            background-size: 220% auto;
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+            animation: perfectShine 2.4s linear infinite;
+            filter: drop-shadow(0 0 16px rgba(129,140,248,0.75));
+        }
+        @keyframes perfectShine { 0% { background-position: 0% 50%; } 100% { background-position: 220% 50%; } }
     </style>
 </head>
 <body>
@@ -145,18 +225,62 @@
         const RANKS = ['E', 'D', 'C', 'B', 'A', 'S', 'SS', 'SSS'];
         const RANK_STYLES = {
             E: 'bg-slate-500/15 text-slate-400 border-slate-400/30',
-            D: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
-            C: 'bg-teal-500/15 text-teal-400 border-teal-500/30',
-            B: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
-            A: 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30',
-            S: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
-            SS: 'bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-400/40 shadow-[0_0_10px_rgba(232,121,249,0.35)]',
-            SSS: 'bg-gradient-to-r from-amber-300 via-yellow-300 to-amber-400 text-black border-amber-300 shadow-[0_0_14px_rgba(251,191,36,0.55)]'
+            D: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 rank-aura-common',
+            C: 'bg-teal-500/15 text-teal-400 border-teal-500/30 rank-aura-common',
+            B: 'bg-blue-500/15 text-blue-400 border-blue-500/30 rank-aura-common',
+            A: 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30 rank-aura-common',
+            S: 'border-amber-300/70 rank-aura-s',
+            SS: 'bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-400/40 rank-aura-ss',
+            SSS: 'border-white/50 rank-aura-sss'
         };
         const getRank = (rc) => RANKS[Math.min(rc || 0, RANKS.length - 1)];
 
         const vibrate = (pattern) => {
             try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) {}
+        };
+
+        // エンジンが吹け上がるような、1.5秒間持続する振動パターンを生成
+        // (onTimeが徐々に長く、offTimeが徐々に短くなることで「加速感」を演出)
+        const buildRevVibratePattern = (durationMs = 1500, pulses = 15) => {
+            const raw = [];
+            let sum = 0;
+            for (let i = 0; i < pulses; i++) {
+                const t = i / (pulses - 1);
+                const on = 26 + t * 78;   // 26ms → 104ms へ加速
+                const off = 42 - t * 30;  // 42ms → 12ms へ短縮
+                raw.push(on, off);
+                sum += on + off;
+            }
+            const scale = durationMs / sum;
+            return raw.map(v => Math.max(4, Math.round(v * scale)));
+        };
+
+        // Web Audio APIでApple UIのような短く心地よいサイン波の合成音を鳴らす
+        let __audioCtx = null;
+        const getAudioCtx = () => {
+            try {
+                if (!__audioCtx) __audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (__audioCtx.state === 'suspended') __audioCtx.resume();
+                return __audioCtx;
+            } catch (e) { return null; }
+        };
+        const playReviewSound = () => {
+            const ctx = getAudioCtx();
+            if (!ctx) return;
+            const now = ctx.currentTime;
+            // 上昇する2音のサイン波チャイム（Apple製品のUI音を意識）
+            [{ f: 880, t: 0, d: 0.16, g: 0.16 }, { f: 1318.5, t: 0.085, d: 0.24, g: 0.13 }].forEach(({ f, t, d, g }) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(f, now + t);
+                gain.gain.setValueAtTime(0.0001, now + t);
+                gain.gain.exponentialRampToValueAtTime(g, now + t + 0.012);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + t + d);
+                osc.connect(gain).connect(ctx.destination);
+                osc.start(now + t);
+                osc.stop(now + t + d + 0.02);
+            });
         };
 
         const getMemoryRetention = (hours, reviewCount) => {
@@ -202,6 +326,42 @@
             return monday;
         };
         const getStartOfMonth = (d = new Date()) => { const m = new Date(d.getFullYear(), d.getMonth(), 1); m.setHours(0, 0, 0, 0); return m; };
+
+        // 数値がパラパラッとカウントアップし、到達時にフワッと光る演出（トップレベルで定義し、親の再レンダーでも状態を保持）
+        const CountUpNumber = ({ value, prefix = '', suffix = '', className = '' }) => {
+            const [display, setDisplay] = useState(value);
+            const [pulse, setPulse] = useState(false);
+            const prevRef = useRef(value);
+            const rafRef = useRef(null);
+            const mountedRef = useRef(false);
+
+            useEffect(() => {
+                if (!mountedRef.current) { mountedRef.current = true; prevRef.current = value; setDisplay(value); return; }
+                const from = prevRef.current;
+                const to = value;
+                if (from === to) return;
+                prevRef.current = to;
+                const duration = 700;
+                const start = performance.now();
+                if (rafRef.current) cancelAnimationFrame(rafRef.current);
+                const tick = (now) => {
+                    const p = Math.min(1, (now - start) / duration);
+                    const eased = 1 - Math.pow(1 - p, 3);
+                    setDisplay(Math.round(from + (to - from) * eased));
+                    if (p < 1) {
+                        rafRef.current = requestAnimationFrame(tick);
+                    } else {
+                        setDisplay(to);
+                        setPulse(true);
+                        setTimeout(() => setPulse(false), 550);
+                    }
+                };
+                rafRef.current = requestAnimationFrame(tick);
+                return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+            }, [value]);
+
+            return <span className={`${className} ${pulse ? 'count-pop-flash' : ''}`}>{prefix}{display}{suffix}</span>;
+        };
 
         function App() {
             const [user, setUser] = useState(null);
@@ -554,6 +714,7 @@
             const TopicCard = ({ t, idx, count, onReview }) => {
                 const [isEditing, setIsEditing] = useState(false);
                 const [isSweeping, setIsSweeping] = useState(false);
+                const [isShaking, setIsShaking] = useState(false);
                 const [sweepKey, setSweepKey] = useState(0);
                 const [popup, setPopup] = useState(null);
                 const [editForm, setEditForm] = useState({
@@ -593,12 +754,16 @@
                     e.preventDefault();
                     e.stopPropagation();
                     const recovered = Math.max(0, Math.round(100 - ret));
-                    vibrate([16, 40, 30]);
+                    // 視覚(1.5秒)と完全同期したハプティクス（Android）とiOS向けヒットストップ・シェイク、SEを同時発火
+                    vibrate(buildRevVibratePattern(1500));
+                    playReviewSound();
                     setSweepKey(k => k + 1);
                     setIsSweeping(true);
+                    setIsShaking(true);
                     setPopup({ id: Date.now(), text: `+${recovered}% 回復` });
-                    setTimeout(() => setIsSweeping(false), 750);
-                    setTimeout(() => setPopup(null), 950);
+                    setTimeout(() => setIsShaking(false), 420);
+                    setTimeout(() => setIsSweeping(false), 1550);
+                    setTimeout(() => setPopup(null), 1750);
                     onReview(t, ret);
                 };
 
@@ -634,9 +799,13 @@
                 }
 
                 return (
-                    <div className={`relative rounded-2xl border p-5 flex flex-col gap-4 shadow-lg transition-colors overflow-hidden ${isNeedsReview ? 'border-red-500/50' : 'border-[var(--border-color)]'}`} style={{ backgroundColor: isNeedsReview ? 'var(--bg-danger-card)' : 'var(--bg-card)' }}>
+                    <div className={`relative rounded-2xl border p-5 flex flex-col gap-4 shadow-lg transition-colors overflow-hidden ${isNeedsReview ? 'border-red-500/50' : 'border-[var(--border-color)]'} ${isShaking ? 'card-impact-shake' : ''}`} style={{ backgroundColor: isNeedsReview ? 'var(--bg-danger-card)' : 'var(--bg-card)' }}>
                         {isNeedsReview && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)] z-10" />}
-                        {isSweeping && <div key={sweepKey} className="review-sweep-el"></div>}
+                        {isSweeping && (
+                            <div key={sweepKey} className="review-fill-el">
+                                <div className="review-fill-edge"></div>
+                            </div>
+                        )}
                         {popup && <div key={popup.id} className="recover-popup">{popup.text}</div>}
 
                         <div className="flex justify-between items-start">
@@ -713,11 +882,12 @@
                     return `${x},${y}`;
                 }).join(' ');
 
+                const isPerfect = percentage >= 100;
                 return (
                     <div className="space-y-5">
                         <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-6 text-center shadow-lg">
                             <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest mb-2">全体の定着率（青の割合）</p>
-                            <p className={`text-6xl mono-num tracking-tighter ${color}`}>{percentage}<span className="text-2xl">%</span></p>
+                            <p className={`text-6xl mono-num tracking-tighter ${isPerfect ? 'perfect-glow' : color}`}>{percentage}<span className="text-2xl">%</span></p>
                             <p className="text-xs text-[var(--text-muted)] mt-2 mono-num">{blue} / {total} 論点が良好（青）</p>
                             <div className="flex justify-center gap-4 mt-4 text-xs mono-num font-bold">
                                 <span className="flex items-center gap-1.5 text-indigo-400"><span className="w-2.5 h-2.5 rounded-full bg-indigo-400 shadow-[0_0_6px_rgba(129,140,248,0.6)]"></span>{blue}</span>
@@ -726,15 +896,12 @@
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-4 text-center shadow-lg">
-                                <p className="text-[9px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest mb-1">本日の復習</p>
-                                <p className="text-2xl mono-num text-[var(--text-primary)]">{todayLog.length}<span className="text-xs text-[var(--text-tertiary)]"> 回</span></p>
-                            </div>
-                            <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-4 text-center shadow-lg">
-                                <p className="text-[9px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest mb-1">合計回復</p>
-                                <p className="text-2xl mono-num text-indigo-400">+{todayRecovered}<span className="text-xs">%</span></p>
-                            </div>
+                        <div className="bg-gradient-to-b from-indigo-500/10 to-transparent border border-indigo-400/30 rounded-3xl p-6 text-center shadow-lg relative overflow-hidden">
+                            <Icon name="Sparkles" size={16} className="text-indigo-400 mx-auto mb-1" />
+                            <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest mb-1">本日の合計回復</p>
+                            <p className="text-5xl mono-num tracking-tighter text-indigo-400">
+                                <CountUpNumber value={todayRecovered} prefix="+" suffix="%" />
+                            </p>
                         </div>
 
                         <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-4">
