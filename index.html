@@ -347,7 +347,11 @@
                 const ret = getMemoryRetention(hrs, rc);
 
                 const targetHours = getNextIntervalHours(rc);
-                const pts = Array.from({ length: 85 }, (_, i) => `${(i * 2 / targetHours) * 200},${50 - (getMemoryRetention(i * 2, rc) / 100) * 40}`).join(' ');
+                const GRAPH_STEPS = 80;
+                const pts = Array.from({ length: GRAPH_STEPS + 1 }, (_, i) => {
+                    const h = (i / GRAPH_STEPS) * targetHours;
+                    return `${(h / targetHours) * 200},${50 - (getMemoryRetention(h, rc) / 100) * 40}`;
+                }).join(' ');
 
                 const isNeedsReview = ret <= REVIEW_THRESHOLD;
                 const isWarn = ret <= 80 && !isNeedsReview;
@@ -489,7 +493,7 @@
                                     >
                                         {stat.needReview > 0 && <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>}
                                         {tab.name}
-                                        <span className={`mono text-[10px] px-1.5 py-0.5 rounded-full ${active ? 'bg-white/20' : 'bg-white/10'}`}>{stat.total}</span>
+                                        <span className={`mono text-[10px] px-1.5 py-0.5 rounded-full ${active ? 'bg-white/20' : stat.needReview > 0 ? 'bg-red-500/20 text-red-300' : 'bg-white/10'}`}>{stat.needReview}</span>
                                     </button>
                                 );
                             })}
