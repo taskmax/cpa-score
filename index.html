@@ -42,8 +42,43 @@
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;900&family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #050505; color: #cbd5e1; -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
+
+        :root {
+            --bg-app-from: #0a0a0f;
+            --bg-app-to: #000000;
+            --bg-header: rgba(0,0,0,0.95);
+            --bg-card: #111111;
+            --bg-card-soft: rgba(255,255,255,0.05);
+            --bg-card-soft-hover: rgba(255,255,255,0.1);
+            --bg-input: #000000;
+            --bg-danger-card: #2a0808;
+            --border-color: rgba(255,255,255,0.1);
+            --border-strong: rgba(255,255,255,0.2);
+            --text-primary: #ffffff;
+            --text-secondary: #cbd5e1;
+            --text-tertiary: #94a3b8;
+            --text-muted: #64748b;
+        }
+        html.light {
+            --bg-app-from: #eef2ff;
+            --bg-app-to: #f8fafc;
+            --bg-header: rgba(255,255,255,0.92);
+            --bg-card: #ffffff;
+            --bg-card-soft: rgba(15,23,42,0.05);
+            --bg-card-soft-hover: rgba(15,23,42,0.09);
+            --bg-input: #f1f5f9;
+            --bg-danger-card: #fef2f2;
+            --border-color: rgba(15,23,42,0.08);
+            --border-strong: rgba(15,23,42,0.16);
+            --text-primary: #0f172a;
+            --text-secondary: #334155;
+            --text-tertiary: #64748b;
+            --text-muted: #94a3b8;
+        }
+
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-app-to); color: var(--text-secondary); -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; transition: background-color .3s ease, color .3s ease; }
         .mono { font-family: 'JetBrains Mono', monospace; }
+        .mono-num { font-family: 'JetBrains Mono', monospace; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }
         .animate-in { animation: fadeIn 0.35s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         ::-webkit-scrollbar { display: none; }
@@ -52,6 +87,29 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.6; }
+        html.light input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(0.6); }
+
+        @keyframes reviewSweep { 0% { transform: translateX(-110%); } 100% { transform: translateX(110%); } }
+        .review-sweep-el { position: absolute; inset: 0; pointer-events: none; overflow: hidden; border-radius: inherit; z-index: 5; }
+        .review-sweep-el::before {
+            content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 55%;
+            background: linear-gradient(90deg, rgba(239,68,68,0.75), rgba(129,140,248,0.75));
+            filter: blur(9px);
+            animation: reviewSweep 0.7s cubic-bezier(.2,.8,.2,1) forwards;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(0.8); opacity: 0; }
+            20% { opacity: 1; transform: translateY(-4px) scale(1.08); }
+            100% { transform: translateY(-42px) scale(1); opacity: 0; }
+        }
+        .recover-popup {
+            position: absolute; top: 10px; right: 16px; font-family: 'JetBrains Mono', monospace; font-weight: 900;
+            font-size: 1.05rem; color: #a5b4fc; text-shadow: 0 0 14px rgba(129,140,248,0.9);
+            animation: floatUp 0.9s ease-out forwards; pointer-events: none; z-index: 30;
+        }
+        @keyframes flamePulse { 0%,100% { opacity: 0.85; transform: scale(1); } 50% { opacity: 1; transform: scale(1.12); } }
+        .flame-pulse { animation: flamePulse 1.6s ease-in-out infinite; }
     </style>
 </head>
 <body>
@@ -77,17 +135,29 @@
 
         const DEFAULT_SUBJECTS = ['財務会計論(計算)', '財務会計論(理論)', '管理会計論', '企業法', '監査論'];
         const REVIEW_THRESHOLD = 65;
+        const DEFAULT_SETTINGS = { weeklyGoal: 15, monthlyGoal: 60, theme: 'dark', lastLoginDate: null, currentStreak: 0, bestStreak: 0 };
 
         // 1日(24h), 3日(72h), 7日(168h), 14日(336h), 30日(720h), 45日(1080h), 60日(1440h) 経過時に65%になるよう逆算した定数 (-時間 / ln(0.65))
         const S_VALUES = [
-            55.7,   // 0回目復習後 (1日後に要復習)
-            167.1,  // 1回目復習後 (3日後に要復習)
-            389.9,  // 2回目復習後 (7日後に要復習)
-            779.8,  // 3回目復習後 (14日後に要復習)
-            1671.0, // 4回目復習後 (30日後に要復習)
-            2506.6, // 5回目復習後 (45日後に要復習)
-            3342.1  // 6回目以降 (常に60日後に要復習)
+            55.7, 167.1, 389.9, 779.8, 1671.0, 2506.6, 3342.1
         ];
+
+        const RANKS = ['E', 'D', 'C', 'B', 'A', 'S', 'SS', 'SSS'];
+        const RANK_STYLES = {
+            E: 'bg-slate-500/15 text-slate-400 border-slate-400/30',
+            D: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+            C: 'bg-teal-500/15 text-teal-400 border-teal-500/30',
+            B: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+            A: 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30',
+            S: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
+            SS: 'bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-400/40 shadow-[0_0_10px_rgba(232,121,249,0.35)]',
+            SSS: 'bg-gradient-to-r from-amber-300 via-yellow-300 to-amber-400 text-black border-amber-300 shadow-[0_0_14px_rgba(251,191,36,0.55)]'
+        };
+        const getRank = (rc) => RANKS[Math.min(rc || 0, RANKS.length - 1)];
+
+        const vibrate = (pattern) => {
+            try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) {}
+        };
 
         const getMemoryRetention = (hours, reviewCount) => {
             if (hours <= 0) return 100;
@@ -107,7 +177,6 @@
             return days[Math.min(reviewCount, days.length - 1)] * 24;
         };
 
-        // datetime-local用フォーマット変換
         const toDatetimeLocalValue = (isoString) => {
             if (!isoString) return '';
             const d = new Date(isoString);
@@ -119,16 +188,28 @@
             return new Date(val).toISOString();
         };
 
-        // ローカル日付キー (YYYY-MM-DD)
         const getLocalDateKey = (d = new Date()) => {
             const pad = (n) => String(n).padStart(2, '0');
             return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
         };
+        const getStartOfDay = (d = new Date()) => { const s = new Date(d); s.setHours(0, 0, 0, 0); return s; };
+        const getStartOfWeek = (d = new Date()) => {
+            const day = d.getDay();
+            const diff = (day === 0 ? -6 : 1) - day;
+            const monday = new Date(d);
+            monday.setHours(0, 0, 0, 0);
+            monday.setDate(d.getDate() + diff);
+            return monday;
+        };
+        const getStartOfMonth = (d = new Date()) => { const m = new Date(d.getFullYear(), d.getMonth(), 1); m.setHours(0, 0, 0, 0); return m; };
 
         function App() {
             const [user, setUser] = useState(null);
             const [topics, setTopics] = useState([]);
             const [subjectsDb, setSubjectsDb] = useState([]);
+            const [statsHistory, setStatsHistory] = useState([]);
+            const [reviewLog, setReviewLog] = useState([]);
+            const [settings, setSettings] = useState(DEFAULT_SETTINGS);
             const [loading, setLoading] = useState(true);
             const [isSubmitting, setIsSubmitting] = useState(false);
             const [activeSubject, setActiveSubject] = useState(null);
@@ -137,8 +218,11 @@
             const [newSubjectName, setNewSubjectName] = useState('');
             const [newTopicTitle, setNewTopicTitle] = useState('');
             const [view, setView] = useState('review');
-            const [statsHistory, setStatsHistory] = useState([]);
+            const [editingGoals, setEditingGoals] = useState(false);
+            const [goalForm, setGoalForm] = useState({ weekly: DEFAULT_SETTINGS.weeklyGoal, monthly: DEFAULT_SETTINGS.monthlyGoal });
             const seededRef = useRef(false);
+            const settingsLoadedRef = useRef(false);
+            const streakCheckedRef = useRef(false);
 
             useEffect(() => {
                 if (window.fb && window.fb.auth) {
@@ -169,17 +253,15 @@
             };
 
             useEffect(() => {
-                if (!user) { setTopics([]); setSubjectsDb([]); setStatsHistory([]); seededRef.current = false; return; }
+                if (!user) { setTopics([]); setSubjectsDb([]); setStatsHistory([]); setReviewLog([]); seededRef.current = false; return; }
                 if (window.fb && window.fb.db) {
                     const { db, appId, collection, query, onSnapshot } = window.fb;
                     const unsubMemory = onSnapshot(query(collection(db, 'artifacts', appId, 'users', user.uid, 'cpa_memory')), (snapshot) => {
-                        const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-                        setTopics(data);
+                        setTopics(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
                     }, (err) => console.error("Fetch error:", err));
 
                     const unsubSubjects = onSnapshot(query(collection(db, 'artifacts', appId, 'users', user.uid, 'cpa_subjects')), (snapshot) => {
-                        const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-                        setSubjectsDb(data);
+                        setSubjectsDb(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
                     }, (err) => console.error("Fetch error:", err));
 
                     const unsubStats = onSnapshot(query(collection(db, 'artifacts', appId, 'users', user.uid, 'cpa_stats')), (snapshot) => {
@@ -188,9 +270,68 @@
                         setStatsHistory(data);
                     }, (err) => console.error("Fetch error:", err));
 
-                    return () => { unsubMemory(); unsubSubjects(); unsubStats(); };
+                    const unsubLog = onSnapshot(query(collection(db, 'artifacts', appId, 'users', user.uid, 'cpa_review_log')), (snapshot) => {
+                        setReviewLog(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+                    }, (err) => console.error("Fetch error:", err));
+
+                    return () => { unsubMemory(); unsubSubjects(); unsubStats(); unsubLog(); };
                 }
             }, [user]);
+
+            useEffect(() => {
+                if (!user) { setSettings(DEFAULT_SETTINGS); settingsLoadedRef.current = false; streakCheckedRef.current = false; return; }
+                if (window.fb && window.fb.db) {
+                    const { db, appId, doc, onSnapshot } = window.fb;
+                    const ref = doc(db, 'artifacts', appId, 'users', user.uid, 'cpa_settings', 'main');
+                    const unsub = onSnapshot(ref, (snap) => {
+                        setSettings(snap.exists() ? { ...DEFAULT_SETTINGS, ...snap.data() } : DEFAULT_SETTINGS);
+                        settingsLoadedRef.current = true;
+                    }, (err) => console.error("Settings fetch error:", err));
+                    return () => unsub();
+                }
+            }, [user]);
+
+            // 連続ログイン記録（セッション中に一度だけ判定）
+            useEffect(() => {
+                if (!user || !settingsLoadedRef.current || streakCheckedRef.current) return;
+                streakCheckedRef.current = true;
+                const todayKey = getLocalDateKey();
+                if (settings.lastLoginDate === todayKey) return;
+                const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+                const yKey = getLocalDateKey(yesterday);
+                const newStreak = settings.lastLoginDate === yKey ? (settings.currentStreak || 0) + 1 : 1;
+                const newBest = Math.max(settings.bestStreak || 0, newStreak);
+                const { db, appId, doc, setDoc } = window.fb;
+                setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'cpa_settings', 'main'), {
+                    lastLoginDate: todayKey, currentStreak: newStreak, bestStreak: newBest
+                }, { merge: true }).catch(err => console.error('Streak update error:', err));
+            }, [user, settings]);
+
+            // テーマ適用
+            useEffect(() => {
+                document.documentElement.classList.toggle('light', settings.theme === 'light');
+            }, [settings.theme]);
+
+            useEffect(() => {
+                setGoalForm({ weekly: settings.weeklyGoal, monthly: settings.monthlyGoal });
+            }, [settings.weeklyGoal, settings.monthlyGoal]);
+
+            const handleToggleTheme = () => {
+                if (!user) return;
+                const next = settings.theme === 'light' ? 'dark' : 'light';
+                const { db, appId, doc, setDoc } = window.fb;
+                setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'cpa_settings', 'main'), { theme: next }, { merge: true }).catch(() => {});
+                vibrate(10);
+            };
+
+            const handleSaveGoals = () => {
+                if (!user) return;
+                const weekly = Math.max(1, parseInt(goalForm.weekly, 10) || 1);
+                const monthly = Math.max(1, parseInt(goalForm.monthly, 10) || 1);
+                const { db, appId, doc, setDoc } = window.fb;
+                setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'cpa_settings', 'main'), { weeklyGoal: weekly, monthlyGoal: monthly }, { merge: true }).catch(() => {});
+                setEditingGoals(false);
+            };
 
             // 初回のみデフォルトタブを投入
             useEffect(() => {
@@ -202,9 +343,7 @@
                         const { db, appId, collection, addDoc } = window.fb;
                         for (let i = 0; i < DEFAULT_SUBJECTS.length; i++) {
                             await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'cpa_subjects'), {
-                                name: DEFAULT_SUBJECTS[i],
-                                order: i,
-                                createdAt: new Date().toISOString()
+                                name: DEFAULT_SUBJECTS[i], order: i, createdAt: new Date().toISOString()
                             });
                         }
                     })();
@@ -213,7 +352,6 @@
                 }
             }, [user, subjectsDb, loading]);
 
-            // タブ一覧（DB登録済み + 既存トピックにのみ存在する未登録科目を統合）
             const tabs = useMemo(() => {
                 const map = {};
                 subjectsDb.forEach(s => { map[s.name] = { id: s.id, name: s.name, order: s.order ?? 0 }; });
@@ -260,6 +398,15 @@
                 return { blue, warn, red, total, percentage };
             }, [topics]);
 
+            const perSubjectGauge = useMemo(() => {
+                return tabs.map(tab => {
+                    const items = topics.filter(t => (t.subject || 'その他') === tab.name);
+                    if (items.length === 0) return { name: tab.name, avg: null, count: 0 };
+                    const avg = items.reduce((sum, t) => sum + getMemoryRetention(getHoursSince(t.lastStudiedAt), t.reviewCount || 0), 0) / items.length;
+                    return { name: tab.name, avg, count: items.length };
+                });
+            }, [tabs, topics]);
+
             // 毎日の定着率（青の割合）をスナップショットとして保存
             useEffect(() => {
                 if (!user || !window.fb || !window.fb.db) return;
@@ -267,12 +414,8 @@
                 const { db, appId, doc, setDoc } = window.fb;
                 const dateKey = getLocalDateKey();
                 setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'cpa_stats', dateKey), {
-                    date: dateKey,
-                    percentage: overallStats.percentage,
-                    blue: overallStats.blue,
-                    warn: overallStats.warn,
-                    red: overallStats.red,
-                    total: overallStats.total,
+                    date: dateKey, percentage: overallStats.percentage, blue: overallStats.blue,
+                    warn: overallStats.warn, red: overallStats.red, total: overallStats.total,
                     updatedAt: new Date().toISOString()
                 }, { merge: true }).catch(err => console.error('Stats snapshot error:', err));
             }, [user, overallStats.percentage, overallStats.total]);
@@ -289,17 +432,27 @@
                     });
             }, [topics, activeSubject]);
 
+            const weeklyCount = useMemo(() => {
+                const start = getStartOfWeek();
+                return reviewLog.filter(r => new Date(r.timestamp) >= start).length;
+            }, [reviewLog]);
+            const monthlyCount = useMemo(() => {
+                const start = getStartOfMonth();
+                return reviewLog.filter(r => new Date(r.timestamp) >= start).length;
+            }, [reviewLog]);
+            const todayLog = useMemo(() => {
+                const start = getStartOfDay();
+                return reviewLog.filter(r => new Date(r.timestamp) >= start);
+            }, [reviewLog]);
+            const todayRecovered = useMemo(() => todayLog.reduce((s, r) => s + (r.recovered || 0), 0), [todayLog]);
+
             const handleAddTopic = async (e) => {
                 e.preventDefault();
                 if (!newTopicTitle.trim() || isSubmitting || !user || !activeSubject) return;
                 setIsSubmitting(true);
                 const newTopic = {
-                    title: newTopicTitle.trim(),
-                    subject: activeSubject,
-                    lastStudiedAt: new Date().toISOString(),
-                    reviewCount: 0,
-                    createdAt: new Date().toISOString(),
-                    order: Date.now()
+                    title: newTopicTitle.trim(), subject: activeSubject, lastStudiedAt: new Date().toISOString(),
+                    reviewCount: 0, createdAt: new Date().toISOString(), order: Date.now()
                 };
                 try {
                     if (window.fb && window.fb.db) {
@@ -307,6 +460,7 @@
                         await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'cpa_memory'), newTopic);
                     }
                     setNewTopicTitle('');
+                    vibrate(10);
                 } finally {
                     setIsSubmitting(false);
                 }
@@ -362,6 +516,19 @@
                 ]);
             };
 
+            const handleReviewAction = async (topic, retBefore) => {
+                if (!user) return;
+                const rc = topic.reviewCount || 0;
+                const recovered = Math.max(0, Math.round(100 - retBefore));
+                const { db, appId, doc, updateDoc, collection, addDoc } = window.fb;
+                await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'cpa_memory', topic.id), {
+                    lastStudiedAt: new Date().toISOString(), reviewCount: rc + 1
+                });
+                await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'cpa_review_log'), {
+                    subject: topic.subject, timestamp: new Date().toISOString(), recovered
+                });
+            };
+
             if (loading) return <div className="h-screen flex items-center justify-center text-indigo-500 mono text-xs animate-pulse">LOADING...</div>;
 
             if (!user) {
@@ -379,13 +546,19 @@
                 );
             }
 
-            const TopicCard = ({ t, idx, count }) => {
+            const RankBadge = ({ rc }) => {
+                const rank = getRank(rc);
+                return <span className={`text-[10px] font-black mono px-2 py-0.5 rounded-full border shrink-0 ${RANK_STYLES[rank]}`}>{rank}</span>;
+            };
+
+            const TopicCard = ({ t, idx, count, onReview }) => {
                 const [isEditing, setIsEditing] = useState(false);
+                const [isSweeping, setIsSweeping] = useState(false);
+                const [sweepKey, setSweepKey] = useState(0);
+                const [popup, setPopup] = useState(null);
                 const [editForm, setEditForm] = useState({
-                    title: t.title,
-                    subject: t.subject,
-                    reviewCount: t.reviewCount || 0,
-                    lastStudiedAt: toDatetimeLocalValue(t.lastStudiedAt)
+                    title: t.title, subject: t.subject,
+                    reviewCount: t.reviewCount || 0, lastStudiedAt: toDatetimeLocalValue(t.lastStudiedAt)
                 });
 
                 const hrs = getHoursSince(t.lastStudiedAt);
@@ -408,8 +581,7 @@
                     handleAction('update', t.id, {
                         col: 'cpa_memory',
                         updates: {
-                            title: editForm.title.trim(),
-                            subject: editForm.subject,
+                            title: editForm.title.trim(), subject: editForm.subject,
                             reviewCount: Math.max(0, parseInt(editForm.reviewCount, 10) || 0),
                             lastStudiedAt: fromDatetimeLocalValue(editForm.lastStudiedAt)
                         }
@@ -417,43 +589,44 @@
                     setIsEditing(false);
                 };
 
-                const handleReview = (e) => {
+                const handleReviewClick = (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    handleAction('update', t.id, {
-                        col: 'cpa_memory',
-                        updates: {
-                            lastStudiedAt: new Date().toISOString(),
-                            reviewCount: rc + 1
-                        }
-                    });
+                    const recovered = Math.max(0, Math.round(100 - ret));
+                    vibrate([16, 40, 30]);
+                    setSweepKey(k => k + 1);
+                    setIsSweeping(true);
+                    setPopup({ id: Date.now(), text: `+${recovered}% 回復` });
+                    setTimeout(() => setIsSweeping(false), 750);
+                    setTimeout(() => setPopup(null), 950);
+                    onReview(t, ret);
                 };
 
                 if (isEditing) {
                     return (
-                        <div className="bg-[#111] rounded-2xl border border-indigo-500/50 p-5 flex flex-col gap-4 shadow-lg animate-in">
+                        <div className="bg-[var(--bg-card)] rounded-2xl border border-indigo-500/50 p-5 flex flex-col gap-4 shadow-lg animate-in">
                             <div className="space-y-3">
-                                <label className="text-[10px] text-slate-400 font-bold uppercase mono">論点名</label>
-                                <input type="text" className="w-full bg-black border border-white/20 p-3 rounded-xl outline-none font-bold text-white text-sm" value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} />
+                                <label className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono">論点名</label>
+                                <input type="text" className="w-full bg-[var(--bg-input)] border border-[var(--border-strong)] p-3 rounded-xl outline-none font-bold text-[var(--text-primary)] text-sm" value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} />
 
-                                <label className="text-[10px] text-slate-400 font-bold uppercase mono block mt-2">タブ（科目）</label>
-                                <select className="w-full bg-black border border-white/20 p-3 rounded-xl outline-none font-bold text-white text-sm" value={editForm.subject} onChange={e => setEditForm({ ...editForm, subject: e.target.value })}>
+                                <label className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono block mt-2">タブ（科目）</label>
+                                <select className="w-full bg-[var(--bg-input)] border border-[var(--border-strong)] p-3 rounded-xl outline-none font-bold text-[var(--text-primary)] text-sm" value={editForm.subject} onChange={e => setEditForm({ ...editForm, subject: e.target.value })}>
                                     {tabs.map(o => <option key={o.name} value={o.name}>{o.name}</option>)}
                                 </select>
 
                                 <div className="grid grid-cols-2 gap-3 mt-2">
                                     <div>
-                                        <label className="text-[10px] text-slate-400 font-bold uppercase mono block mb-1">総復習回数</label>
-                                        <input type="number" min="0" className="w-full bg-black border border-white/20 p-3 rounded-xl outline-none font-bold text-white text-sm mono" value={editForm.reviewCount} onChange={e => setEditForm({ ...editForm, reviewCount: e.target.value })} />
+                                        <label className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono block mb-1">総復習回数</label>
+                                        <input type="number" min="0" className="w-full bg-[var(--bg-input)] border border-[var(--border-strong)] p-3 rounded-xl outline-none font-bold text-[var(--text-primary)] text-sm mono-num" value={editForm.reviewCount} onChange={e => setEditForm({ ...editForm, reviewCount: e.target.value })} />
                                     </div>
                                     <div>
-                                        <label className="text-[10px] text-slate-400 font-bold uppercase mono block mb-1">最終復習日</label>
-                                        <input type="datetime-local" className="w-full bg-black border border-white/20 p-3 rounded-xl outline-none font-bold text-white text-xs mono" value={editForm.lastStudiedAt} onChange={e => setEditForm({ ...editForm, lastStudiedAt: e.target.value })} />
+                                        <label className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono block mb-1">最終復習日</label>
+                                        <input type="datetime-local" className="w-full bg-[var(--bg-input)] border border-[var(--border-strong)] p-3 rounded-xl outline-none font-bold text-[var(--text-primary)] text-xs mono" value={editForm.lastStudiedAt} onChange={e => setEditForm({ ...editForm, lastStudiedAt: e.target.value })} />
                                     </div>
                                 </div>
                             </div>
                             <div className="flex justify-end gap-2 mt-2">
-                                <button type="button" onClick={() => setIsEditing(false)} className="px-4 py-2.5 text-xs font-bold text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-colors">キャンセル</button>
+                                <button type="button" onClick={() => setIsEditing(false)} className="px-4 py-2.5 text-xs font-bold text-[var(--text-tertiary)] hover:text-[var(--text-primary)] bg-[var(--bg-card-soft)] hover:bg-[var(--bg-card-soft-hover)] rounded-xl transition-colors">キャンセル</button>
                                 <button type="button" onClick={handleSaveEdit} className="px-5 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-lg transition-colors">保存する</button>
                             </div>
                         </div>
@@ -461,43 +634,47 @@
                 }
 
                 return (
-                    <div className={`relative rounded-2xl border p-5 flex flex-col gap-4 shadow-lg transition-colors overflow-hidden ${isNeedsReview ? 'bg-[#2a0808] border-red-500/50' : 'bg-[#111] border-white/10'}`}>
-                        {isNeedsReview && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)]" />}
+                    <div className={`relative rounded-2xl border p-5 flex flex-col gap-4 shadow-lg transition-colors overflow-hidden ${isNeedsReview ? 'border-red-500/50' : 'border-[var(--border-color)]'}`} style={{ backgroundColor: isNeedsReview ? 'var(--bg-danger-card)' : 'var(--bg-card)' }}>
+                        {isNeedsReview && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)] z-10" />}
+                        {isSweeping && <div key={sweepKey} className="review-sweep-el"></div>}
+                        {popup && <div key={popup.id} className="recover-popup">{popup.text}</div>}
+
                         <div className="flex justify-between items-start">
                             <div className="flex-1 mr-4">
-                                <div className="flex items-center gap-2 mb-1">
+                                <div className="flex items-center gap-2 mb-1 flex-wrap">
                                     {isNeedsReview && <Icon name="AlertCircle" size={16} className="text-red-500 animate-pulse" />}
-                                    <h3 className="text-base font-bold text-white leading-tight">{t.title}</h3>
+                                    <h3 className="text-base font-bold text-[var(--text-primary)] leading-tight">{t.title}</h3>
+                                    <RankBadge rc={rc} />
                                 </div>
-                                <p className="text-xs text-slate-400 mono">復習回数: {rc} 回 ・ 最終復習: {new Date(t.lastStudiedAt).toLocaleDateString('ja-JP')}</p>
+                                <p className="text-xs text-[var(--text-tertiary)] mono-num">復習回数: {rc} 回 ・ 最終復習: {new Date(t.lastStudiedAt).toLocaleDateString('ja-JP')}</p>
                             </div>
                             <div className="text-right">
-                                <span className="text-[10px] font-bold text-slate-400 block mono mb-1">定着率</span>
-                                <span className={`text-2xl font-black mono tracking-tighter ${isGood ? 'text-indigo-400' : isWarn ? 'text-yellow-400' : 'text-red-400'}`}>{Math.floor(ret)}%</span>
+                                <span className="text-[10px] font-bold text-[var(--text-tertiary)] block mono mb-1">定着率</span>
+                                <span className={`text-2xl mono-num tracking-tighter ${isGood ? 'text-indigo-400' : isWarn ? 'text-yellow-400' : 'text-red-400'}`}>{Math.floor(ret)}%</span>
                             </div>
                         </div>
 
-                        <div className="h-20 w-full relative bg-black/50 rounded-xl border border-white/5 p-2 overflow-visible z-10">
+                        <div className="h-20 w-full relative bg-black/30 rounded-xl border border-[var(--border-color)] p-2 overflow-visible z-10">
                             <svg viewBox="0 0 200 50" className="w-full h-full overflow-visible">
                                 <line x1="0" y1={50 - (REVIEW_THRESHOLD / 100) * 40} x2="200" y2={50 - (REVIEW_THRESHOLD / 100) * 40} stroke="#ef4444" strokeOpacity="0.3" strokeDasharray="4,4" strokeWidth="1" />
                                 <polyline fill="none" stroke={isNeedsReview ? "#ef4444" : "#6366f1"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" points={pts} opacity={isNeedsReview ? "0.8" : "0.6"} />
                                 <circle cx={(Math.min(hrs, targetHours) / targetHours) * 200} cy={50 - (ret / 100) * 40} r="4" fill={isGood ? '#818cf8' : isWarn ? '#facc15' : '#ef4444'} stroke="#000" strokeWidth="1.5" className="transition-all duration-300" />
                             </svg>
-                            <div className="absolute bottom-1 left-2 right-2 flex justify-between text-[9px] mono text-slate-500 font-bold"><span>0h</span><span>{targetHours / 24} days</span></div>
+                            <div className="absolute bottom-1 left-2 right-2 flex justify-between text-[9px] mono text-[var(--text-muted)] font-bold"><span>0h</span><span>{targetHours / 24} days</span></div>
                         </div>
 
                         <div className="flex justify-between items-center mt-1 z-10">
                             <div className="flex gap-1 items-center">
-                                <button type="button" onClick={() => handleAction('delete', t.id, { col: 'cpa_memory' })} className="text-slate-500 hover:text-red-400 p-2 rounded-lg hover:bg-white/5 transition-colors"><Icon name="Trash2" size={18} /></button>
-                                <button type="button" onClick={() => setIsEditing(true)} className="text-slate-500 hover:text-indigo-400 p-2 rounded-lg hover:bg-white/5 transition-colors"><Icon name="Edit2" size={18} /></button>
+                                <button type="button" onClick={() => handleAction('delete', t.id, { col: 'cpa_memory' })} className="text-[var(--text-muted)] hover:text-red-400 p-2 rounded-lg hover:bg-[var(--bg-card-soft)] transition-colors"><Icon name="Trash2" size={18} /></button>
+                                <button type="button" onClick={() => setIsEditing(true)} className="text-[var(--text-muted)] hover:text-indigo-400 p-2 rounded-lg hover:bg-[var(--bg-card-soft)] transition-colors"><Icon name="Edit2" size={18} /></button>
                                 {reorderMode && (
                                     <div className="flex flex-col ml-1">
-                                        <button type="button" disabled={idx === 0} onClick={() => handleReorder(t, 'up')} className="text-slate-500 hover:text-white disabled:opacity-20 disabled:pointer-events-none p-1 rounded-md hover:bg-white/5 transition-colors"><Icon name="ChevronUp" size={16} /></button>
-                                        <button type="button" disabled={idx === count - 1} onClick={() => handleReorder(t, 'down')} className="text-slate-500 hover:text-white disabled:opacity-20 disabled:pointer-events-none p-1 rounded-md hover:bg-white/5 transition-colors"><Icon name="ChevronDown" size={16} /></button>
+                                        <button type="button" disabled={idx === 0} onClick={() => handleReorder(t, 'up')} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] disabled:opacity-20 disabled:pointer-events-none p-1 rounded-md hover:bg-[var(--bg-card-soft)] transition-colors"><Icon name="ChevronUp" size={16} /></button>
+                                        <button type="button" disabled={idx === count - 1} onClick={() => handleReorder(t, 'down')} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] disabled:opacity-20 disabled:pointer-events-none p-1 rounded-md hover:bg-[var(--bg-card-soft)] transition-colors"><Icon name="ChevronDown" size={16} /></button>
                                     </div>
                                 )}
                             </div>
-                            <button type="button" onClick={handleReview} className={`font-bold mono py-2.5 px-5 rounded-xl shadow-lg active:scale-95 transition-all text-sm flex items-center gap-2 ${isNeedsReview ? 'bg-red-600 hover:bg-red-500 text-white' : 'bg-indigo-600 hover:bg-indigo-500 text-white'}`}>
+                            <button type="button" onClick={handleReviewClick} className={`font-bold mono py-2.5 px-5 rounded-xl shadow-lg active:scale-90 transition-all text-sm flex items-center gap-2 ${isNeedsReview ? 'bg-red-600 hover:bg-red-500 text-white' : 'bg-indigo-600 hover:bg-indigo-500 text-white'}`}>
                                 <Icon name="Brain" size={18} /> 復習した！
                             </button>
                         </div>
@@ -507,12 +684,28 @@
 
             const activeStat = activeSubject ? tabStats[activeSubject] : null;
 
-            const StatsView = ({ stats, history }) => {
-                const { blue, warn, red, total, percentage } = stats;
+            const GoalBar = ({ label, count, goal, icon }) => {
+                const pct = Math.min(100, Math.round((count / goal) * 100));
+                const done = pct >= 100;
+                return (
+                    <div>
+                        <div className="flex justify-between items-center mb-1.5">
+                            <span className="text-xs font-bold text-[var(--text-secondary)] flex items-center gap-1.5"><Icon name={icon} size={13} className="text-indigo-400" />{label}</span>
+                            <span className="text-xs mono-num text-[var(--text-primary)]">{count} / {goal} 回 <span className={done ? 'text-indigo-400' : 'text-[var(--text-tertiary)]'}>({pct}%)</span></span>
+                        </div>
+                        <div className="w-full h-2.5 rounded-full bg-[var(--bg-card-soft)] overflow-hidden">
+                            <div className={`h-full rounded-full transition-all duration-500 ${done ? 'bg-gradient-to-r from-amber-300 to-amber-500' : 'bg-gradient-to-r from-indigo-500 to-indigo-400'}`} style={{ width: `${pct}%` }}></div>
+                        </div>
+                    </div>
+                );
+            };
+
+            const StatsView = () => {
+                const { blue, warn, red, total, percentage } = overallStats;
                 const color = percentage > 80 ? 'text-indigo-400' : percentage > REVIEW_THRESHOLD ? 'text-yellow-400' : 'text-red-400';
                 const stroke = percentage > 80 ? '#818cf8' : percentage > REVIEW_THRESHOLD ? '#facc15' : '#ef4444';
 
-                const recent = history.slice(-30);
+                const recent = statsHistory.slice(-30);
                 const n = recent.length;
                 const graphPts = recent.map((h, i) => {
                     const x = n > 1 ? (i / (n - 1)) * 300 : 150;
@@ -522,24 +715,88 @@
 
                 return (
                     <div className="space-y-5">
-                        <div className="bg-[#111] border border-white/10 rounded-3xl p-6 text-center shadow-lg">
-                            <p className="text-[10px] text-slate-400 font-bold uppercase mono tracking-widest mb-2">全体の定着率（青の割合）</p>
-                            <p className={`text-6xl font-black mono tracking-tighter ${color}`}>{percentage}<span className="text-2xl">%</span></p>
-                            <p className="text-xs text-slate-500 mt-2 mono">{blue} / {total} 論点が良好（青）</p>
-                            <div className="flex justify-center gap-4 mt-4 text-xs mono font-bold">
+                        <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-6 text-center shadow-lg">
+                            <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest mb-2">全体の定着率（青の割合）</p>
+                            <p className={`text-6xl mono-num tracking-tighter ${color}`}>{percentage}<span className="text-2xl">%</span></p>
+                            <p className="text-xs text-[var(--text-muted)] mt-2 mono-num">{blue} / {total} 論点が良好（青）</p>
+                            <div className="flex justify-center gap-4 mt-4 text-xs mono-num font-bold">
                                 <span className="flex items-center gap-1.5 text-indigo-400"><span className="w-2.5 h-2.5 rounded-full bg-indigo-400 shadow-[0_0_6px_rgba(129,140,248,0.6)]"></span>{blue}</span>
                                 <span className="flex items-center gap-1.5 text-yellow-400"><span className="w-2.5 h-2.5 rounded-full bg-yellow-400 shadow-[0_0_6px_rgba(250,204,21,0.6)]"></span>{warn}</span>
                                 <span className="flex items-center gap-1.5 text-red-400"><span className="w-2.5 h-2.5 rounded-full bg-red-400 shadow-[0_0_6px_rgba(248,113,113,0.6)]"></span>{red}</span>
                             </div>
                         </div>
 
-                        <div className="bg-[#111] border border-white/10 rounded-3xl p-5 shadow-lg">
-                            <p className="text-[10px] text-slate-400 font-bold uppercase mono tracking-widest mb-3">日別推移{n > 0 ? `（直近${n}日）` : ''}</p>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-4 text-center shadow-lg">
+                                <p className="text-[9px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest mb-1">本日の復習</p>
+                                <p className="text-2xl mono-num text-[var(--text-primary)]">{todayLog.length}<span className="text-xs text-[var(--text-tertiary)]"> 回</span></p>
+                            </div>
+                            <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-4 text-center shadow-lg">
+                                <p className="text-[9px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest mb-1">合計回復</p>
+                                <p className="text-2xl mono-num text-indigo-400">+{todayRecovered}<span className="text-xs">%</span></p>
+                            </div>
+                        </div>
+
+                        <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-4">
+                            <div className="flex items-center justify-between">
+                                <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest flex items-center gap-1.5"><Icon name="Target" size={13} className="text-indigo-400" />目標達成率</p>
+                                <button type="button" onClick={() => setEditingGoals(v => !v)} className="text-[var(--text-muted)] hover:text-indigo-400 p-1.5 rounded-lg hover:bg-[var(--bg-card-soft)] transition-colors">
+                                    <Icon name={editingGoals ? "X" : "Settings"} size={14} />
+                                </button>
+                            </div>
+
+                            {editingGoals ? (
+                                <div className="space-y-3 animate-in">
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono block mb-1">週間目標（回）</label>
+                                            <input type="number" min="1" className="w-full bg-[var(--bg-input)] border border-[var(--border-strong)] p-2.5 rounded-xl outline-none font-bold text-[var(--text-primary)] text-sm mono-num" value={goalForm.weekly} onChange={e => setGoalForm({ ...goalForm, weekly: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono block mb-1">月間目標（回）</label>
+                                            <input type="number" min="1" className="w-full bg-[var(--bg-input)] border border-[var(--border-strong)] p-2.5 rounded-xl outline-none font-bold text-[var(--text-primary)] text-sm mono-num" value={goalForm.monthly} onChange={e => setGoalForm({ ...goalForm, monthly: e.target.value })} />
+                                        </div>
+                                    </div>
+                                    <button type="button" onClick={handleSaveGoals} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-xs transition-colors">保存する</button>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    <GoalBar label="今週" count={weeklyCount} goal={settings.weeklyGoal || 1} icon="CalendarDays" />
+                                    <GoalBar label="今月" count={monthlyCount} goal={settings.monthlyGoal || 1} icon="Calendar" />
+                                </div>
+                            )}
+                        </div>
+
+                        {perSubjectGauge.length > 0 && (
+                            <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-4">
+                                <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest flex items-center gap-1.5"><Icon name="Gauge" size={13} className="text-indigo-400" />科目別 定着率ゲージ</p>
+                                <div className="space-y-3">
+                                    {perSubjectGauge.map(s => {
+                                        const val = s.avg === null ? 0 : Math.round(s.avg);
+                                        const gcolor = s.avg === null ? '#475569' : val > 80 ? '#818cf8' : val > REVIEW_THRESHOLD ? '#facc15' : '#ef4444';
+                                        return (
+                                            <div key={s.name}>
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <span className="text-xs font-bold text-[var(--text-secondary)]">{s.name}</span>
+                                                    <span className="text-xs mono-num text-[var(--text-primary)]">{s.avg === null ? '—' : `${val}%`}</span>
+                                                </div>
+                                                <div className="w-full h-2 rounded-full bg-[var(--bg-card-soft)] overflow-hidden">
+                                                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${val}%`, backgroundColor: gcolor }}></div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg">
+                            <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest mb-3">日別推移{n > 0 ? `（直近${n}日）` : ''}</p>
                             {n === 0 ? (
-                                <div className="text-center py-14 text-slate-500 text-xs font-bold">データがまだありません。<br />論点を追加・復習すると記録されます。</div>
+                                <div className="text-center py-14 text-[var(--text-muted)] text-xs font-bold">データがまだありません。<br />論点を追加・復習すると記録されます。</div>
                             ) : (
                                 <div>
-                                    <div className="relative h-40 w-full bg-black/50 rounded-xl border border-white/5 p-2 overflow-visible">
+                                    <div className="relative h-40 w-full bg-black/20 rounded-xl border border-[var(--border-color)] p-2 overflow-visible">
                                         <svg viewBox="0 0 300 120" className="w-full h-full overflow-visible" preserveAspectRatio="none">
                                             <line x1="0" y1={110 - (REVIEW_THRESHOLD / 100) * 90} x2="300" y2={110 - (REVIEW_THRESHOLD / 100) * 90} stroke="#ef4444" strokeOpacity="0.25" strokeDasharray="4,4" strokeWidth="1" />
                                             <line x1="0" y1={110 - 0.8 * 90} x2="300" y2={110 - 0.8 * 90} stroke="#818cf8" strokeOpacity="0.2" strokeDasharray="4,4" strokeWidth="1" />
@@ -552,7 +809,7 @@
                                             })}
                                         </svg>
                                     </div>
-                                    <div className="flex justify-between text-[9px] mono text-slate-500 font-bold mt-2 px-1">
+                                    <div className="flex justify-between text-[9px] mono text-[var(--text-muted)] font-bold mt-2 px-1">
                                         <span>{recent[0]?.date}</span>
                                         <span>{recent[n - 1]?.date}</span>
                                     </div>
@@ -564,15 +821,25 @@
             };
 
             return (
-                <div className="min-h-screen pb-12 bg-gradient-to-b from-[#0a0a0f] to-black">
-                    <header className="bg-black/95 backdrop-blur border-b border-white/10 px-4 pb-4 pt-safe shadow-2xl sticky top-0 z-50">
-                        <div className="max-w-md mx-auto flex justify-between items-center mb-3 gap-3">
-                            <h1 className="text-sm font-black text-white tracking-widest flex items-center gap-2 min-w-0 truncate">
+                <div className="min-h-screen pb-12 bg-gradient-to-b from-[var(--bg-app-from)] to-[var(--bg-app-to)]">
+                    <header className="bg-[var(--bg-header)] backdrop-blur border-b border-[var(--border-color)] px-4 pb-4 pt-safe shadow-2xl sticky top-0 z-50">
+                        <div className="max-w-md mx-auto flex justify-between items-center mb-3 gap-2">
+                            <h1 className="text-sm font-black text-[var(--text-primary)] tracking-widest flex items-center gap-2 min-w-0 truncate">
                                 <Icon name="BrainCircuit" size={18} className="text-indigo-400 shrink-0" /> <span className="truncate">復習マネージャー</span>
                             </h1>
-                            <button type="button" onClick={handleLogout} className="shrink-0 text-xs font-bold text-slate-400 hover:text-white flex items-center gap-1 bg-white/5 px-3 py-1.5 rounded-full transition-colors active:scale-95">
-                                <Icon name="LogOut" size={12} /> ログアウト
-                            </button>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                                {(settings.currentStreak || 0) > 0 && (
+                                    <span className="flex items-center gap-1 text-[10px] font-black mono-num text-orange-400 bg-orange-500/10 border border-orange-500/30 px-2 py-1.5 rounded-full">
+                                        <Icon name="Flame" size={13} className="flame-pulse" />{settings.currentStreak}
+                                    </span>
+                                )}
+                                <button type="button" onClick={handleToggleTheme} className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] bg-[var(--bg-card-soft)] p-2 rounded-full transition-colors active:scale-90">
+                                    <Icon name={settings.theme === 'light' ? 'Moon' : 'Sun'} size={14} />
+                                </button>
+                                <button type="button" onClick={handleLogout} className="text-xs font-bold text-[var(--text-tertiary)] hover:text-[var(--text-primary)] flex items-center gap-1 bg-[var(--bg-card-soft)] px-3 py-1.5 rounded-full transition-colors active:scale-95">
+                                    <Icon name="LogOut" size={12} />
+                                </button>
+                            </div>
                         </div>
 
                         {view === 'review' && (<>
@@ -590,34 +857,31 @@
                                             active
                                                 ? 'bg-indigo-600 text-white border-indigo-500 shadow-[0_0_16px_rgba(99,102,241,0.4)]'
                                                 : stat.needReview > 0
-                                                    ? 'bg-red-500/10 text-red-300 border-red-500/40'
-                                                    : 'bg-white/5 text-slate-300 border-white/10 hover:bg-white/10'
+                                                    ? 'bg-red-500/10 text-red-400 border-red-500/40'
+                                                    : 'bg-[var(--bg-card-soft)] text-[var(--text-secondary)] border-[var(--border-color)] hover:bg-[var(--bg-card-soft-hover)]'
                                         }`}
                                     >
                                         {stat.needReview > 0 && <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>}
                                         {tab.name}
-                                        <span className={`mono text-[10px] px-1.5 py-0.5 rounded-full ${active ? 'bg-white/20' : stat.needReview > 0 ? 'bg-red-500/20 text-red-300' : 'bg-white/10'}`}>{stat.needReview}</span>
+                                        <span className={`mono-num text-[10px] px-1.5 py-0.5 rounded-full ${active ? 'bg-white/20' : stat.needReview > 0 ? 'bg-red-500/20 text-red-400' : 'bg-[var(--bg-card-soft-hover)]'}`}>{stat.needReview}</span>
                                     </button>
                                 );
                             })}
-                            <button type="button" onClick={() => setShowAddSubject(v => !v)} className="shrink-0 flex items-center justify-center w-10 h-10 rounded-2xl bg-white/5 hover:bg-white/10 border border-dashed border-white/20 text-slate-300 transition-colors">
+                            <button type="button" onClick={() => setShowAddSubject(v => !v)} className="shrink-0 flex items-center justify-center w-10 h-10 rounded-2xl bg-[var(--bg-card-soft)] hover:bg-[var(--bg-card-soft-hover)] border border-dashed border-[var(--border-strong)] text-[var(--text-secondary)] transition-colors">
                                 <Icon name="Plus" size={18} />
                             </button>
                         </div>
 
-                        {showAddSubject && view === 'review' && (
+                        {showAddSubject && (
                             <div className="max-w-md mx-auto flex gap-2 mt-2 animate-in">
                                 <input
-                                    type="text"
-                                    autoFocus
-                                    placeholder="新しいタブ名（例: 租税法）"
-                                    className="flex-1 bg-black border border-white/20 p-2.5 rounded-xl outline-none font-bold text-white text-xs"
-                                    value={newSubjectName}
-                                    onChange={e => setNewSubjectName(e.target.value)}
+                                    type="text" autoFocus placeholder="新しいタブ名（例: 租税法）"
+                                    className="flex-1 bg-[var(--bg-input)] border border-[var(--border-strong)] p-2.5 rounded-xl outline-none font-bold text-[var(--text-primary)] text-xs"
+                                    value={newSubjectName} onChange={e => setNewSubjectName(e.target.value)}
                                     onKeyDown={e => { if (e.key === 'Enter') handleAddSubject(); }}
                                 />
                                 <button type="button" onClick={handleAddSubject} className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 rounded-xl font-bold text-xs transition-colors">追加</button>
-                                <button type="button" onClick={() => { setShowAddSubject(false); setNewSubjectName(''); }} className="bg-white/5 hover:bg-white/10 text-slate-400 px-3 rounded-xl transition-colors"><Icon name="X" size={16} /></button>
+                                <button type="button" onClick={() => { setShowAddSubject(false); setNewSubjectName(''); }} className="bg-[var(--bg-card-soft)] hover:bg-[var(--bg-card-soft-hover)] text-[var(--text-tertiary)] px-3 rounded-xl transition-colors"><Icon name="X" size={16} /></button>
                             </div>
                         )}
                         </>)}
@@ -626,35 +890,35 @@
                     <main className="max-w-md mx-auto p-4 space-y-6 animate-in pb-28">
                         {view === 'review' ? (
                         <>
-                        <form onSubmit={handleAddTopic} className="bg-[#111] p-5 rounded-3xl border border-white/10 flex flex-col gap-3 shadow-lg">
-                            <label className="text-xs font-black text-white uppercase mono tracking-widest ml-1 flex items-center gap-2">
+                        <form onSubmit={handleAddTopic} className="bg-[var(--bg-card)] p-5 rounded-3xl border border-[var(--border-color)] flex flex-col gap-3 shadow-lg">
+                            <label className="text-xs font-black text-[var(--text-primary)] uppercase mono tracking-widest ml-1 flex items-center gap-2">
                                 <Icon name="FolderTree" size={14} className="text-indigo-400" /> {activeSubject || '—'} に論点を追加
                             </label>
                             <div className="flex gap-2">
-                                <input type="text" placeholder="例: 有価証券、リース" className="flex-1 bg-black border border-white/20 p-4 rounded-xl outline-none font-bold text-white text-base" value={newTopicTitle} onChange={e => setNewTopicTitle(e.target.value)} required />
+                                <input type="text" placeholder="例: 有価証券、リース" className="flex-1 bg-[var(--bg-input)] border border-[var(--border-strong)] p-4 rounded-xl outline-none font-bold text-[var(--text-primary)] text-base" value={newTopicTitle} onChange={e => setNewTopicTitle(e.target.value)} required />
                                 <button type="submit" disabled={isSubmitting || !activeSubject} className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white px-5 rounded-xl font-bold flex items-center justify-center transition-colors"><Icon name="Plus" size={24} /></button>
                             </div>
                         </form>
 
                         {tabs.length === 0 ? (
-                            <div className="text-center py-16 text-slate-400 text-sm font-bold border-2 border-dashed border-white/10 rounded-3xl">タブを追加して論点を登録しましょう</div>
+                            <div className="text-center py-16 text-[var(--text-tertiary)] text-sm font-bold border-2 border-dashed border-[var(--border-color)] rounded-3xl">タブを追加して論点を登録しましょう</div>
                         ) : (
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between px-1">
                                     <div className="flex items-center gap-2">
-                                        <span className="text-sm font-bold text-white">{activeSubject}</span>
+                                        <span className="text-sm font-bold text-[var(--text-primary)]">{activeSubject}</span>
                                         {activeStat && activeStat.needReview > 0 && (
-                                            <span className="bg-red-500/20 text-red-400 text-xs mono font-bold px-2 py-0.5 rounded-full border border-red-500/30 flex items-center gap-1">
+                                            <span className="bg-red-500/20 text-red-400 text-xs mono-num font-bold px-2 py-0.5 rounded-full border border-red-500/30 flex items-center gap-1">
                                                 <Icon name="AlertCircle" size={10} /> 要復習 {activeStat.needReview}
                                             </span>
                                         )}
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <button type="button" onClick={() => setReorderMode(v => !v)} className={`text-xs font-bold flex items-center gap-1 px-3 py-1.5 rounded-full transition-colors ${reorderMode ? 'bg-indigo-600 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}>
+                                        <button type="button" onClick={() => setReorderMode(v => !v)} className={`text-xs font-bold flex items-center gap-1 px-3 py-1.5 rounded-full transition-colors ${reorderMode ? 'bg-indigo-600 text-white' : 'bg-[var(--bg-card-soft)] text-[var(--text-tertiary)] hover:bg-[var(--bg-card-soft-hover)]'}`}>
                                             <Icon name="ArrowUpDown" size={12} /> 並び替え
                                         </button>
                                         {tabs.find(t => t.name === activeSubject)?.id && (
-                                            <button type="button" onClick={() => handleDeleteSubject(tabs.find(t => t.name === activeSubject))} className="text-xs font-bold flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-white/5 text-slate-500 hover:text-red-400 hover:bg-white/10 transition-colors">
+                                            <button type="button" onClick={() => handleDeleteSubject(tabs.find(t => t.name === activeSubject))} className="text-xs font-bold flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-[var(--bg-card-soft)] text-[var(--text-muted)] hover:text-red-400 hover:bg-[var(--bg-card-soft-hover)] transition-colors">
                                                 <Icon name="Trash2" size={12} />
                                             </button>
                                         )}
@@ -662,27 +926,27 @@
                                 </div>
 
                                 {visibleTopics.length === 0 ? (
-                                    <div className="text-center py-16 text-slate-400 text-sm font-bold border-2 border-dashed border-white/10 rounded-3xl">論点を登録して記憶をトラッキングしましょう</div>
+                                    <div className="text-center py-16 text-[var(--text-tertiary)] text-sm font-bold border-2 border-dashed border-[var(--border-color)] rounded-3xl">論点を登録して記憶をトラッキングしましょう</div>
                                 ) : (
                                     <div className="space-y-4">
-                                        {visibleTopics.map((t, i) => <TopicCard key={t.id} t={t} idx={i} count={visibleTopics.length} />)}
+                                        {visibleTopics.map((t, i) => <TopicCard key={t.id} t={t} idx={i} count={visibleTopics.length} onReview={handleReviewAction} />)}
                                     </div>
                                 )}
                             </div>
                         )}
                         </>
                         ) : (
-                            <StatsView stats={overallStats} history={statsHistory} />
+                            <StatsView />
                         )}
                     </main>
 
-                    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-black/95 backdrop-blur border-t border-white/10 pb-safe">
+                    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[var(--bg-header)] backdrop-blur border-t border-[var(--border-color)] pb-safe">
                         <div className="max-w-md mx-auto grid grid-cols-2 gap-2 p-3">
-                            <button type="button" onClick={() => setView('review')} className={`flex flex-col items-center gap-1 py-2 rounded-2xl text-xs font-bold transition-colors ${view === 'review' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-white/5'}`}>
+                            <button type="button" onClick={() => setView('review')} className={`flex flex-col items-center gap-1 py-2 rounded-2xl text-xs font-bold transition-colors ${view === 'review' ? 'bg-indigo-600 text-white' : 'text-[var(--text-tertiary)] hover:bg-[var(--bg-card-soft)]'}`}>
                                 <Icon name="Brain" size={20} />
                                 復習
                             </button>
-                            <button type="button" onClick={() => setView('stats')} className={`flex flex-col items-center gap-1 py-2 rounded-2xl text-xs font-bold transition-colors ${view === 'stats' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-white/5'}`}>
+                            <button type="button" onClick={() => setView('stats')} className={`flex flex-col items-center gap-1 py-2 rounded-2xl text-xs font-bold transition-colors ${view === 'stats' ? 'bg-indigo-600 text-white' : 'text-[var(--text-tertiary)] hover:bg-[var(--bg-card-soft)]'}`}>
                                 <Icon name="LineChart" size={20} />
                                 グラフ
                             </button>
