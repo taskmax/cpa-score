@@ -16,7 +16,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, query, onSnapshot, addDoc, deleteDoc, updateDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, query, onSnapshot, addDoc, deleteDoc, updateDoc, setDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAHvv2J4RXuayFasYSNRB90poh0k7SEQ0w",
@@ -38,7 +38,7 @@
         }
 
         const appId = 'score-chart-stable';
-        window.fb = { auth, db, appId, collection, query, onSnapshot, addDoc, deleteDoc, updateDoc, doc, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged };
+        window.fb = { auth, db, appId, collection, query, onSnapshot, addDoc, deleteDoc, updateDoc, setDoc, doc, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged };
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;900&family=Inter:wght@400;700;900&display=swap');
@@ -47,7 +47,8 @@
         .animate-in { animation: fadeIn 0.35s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         ::-webkit-scrollbar { display: none; }
-        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+        .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom) + 10px); }
+        .pt-safe { padding-top: calc(env(safe-area-inset-top) + 14px); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.6; }
@@ -118,6 +119,12 @@
             return new Date(val).toISOString();
         };
 
+        // ローカル日付キー (YYYY-MM-DD)
+        const getLocalDateKey = (d = new Date()) => {
+            const pad = (n) => String(n).padStart(2, '0');
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        };
+
         function App() {
             const [user, setUser] = useState(null);
             const [topics, setTopics] = useState([]);
@@ -129,6 +136,8 @@
             const [showAddSubject, setShowAddSubject] = useState(false);
             const [newSubjectName, setNewSubjectName] = useState('');
             const [newTopicTitle, setNewTopicTitle] = useState('');
+            const [view, setView] = useState('review');
+            const [statsHistory, setStatsHistory] = useState([]);
             const seededRef = useRef(false);
 
             useEffect(() => {
@@ -160,7 +169,7 @@
             };
 
             useEffect(() => {
-                if (!user) { setTopics([]); setSubjectsDb([]); seededRef.current = false; return; }
+                if (!user) { setTopics([]); setSubjectsDb([]); setStatsHistory([]); seededRef.current = false; return; }
                 if (window.fb && window.fb.db) {
                     const { db, appId, collection, query, onSnapshot } = window.fb;
                     const unsubMemory = onSnapshot(query(collection(db, 'artifacts', appId, 'users', user.uid, 'cpa_memory')), (snapshot) => {
@@ -173,7 +182,13 @@
                         setSubjectsDb(data);
                     }, (err) => console.error("Fetch error:", err));
 
-                    return () => { unsubMemory(); unsubSubjects(); };
+                    const unsubStats = onSnapshot(query(collection(db, 'artifacts', appId, 'users', user.uid, 'cpa_stats')), (snapshot) => {
+                        const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                        data.sort((a, b) => (a.date > b.date ? 1 : -1));
+                        setStatsHistory(data);
+                    }, (err) => console.error("Fetch error:", err));
+
+                    return () => { unsubMemory(); unsubSubjects(); unsubStats(); };
                 }
             }, [user]);
 
@@ -230,6 +245,37 @@
                 });
                 return stats;
             }, [tabs, topics]);
+
+            const overallStats = useMemo(() => {
+                let blue = 0, warn = 0, red = 0;
+                topics.forEach(t => {
+                    const hrs = getHoursSince(t.lastStudiedAt);
+                    const ret = getMemoryRetention(hrs, t.reviewCount || 0);
+                    if (ret > 80) blue++;
+                    else if (ret > REVIEW_THRESHOLD) warn++;
+                    else red++;
+                });
+                const total = topics.length;
+                const percentage = total ? Math.round((blue / total) * 100) : 0;
+                return { blue, warn, red, total, percentage };
+            }, [topics]);
+
+            // 毎日の定着率（青の割合）をスナップショットとして保存
+            useEffect(() => {
+                if (!user || !window.fb || !window.fb.db) return;
+                if (topics.length === 0) return;
+                const { db, appId, doc, setDoc } = window.fb;
+                const dateKey = getLocalDateKey();
+                setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'cpa_stats', dateKey), {
+                    date: dateKey,
+                    percentage: overallStats.percentage,
+                    blue: overallStats.blue,
+                    warn: overallStats.warn,
+                    red: overallStats.red,
+                    total: overallStats.total,
+                    updatedAt: new Date().toISOString()
+                }, { merge: true }).catch(err => console.error('Stats snapshot error:', err));
+            }, [user, overallStats.percentage, overallStats.total]);
 
             const visibleTopics = useMemo(() => {
                 if (!activeSubject) return [];
@@ -461,18 +507,75 @@
 
             const activeStat = activeSubject ? tabStats[activeSubject] : null;
 
+            const StatsView = ({ stats, history }) => {
+                const { blue, warn, red, total, percentage } = stats;
+                const color = percentage > 80 ? 'text-indigo-400' : percentage > REVIEW_THRESHOLD ? 'text-yellow-400' : 'text-red-400';
+                const stroke = percentage > 80 ? '#818cf8' : percentage > REVIEW_THRESHOLD ? '#facc15' : '#ef4444';
+
+                const recent = history.slice(-30);
+                const n = recent.length;
+                const graphPts = recent.map((h, i) => {
+                    const x = n > 1 ? (i / (n - 1)) * 300 : 150;
+                    const y = 110 - (Math.max(0, Math.min(100, h.percentage)) / 100) * 90;
+                    return `${x},${y}`;
+                }).join(' ');
+
+                return (
+                    <div className="space-y-5">
+                        <div className="bg-[#111] border border-white/10 rounded-3xl p-6 text-center shadow-lg">
+                            <p className="text-[10px] text-slate-400 font-bold uppercase mono tracking-widest mb-2">全体の定着率（青の割合）</p>
+                            <p className={`text-6xl font-black mono tracking-tighter ${color}`}>{percentage}<span className="text-2xl">%</span></p>
+                            <p className="text-xs text-slate-500 mt-2 mono">{blue} / {total} 論点が良好（青）</p>
+                            <div className="flex justify-center gap-4 mt-4 text-xs mono font-bold">
+                                <span className="flex items-center gap-1.5 text-indigo-400"><span className="w-2.5 h-2.5 rounded-full bg-indigo-400 shadow-[0_0_6px_rgba(129,140,248,0.6)]"></span>{blue}</span>
+                                <span className="flex items-center gap-1.5 text-yellow-400"><span className="w-2.5 h-2.5 rounded-full bg-yellow-400 shadow-[0_0_6px_rgba(250,204,21,0.6)]"></span>{warn}</span>
+                                <span className="flex items-center gap-1.5 text-red-400"><span className="w-2.5 h-2.5 rounded-full bg-red-400 shadow-[0_0_6px_rgba(248,113,113,0.6)]"></span>{red}</span>
+                            </div>
+                        </div>
+
+                        <div className="bg-[#111] border border-white/10 rounded-3xl p-5 shadow-lg">
+                            <p className="text-[10px] text-slate-400 font-bold uppercase mono tracking-widest mb-3">日別推移{n > 0 ? `（直近${n}日）` : ''}</p>
+                            {n === 0 ? (
+                                <div className="text-center py-14 text-slate-500 text-xs font-bold">データがまだありません。<br />論点を追加・復習すると記録されます。</div>
+                            ) : (
+                                <div>
+                                    <div className="relative h-40 w-full bg-black/50 rounded-xl border border-white/5 p-2 overflow-visible">
+                                        <svg viewBox="0 0 300 120" className="w-full h-full overflow-visible" preserveAspectRatio="none">
+                                            <line x1="0" y1={110 - (REVIEW_THRESHOLD / 100) * 90} x2="300" y2={110 - (REVIEW_THRESHOLD / 100) * 90} stroke="#ef4444" strokeOpacity="0.25" strokeDasharray="4,4" strokeWidth="1" />
+                                            <line x1="0" y1={110 - 0.8 * 90} x2="300" y2={110 - 0.8 * 90} stroke="#818cf8" strokeOpacity="0.2" strokeDasharray="4,4" strokeWidth="1" />
+                                            {n > 1 && <polyline fill="none" stroke={stroke} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" points={graphPts} opacity="0.85" />}
+                                            {recent.map((h, i) => {
+                                                const x = n > 1 ? (i / (n - 1)) * 300 : 150;
+                                                const y = 110 - (Math.max(0, Math.min(100, h.percentage)) / 100) * 90;
+                                                const dotColor = h.percentage > 80 ? '#818cf8' : h.percentage > REVIEW_THRESHOLD ? '#facc15' : '#ef4444';
+                                                return <circle key={h.id} cx={x} cy={y} r="3" fill={dotColor} stroke="#000" strokeWidth="1" />;
+                                            })}
+                                        </svg>
+                                    </div>
+                                    <div className="flex justify-between text-[9px] mono text-slate-500 font-bold mt-2 px-1">
+                                        <span>{recent[0]?.date}</span>
+                                        <span>{recent[n - 1]?.date}</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                );
+            };
+
             return (
                 <div className="min-h-screen pb-12 bg-gradient-to-b from-[#0a0a0f] to-black">
-                    <header className="bg-black/95 backdrop-blur border-b border-white/10 p-4 shadow-2xl sticky top-0 z-50">
-                        <div className="max-w-md mx-auto flex justify-between items-center mb-3">
-                            <h1 className="text-sm font-black text-white tracking-widest flex items-center gap-2">
-                                <Icon name="BrainCircuit" size={18} className="text-indigo-400" /> 復習マネージャー
+                    <header className="bg-black/95 backdrop-blur border-b border-white/10 px-4 pb-4 pt-safe shadow-2xl sticky top-0 z-50">
+                        <div className="max-w-md mx-auto flex justify-between items-center mb-3 gap-3">
+                            <h1 className="text-sm font-black text-white tracking-widest flex items-center gap-2 min-w-0 truncate">
+                                <Icon name="BrainCircuit" size={18} className="text-indigo-400 shrink-0" /> <span className="truncate">復習マネージャー</span>
                             </h1>
-                            <button type="button" onClick={handleLogout} className="text-xs font-bold text-slate-400 hover:text-white flex items-center gap-1 bg-white/5 px-3 py-1.5 rounded-full transition-colors">
+                            <button type="button" onClick={handleLogout} className="shrink-0 text-xs font-bold text-slate-400 hover:text-white flex items-center gap-1 bg-white/5 px-3 py-1.5 rounded-full transition-colors active:scale-95">
                                 <Icon name="LogOut" size={12} /> ログアウト
                             </button>
                         </div>
 
+                        {view === 'review' && (<>
                         <div className="max-w-md mx-auto flex gap-2 overflow-x-auto no-scrollbar pb-1">
                             {tabs.map(tab => {
                                 const stat = tabStats[tab.name] || { total: 0, needReview: 0 };
@@ -502,7 +605,7 @@
                             </button>
                         </div>
 
-                        {showAddSubject && (
+                        {showAddSubject && view === 'review' && (
                             <div className="max-w-md mx-auto flex gap-2 mt-2 animate-in">
                                 <input
                                     type="text"
@@ -517,9 +620,12 @@
                                 <button type="button" onClick={() => { setShowAddSubject(false); setNewSubjectName(''); }} className="bg-white/5 hover:bg-white/10 text-slate-400 px-3 rounded-xl transition-colors"><Icon name="X" size={16} /></button>
                             </div>
                         )}
+                        </>)}
                     </header>
 
-                    <main className="max-w-md mx-auto p-4 space-y-6 animate-in">
+                    <main className="max-w-md mx-auto p-4 space-y-6 animate-in pb-28">
+                        {view === 'review' ? (
+                        <>
                         <form onSubmit={handleAddTopic} className="bg-[#111] p-5 rounded-3xl border border-white/10 flex flex-col gap-3 shadow-lg">
                             <label className="text-xs font-black text-white uppercase mono tracking-widest ml-1 flex items-center gap-2">
                                 <Icon name="FolderTree" size={14} className="text-indigo-400" /> {activeSubject || '—'} に論点を追加
@@ -564,7 +670,24 @@
                                 )}
                             </div>
                         )}
+                        </>
+                        ) : (
+                            <StatsView stats={overallStats} history={statsHistory} />
+                        )}
                     </main>
+
+                    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-black/95 backdrop-blur border-t border-white/10 pb-safe">
+                        <div className="max-w-md mx-auto grid grid-cols-2 gap-2 p-3">
+                            <button type="button" onClick={() => setView('review')} className={`flex flex-col items-center gap-1 py-2 rounded-2xl text-xs font-bold transition-colors ${view === 'review' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-white/5'}`}>
+                                <Icon name="Brain" size={20} />
+                                復習
+                            </button>
+                            <button type="button" onClick={() => setView('stats')} className={`flex flex-col items-center gap-1 py-2 rounded-2xl text-xs font-bold transition-colors ${view === 'stats' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-white/5'}`}>
+                                <Icon name="LineChart" size={20} />
+                                グラフ
+                            </button>
+                        </div>
+                    </nav>
                 </div>
             );
         }
