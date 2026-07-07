@@ -145,33 +145,53 @@
         @keyframes flamePulse { 0%,100% { opacity: 0.85; transform: scale(1); } 50% { opacity: 1; transform: scale(1.12); } }
         .flame-pulse { animation: flamePulse 1.6s ease-in-out infinite; }
 
-        /* ===== ランクバッジ オーラ演出 ===== */
+        /* ===== ランクバッジ オーラ演出（下から上に立ち上る炎） ===== */
         .rank-aura-common { box-shadow: 0 0 6px -1px currentColor; }
-        .rank-aura-ss { animation: auraPulseSS 1.8s ease-in-out infinite; }
-        @keyframes auraPulseSS {
-            0%,100% { box-shadow: 0 0 8px rgba(232,121,249,0.4); }
-            50% { box-shadow: 0 0 18px rgba(232,121,249,0.85), 0 0 28px rgba(232,121,249,0.3); }
+
+        .rank-flame { position: relative; isolation: isolate; overflow: visible; }
+        .rank-flame::before, .rank-flame::after {
+            content: ''; position: absolute; left: 50%; bottom: 88%;
+            width: 58%; height: 70%; border-radius: 50% 50% 45% 45%;
+            filter: blur(3px); opacity: 0; z-index: -1; pointer-events: none;
+            mix-blend-mode: screen;
+            transform: translateX(-50%) translateY(0) scaleY(0.55) scaleX(0.9);
         }
+        .rank-flame::before { animation: flameRise 1.6s ease-in infinite; }
+        .rank-flame::after  { width: 40%; left: 40%; animation: flameRise 1.6s ease-in 0.55s infinite; }
+        @keyframes flameRise {
+            0%   { opacity: 0;    transform: translateX(-50%) translateY(0)     scaleY(0.5)  scaleX(0.85); }
+            14%  { opacity: 0.85; }
+            55%  { opacity: 0.5;  transform: translateX(-50%) translateY(-75%)  scaleY(1.15) scaleX(1.05); }
+            100% { opacity: 0;    transform: translateX(-50%) translateY(-150%) scaleY(1.3)  scaleX(0.8); }
+        }
+
+        .rank-aura-ss {
+            --flame-a: radial-gradient(ellipse at 50% 100%, #fdf4ff 0%, #e879f9 45%, transparent 75%);
+            --flame-b: radial-gradient(ellipse at 50% 100%, #f5d0fe 0%, #c026d3 55%, transparent 78%);
+        }
+        .rank-aura-ss::before { background: var(--flame-a); }
+        .rank-aura-ss::after  { background: var(--flame-b); }
+
         .rank-aura-s {
             background: linear-gradient(135deg,#fef3c7,#fbbf24,#f59e0b);
             color: #451a03; border-color: rgba(251,191,36,0.7); font-weight: 900;
-            animation: auraPulseGold 1.8s ease-in-out infinite;
+            --flame-a: radial-gradient(ellipse at 50% 100%, #fff7cc 0%, #fbbf24 45%, transparent 75%);
+            --flame-b: radial-gradient(ellipse at 50% 100%, #fde68a 0%, #ea580c 55%, transparent 78%);
         }
-        @keyframes auraPulseGold {
-            0%,100% { box-shadow: 0 0 8px rgba(251,191,36,0.55); }
-            50% { box-shadow: 0 0 20px rgba(251,191,36,0.95), 0 0 32px rgba(251,191,36,0.45); }
-        }
+        .rank-aura-s::before { background: var(--flame-a); }
+        .rank-aura-s::after  { background: var(--flame-b); }
+
         .rank-aura-sss {
             background: linear-gradient(90deg,#ff6b6b,#feca57,#1dd1a1,#54a0ff,#c56cf0,#ff6b6b);
             background-size: 300% 100%;
             color: #0b0b0f; border-color: rgba(255,255,255,0.6); font-weight: 900;
-            animation: rainbowShift 3.2s linear infinite, auraPulseRainbow 1.7s ease-in-out infinite;
+            /* 圧倒的な強者感のため、ゆっくりとした周期（4.5秒）で色が移ろう */
+            animation: rainbowShift 4.5s ease-in-out infinite;
         }
-        @keyframes rainbowShift { to { background-position: 300% 50%; } }
-        @keyframes auraPulseRainbow {
-            0%,100% { box-shadow: 0 0 10px rgba(255,255,255,0.5); }
-            50% { box-shadow: 0 0 22px rgba(255,255,255,0.95), 0 0 36px rgba(180,140,255,0.55); }
-        }
+        @keyframes rainbowShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .rank-aura-sss::before { background: conic-gradient(from 0deg, #ff6b6b, #feca57, #1dd1a1, #54a0ff, #c56cf0, #ff6b6b); animation: flameRise 1.6s ease-in infinite, flameHue 3s linear infinite; }
+        .rank-aura-sss::after  { background: conic-gradient(from 180deg, #feca57, #1dd1a1, #54a0ff, #c56cf0, #ff6b6b, #feca57); animation: flameRise 1.6s ease-in 0.55s infinite, flameHue 3s linear infinite reverse; }
+        @keyframes flameHue { to { filter: blur(3px) hue-rotate(360deg); } }
 
         /* ===== 「合計回復」カウントアップ演出 ===== */
         .count-pop-flash { display: inline-block; animation: countPopFlash 0.55s ease-out; }
@@ -181,15 +201,15 @@
             100% { text-shadow: 0 0 0 rgba(129,140,248,0); transform: scale(1); }
         }
 
-        /* ===== パーフェクト（100%）演出 ===== */
+        /* ===== パーフェクト（100%）演出：高級感のあるゆっくりとしたシャイン ===== */
         .perfect-glow {
             background: linear-gradient(90deg, #a5b4fc, #ffffff, #818cf8, #ffffff, #a5b4fc);
             background-size: 220% auto;
             -webkit-background-clip: text; background-clip: text; color: transparent;
-            animation: perfectShine 2.4s linear infinite;
+            animation: perfectShine 5s ease-in-out infinite;
             filter: drop-shadow(0 0 16px rgba(129,140,248,0.75));
         }
-        @keyframes perfectShine { 0% { background-position: 0% 50%; } 100% { background-position: 220% 50%; } }
+        @keyframes perfectShine { 0% { background-position: 0% 50%; } 50% { background-position: 220% 50%; } 100% { background-position: 0% 50%; } }
     </style>
 </head>
 <body>
@@ -223,15 +243,20 @@
         ];
 
         const RANKS = ['E', 'D', 'C', 'B', 'A', 'S', 'SS', 'SSS'];
+        const SORT_OPTIONS = [
+            { key: 'lastStudied', label: '最終復習日', sub: '古い順（要復習優先）', icon: 'CalendarClock' },
+            { key: 'reviewCount', label: '復習回数', sub: '少ない順', icon: 'Repeat' },
+            { key: 'retention', label: '定着率', sub: '低い順（要復習優先）', icon: 'Gauge' }
+        ];
         const RANK_STYLES = {
             E: 'bg-slate-500/15 text-slate-400 border-slate-400/30',
             D: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 rank-aura-common',
             C: 'bg-teal-500/15 text-teal-400 border-teal-500/30 rank-aura-common',
             B: 'bg-blue-500/15 text-blue-400 border-blue-500/30 rank-aura-common',
             A: 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30 rank-aura-common',
-            S: 'border-amber-300/70 rank-aura-s',
-            SS: 'bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-400/40 rank-aura-ss',
-            SSS: 'border-white/50 rank-aura-sss'
+            S: 'border-amber-300/70 rank-flame rank-aura-s',
+            SS: 'bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-400/40 rank-flame rank-aura-ss',
+            SSS: 'border-white/50 rank-flame rank-aura-sss'
         };
         const getRank = (rc) => RANKS[Math.min(rc || 0, RANKS.length - 1)];
 
@@ -268,19 +293,30 @@
             const ctx = getAudioCtx();
             if (!ctx) return;
             const now = ctx.currentTime;
-            // 上昇する2音のサイン波チャイム（Apple製品のUI音を意識）
-            [{ f: 880, t: 0, d: 0.16, g: 0.16 }, { f: 1318.5, t: 0.085, d: 0.24, g: 0.13 }].forEach(({ f, t, d, g }) => {
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(f, now + t);
-                gain.gain.setValueAtTime(0.0001, now + t);
-                gain.gain.exponentialRampToValueAtTime(g, now + t + 0.012);
-                gain.gain.exponentialRampToValueAtTime(0.0001, now + t + d);
-                osc.connect(gain).connect(ctx.destination);
-                osc.start(now + t);
-                osc.stop(now + t + d + 0.02);
-            });
+            // 低域（100〜200Hz）のサイン波＋極短デケイ（約0.05秒）で、高級スイッチのような「コツッ」を合成
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(190, now);
+            osc.frequency.exponentialRampToValueAtTime(105, now + 0.05);
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.exponentialRampToValueAtTime(0.55, now + 0.004);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.05);
+            osc.connect(gain).connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.07);
+
+            // わずかな高域トランジェントでスイッチの「アタック感」を補強
+            const tOsc = ctx.createOscillator();
+            const tGain = ctx.createGain();
+            tOsc.type = 'triangle';
+            tOsc.frequency.setValueAtTime(1500, now);
+            tGain.gain.setValueAtTime(0.0001, now);
+            tGain.gain.exponentialRampToValueAtTime(0.08, now + 0.002);
+            tGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.016);
+            tOsc.connect(tGain).connect(ctx.destination);
+            tOsc.start(now);
+            tOsc.stop(now + 0.03);
         };
 
         const getMemoryRetention = (hours, reviewCount) => {
@@ -373,7 +409,8 @@
             const [loading, setLoading] = useState(true);
             const [isSubmitting, setIsSubmitting] = useState(false);
             const [activeSubject, setActiveSubject] = useState(null);
-            const [reorderMode, setReorderMode] = useState(false);
+            const [sortKey, setSortKey] = useState('order'); // 'order' | 'lastStudied' | 'reviewCount' | 'retention'
+            const [showSortMenu, setShowSortMenu] = useState(false);
             const [showAddSubject, setShowAddSubject] = useState(false);
             const [newSubjectName, setNewSubjectName] = useState('');
             const [newTopicTitle, setNewTopicTitle] = useState('');
@@ -582,15 +619,30 @@
 
             const visibleTopics = useMemo(() => {
                 if (!activeSubject) return [];
-                return topics
-                    .filter(t => (t.subject || 'その他') === activeSubject)
-                    .slice()
-                    .sort((a, b) => {
+                const list = topics.filter(t => (t.subject || 'その他') === activeSubject).slice();
+                if (sortKey === 'lastStudied') {
+                    // 最終復習日が古い順（＝要復習度が高いものが上に来る）
+                    list.sort((a, b) => new Date(a.lastStudiedAt || 0) - new Date(b.lastStudiedAt || 0));
+                } else if (sortKey === 'reviewCount') {
+                    // 復習回数が少ない順
+                    list.sort((a, b) => (a.reviewCount || 0) - (b.reviewCount || 0));
+                } else if (sortKey === 'retention') {
+                    // 定着率が低い順
+                    list.sort((a, b) => {
+                        const ra = getMemoryRetention(getHoursSince(a.lastStudiedAt), a.reviewCount || 0);
+                        const rb = getMemoryRetention(getHoursSince(b.lastStudiedAt), b.reviewCount || 0);
+                        return ra - rb;
+                    });
+                } else {
+                    // 手動（追加順・ドラッグ順）
+                    list.sort((a, b) => {
                         const oa = a.order ?? (a.createdAt ? new Date(a.createdAt).getTime() : 0);
                         const ob = b.order ?? (b.createdAt ? new Date(b.createdAt).getTime() : 0);
                         return oa - ob;
                     });
-            }, [topics, activeSubject]);
+                }
+                return list;
+            }, [topics, activeSubject, sortKey]);
 
             const weeklyCount = useMemo(() => {
                 const start = getStartOfWeek();
@@ -600,11 +652,11 @@
                 const start = getStartOfMonth();
                 return reviewLog.filter(r => new Date(r.timestamp) >= start).length;
             }, [reviewLog]);
-            const todayLog = useMemo(() => {
-                const start = getStartOfDay();
+            const weeklyLog = useMemo(() => {
+                const start = getStartOfWeek();
                 return reviewLog.filter(r => new Date(r.timestamp) >= start);
             }, [reviewLog]);
-            const todayRecovered = useMemo(() => todayLog.reduce((s, r) => s + (r.recovered || 0), 0), [todayLog]);
+            const weeklyRecovered = useMemo(() => weeklyLog.reduce((s, r) => s + (r.recovered || 0), 0), [weeklyLog]);
 
             const handleAddTopic = async (e) => {
                 e.preventDefault();
@@ -662,19 +714,8 @@
                 }
             };
 
-            const handleReorder = async (topic, direction) => {
-                const idx = visibleTopics.findIndex(t => t.id === topic.id);
-                const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
-                if (swapIdx < 0 || swapIdx >= visibleTopics.length) return;
-                const other = visibleTopics[swapIdx];
-                const orderA = topic.order ?? Date.now();
-                const orderB = other.order ?? Date.now();
-                const { db, doc, updateDoc, appId } = window.fb;
-                await Promise.all([
-                    updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'cpa_memory', topic.id), { order: orderB }),
-                    updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'cpa_memory', other.id), { order: orderA })
-                ]);
-            };
+            // 並び替えは sortKey（visibleTopics の useMemo）でリアルタイムに反映されるため、
+            // 個別の手動並び替え関数は不要になりました。
 
             const handleReviewAction = async (topic, retBefore) => {
                 if (!user) return;
@@ -711,7 +752,7 @@
                 return <span className={`text-[10px] font-black mono px-2 py-0.5 rounded-full border shrink-0 ${RANK_STYLES[rank]}`}>{rank}</span>;
             };
 
-            const TopicCard = ({ t, idx, count, onReview }) => {
+            const TopicCard = ({ t, onReview }) => {
                 const [isEditing, setIsEditing] = useState(false);
                 const [isSweeping, setIsSweeping] = useState(false);
                 const [isShaking, setIsShaking] = useState(false);
@@ -836,12 +877,6 @@
                             <div className="flex gap-1 items-center">
                                 <button type="button" onClick={() => handleAction('delete', t.id, { col: 'cpa_memory' })} className="text-[var(--text-muted)] hover:text-red-400 p-2 rounded-lg hover:bg-[var(--bg-card-soft)] transition-colors"><Icon name="Trash2" size={18} /></button>
                                 <button type="button" onClick={() => setIsEditing(true)} className="text-[var(--text-muted)] hover:text-indigo-400 p-2 rounded-lg hover:bg-[var(--bg-card-soft)] transition-colors"><Icon name="Edit2" size={18} /></button>
-                                {reorderMode && (
-                                    <div className="flex flex-col ml-1">
-                                        <button type="button" disabled={idx === 0} onClick={() => handleReorder(t, 'up')} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] disabled:opacity-20 disabled:pointer-events-none p-1 rounded-md hover:bg-[var(--bg-card-soft)] transition-colors"><Icon name="ChevronUp" size={16} /></button>
-                                        <button type="button" disabled={idx === count - 1} onClick={() => handleReorder(t, 'down')} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] disabled:opacity-20 disabled:pointer-events-none p-1 rounded-md hover:bg-[var(--bg-card-soft)] transition-colors"><Icon name="ChevronDown" size={16} /></button>
-                                    </div>
-                                )}
                             </div>
                             <button type="button" onClick={handleReviewClick} className={`font-bold mono py-2.5 px-5 rounded-xl shadow-lg active:scale-90 transition-all text-sm flex items-center gap-2 ${isNeedsReview ? 'bg-red-600 hover:bg-red-500 text-white' : 'bg-indigo-600 hover:bg-indigo-500 text-white'}`}>
                                 <Icon name="Brain" size={18} /> 復習した！
@@ -898,9 +933,9 @@
 
                         <div className="bg-gradient-to-b from-indigo-500/10 to-transparent border border-indigo-400/30 rounded-3xl p-6 text-center shadow-lg relative overflow-hidden">
                             <Icon name="Sparkles" size={16} className="text-indigo-400 mx-auto mb-1" />
-                            <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest mb-1">本日の合計回復</p>
+                            <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest mb-1">今週の合計回復</p>
                             <p className="text-5xl mono-num tracking-tighter text-indigo-400">
-                                <CountUpNumber value={todayRecovered} prefix="+" suffix="%" />
+                                <CountUpNumber value={weeklyRecovered} prefix="+" suffix="%" />
                             </p>
                         </div>
 
@@ -992,18 +1027,18 @@
                     <header className="bg-[var(--bg-header)] backdrop-blur border-b border-[var(--border-color)] px-4 pb-4 pt-safe shadow-2xl sticky top-0 z-50">
                         <div className="max-w-md mx-auto flex justify-between items-center mb-3 gap-2">
                             <h1 className="text-sm font-black text-[var(--text-primary)] tracking-widest flex items-center gap-2 min-w-0 truncate">
-                                <Icon name="BrainCircuit" size={18} className="text-indigo-400 shrink-0" /> <span className="truncate">復習マネージャー</span>
+                                <Icon name="Brain" size={18} className="text-indigo-400 shrink-0" /> <span className="truncate">復習管理</span>
                             </h1>
                             <div className="flex items-center gap-1.5 shrink-0">
                                 {(settings.currentStreak || 0) > 0 && (
-                                    <span className="flex items-center gap-1 text-[10px] font-black mono-num text-orange-400 bg-orange-500/10 border border-orange-500/30 px-2 py-1.5 rounded-full">
+                                    <span className="h-9 min-w-9 px-2.5 flex items-center justify-center gap-1 text-[10px] font-black mono-num text-orange-400 bg-orange-500/10 border border-orange-500/30 rounded-full">
                                         <Icon name="Flame" size={13} className="flame-pulse" />{settings.currentStreak}
                                     </span>
                                 )}
-                                <button type="button" onClick={handleToggleTheme} className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] bg-[var(--bg-card-soft)] p-2 rounded-full transition-colors active:scale-90">
+                                <button type="button" onClick={handleToggleTheme} className="h-9 w-9 flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--text-primary)] bg-[var(--bg-card-soft)] rounded-full transition-colors active:scale-90">
                                     <Icon name={settings.theme === 'light' ? 'Moon' : 'Sun'} size={14} />
                                 </button>
-                                <button type="button" onClick={handleLogout} className="text-xs font-bold text-[var(--text-tertiary)] hover:text-[var(--text-primary)] flex items-center gap-1 bg-[var(--bg-card-soft)] px-3 py-1.5 rounded-full transition-colors active:scale-95">
+                                <button type="button" onClick={handleLogout} className="h-9 w-9 flex items-center justify-center text-xs font-bold text-[var(--text-tertiary)] hover:text-[var(--text-primary)] bg-[var(--bg-card-soft)] rounded-full transition-colors active:scale-95">
                                     <Icon name="LogOut" size={12} />
                                 </button>
                             </div>
@@ -1057,16 +1092,6 @@
                     <main className="max-w-md mx-auto p-4 space-y-6 animate-in pb-28">
                         {view === 'review' ? (
                         <>
-                        <form onSubmit={handleAddTopic} className="bg-[var(--bg-card)] p-5 rounded-3xl border border-[var(--border-color)] flex flex-col gap-3 shadow-lg">
-                            <label className="text-xs font-black text-[var(--text-primary)] uppercase mono tracking-widest ml-1 flex items-center gap-2">
-                                <Icon name="FolderTree" size={14} className="text-indigo-400" /> {activeSubject || '—'} に論点を追加
-                            </label>
-                            <div className="flex gap-2">
-                                <input type="text" placeholder="例: 有価証券、リース" className="flex-1 bg-[var(--bg-input)] border border-[var(--border-strong)] p-4 rounded-xl outline-none font-bold text-[var(--text-primary)] text-base" value={newTopicTitle} onChange={e => setNewTopicTitle(e.target.value)} required />
-                                <button type="submit" disabled={isSubmitting || !activeSubject} className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white px-5 rounded-xl font-bold flex items-center justify-center transition-colors"><Icon name="Plus" size={24} /></button>
-                            </div>
-                        </form>
-
                         {tabs.length === 0 ? (
                             <div className="text-center py-16 text-[var(--text-tertiary)] text-sm font-bold border-2 border-dashed border-[var(--border-color)] rounded-3xl">タブを追加して論点を登録しましょう</div>
                         ) : (
@@ -1081,9 +1106,33 @@
                                         )}
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <button type="button" onClick={() => setReorderMode(v => !v)} className={`text-xs font-bold flex items-center gap-1 px-3 py-1.5 rounded-full transition-colors ${reorderMode ? 'bg-indigo-600 text-white' : 'bg-[var(--bg-card-soft)] text-[var(--text-tertiary)] hover:bg-[var(--bg-card-soft-hover)]'}`}>
-                                            <Icon name="ArrowUpDown" size={12} /> 並び替え
-                                        </button>
+                                        <div className="relative">
+                                            <button type="button" onClick={() => setShowSortMenu(v => !v)} className={`text-xs font-bold flex items-center gap-1 px-3 py-1.5 rounded-full transition-colors ${sortKey !== 'order' ? 'bg-indigo-600 text-white' : 'bg-[var(--bg-card-soft)] text-[var(--text-tertiary)] hover:bg-[var(--bg-card-soft-hover)]'}`}>
+                                                <Icon name="ArrowUpDown" size={12} />
+                                                並び替え{sortKey !== 'order' && `：${SORT_OPTIONS.find(o => o.key === sortKey)?.label}`}
+                                            </button>
+                                            {showSortMenu && (
+                                                <>
+                                                    <div className="fixed inset-0 z-40" onClick={() => setShowSortMenu(false)}></div>
+                                                    <div className="absolute right-0 mt-2 w-52 bg-[var(--bg-card)] border border-[var(--border-strong)] rounded-2xl shadow-2xl z-50 overflow-hidden animate-in">
+                                                        {SORT_OPTIONS.map(opt => (
+                                                            <button
+                                                                type="button" key={opt.key}
+                                                                onClick={() => { setSortKey(sortKey === opt.key ? 'order' : opt.key); setShowSortMenu(false); }}
+                                                                className={`w-full text-left px-4 py-2.5 flex items-center gap-2.5 transition-colors ${sortKey === opt.key ? 'bg-indigo-600 text-white' : 'text-[var(--text-secondary)] hover:bg-[var(--bg-card-soft-hover)]'}`}
+                                                            >
+                                                                <Icon name={opt.icon} size={14} className="shrink-0" />
+                                                                <span className="flex flex-col leading-tight">
+                                                                    <span className="text-xs font-bold">{opt.label}</span>
+                                                                    <span className={`text-[10px] ${sortKey === opt.key ? 'text-indigo-100' : 'text-[var(--text-muted)]'}`}>{opt.sub}</span>
+                                                                </span>
+                                                                {sortKey === opt.key && <Icon name="Check" size={14} className="ml-auto shrink-0" />}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
                                         {tabs.find(t => t.name === activeSubject)?.id && (
                                             <button type="button" onClick={() => handleDeleteSubject(tabs.find(t => t.name === activeSubject))} className="text-xs font-bold flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-[var(--bg-card-soft)] text-[var(--text-muted)] hover:text-red-400 hover:bg-[var(--bg-card-soft-hover)] transition-colors">
                                                 <Icon name="Trash2" size={12} />
@@ -1096,11 +1145,22 @@
                                     <div className="text-center py-16 text-[var(--text-tertiary)] text-sm font-bold border-2 border-dashed border-[var(--border-color)] rounded-3xl">論点を登録して記憶をトラッキングしましょう</div>
                                 ) : (
                                     <div className="space-y-4">
-                                        {visibleTopics.map((t, i) => <TopicCard key={t.id} t={t} idx={i} count={visibleTopics.length} onReview={handleReviewAction} />)}
+                                        {visibleTopics.map((t) => <TopicCard key={t.id} t={t} onReview={handleReviewAction} />)}
                                     </div>
                                 )}
                             </div>
                         )}
+
+                        {/* 学習が進むほど頻度が下がるため、追加フォームはリストの一番下（ナビゲーションバーの直前）に配置 */}
+                        <form onSubmit={handleAddTopic} className="bg-[var(--bg-card)] p-5 rounded-3xl border border-[var(--border-color)] flex flex-col gap-3 shadow-lg">
+                            <label className="text-xs font-black text-[var(--text-primary)] uppercase mono tracking-widest ml-1 flex items-center gap-2">
+                                <Icon name="FolderTree" size={14} className="text-indigo-400" /> {activeSubject || '—'} に論点を追加
+                            </label>
+                            <div className="flex gap-2">
+                                <input type="text" placeholder="例: 有価証券、リース" className="flex-1 bg-[var(--bg-input)] border border-[var(--border-strong)] p-4 rounded-xl outline-none font-bold text-[var(--text-primary)] text-base" value={newTopicTitle} onChange={e => setNewTopicTitle(e.target.value)} required />
+                                <button type="submit" disabled={isSubmitting || !activeSubject} className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white px-5 rounded-xl font-bold flex items-center justify-center transition-colors"><Icon name="Plus" size={24} /></button>
+                            </div>
+                        </form>
                         </>
                         ) : (
                             <StatsView />
