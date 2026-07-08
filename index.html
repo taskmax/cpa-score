@@ -309,34 +309,63 @@
                 return __audioCtx;
             } catch (e) { return null; }
         };
+        // ===== 完了音（水系・統一）=====
+        // チャージ中の「ポロポロ」水滴音との統一感を持たせるため、
+        // 完了音も「水面にしずくが落ちて、透明な波紋がフワッと広がる」イメージで合成する。
+        // 1) 落下インパクト（周波数を鋭くスイープダウンさせる低音の「ポチャン」）
+        // 2) 高域のきらめき（水しぶきの粒立ち）
+        // 3) 波紋の余韻（LFOでゆらぎを加えたゆっくり減衰するサイン波）
         const playReviewSound = () => {
             const ctx = getAudioCtx();
             if (!ctx) return;
             const now = ctx.currentTime;
-            // 低域（100〜200Hz）のサイン波＋極短デケイ（約0.05秒）で、高級スイッチのような「コツッ」を合成
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(190, now);
-            osc.frequency.exponentialRampToValueAtTime(105, now + 0.05);
-            gain.gain.setValueAtTime(0.0001, now);
-            gain.gain.exponentialRampToValueAtTime(0.55, now + 0.004);
-            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.05);
-            osc.connect(gain).connect(ctx.destination);
-            osc.start(now);
-            osc.stop(now + 0.07);
 
-            // わずかな高域トランジェントでスイッチの「アタック感」を補強
-            const tOsc = ctx.createOscillator();
-            const tGain = ctx.createGain();
-            tOsc.type = 'triangle';
-            tOsc.frequency.setValueAtTime(1500, now);
-            tGain.gain.setValueAtTime(0.0001, now);
-            tGain.gain.exponentialRampToValueAtTime(0.08, now + 0.002);
-            tGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.016);
-            tOsc.connect(tGain).connect(ctx.destination);
-            tOsc.start(now);
-            tOsc.stop(now + 0.03);
+            // 1) 水滴が水面に「ポチャン」と落ちる瞬間のインパクト音
+            const osc1 = ctx.createOscillator();
+            const gain1 = ctx.createGain();
+            osc1.type = 'sine';
+            osc1.frequency.setValueAtTime(880, now);
+            osc1.frequency.exponentialRampToValueAtTime(180, now + 0.14);
+            gain1.gain.setValueAtTime(0.0001, now);
+            gain1.gain.exponentialRampToValueAtTime(0.6, now + 0.012);
+            gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+            osc1.connect(gain1).connect(ctx.destination);
+            osc1.start(now);
+            osc1.stop(now + 0.24);
+
+            // 2) 水しぶきの高域のきらめき
+            const osc2 = ctx.createOscillator();
+            const gain2 = ctx.createGain();
+            osc2.type = 'sine';
+            osc2.frequency.setValueAtTime(2400, now + 0.01);
+            osc2.frequency.exponentialRampToValueAtTime(1200, now + 0.09);
+            gain2.gain.setValueAtTime(0.0001, now + 0.01);
+            gain2.gain.exponentialRampToValueAtTime(0.18, now + 0.02);
+            gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+            osc2.connect(gain2).connect(ctx.destination);
+            osc2.start(now + 0.01);
+            osc2.stop(now + 0.14);
+
+            // 3) 波紋が美しく広がるような、透き通った余韻（ビブラートで揺らぎを追加）
+            const osc3 = ctx.createOscillator();
+            const gain3 = ctx.createGain();
+            const lfo = ctx.createOscillator();
+            const lfoGain = ctx.createGain();
+            osc3.type = 'sine';
+            osc3.frequency.setValueAtTime(520, now + 0.05);
+            osc3.frequency.exponentialRampToValueAtTime(340, now + 0.6);
+            lfo.type = 'sine';
+            lfo.frequency.setValueAtTime(7, now);
+            lfoGain.gain.setValueAtTime(12, now);
+            lfo.connect(lfoGain).connect(osc3.frequency);
+            gain3.gain.setValueAtTime(0.0001, now + 0.05);
+            gain3.gain.exponentialRampToValueAtTime(0.22, now + 0.08);
+            gain3.gain.exponentialRampToValueAtTime(0.0001, now + 0.75);
+            osc3.connect(gain3).connect(ctx.destination);
+            lfo.start(now);
+            lfo.stop(now + 0.8);
+            osc3.start(now + 0.05);
+            osc3.stop(now + 0.8);
         };
 
         // 長押しチャージ中の「コップに水が満たされていく」ような、耳に気持ちいい水滴音
@@ -381,7 +410,10 @@
             return (intervalDays && intervalDays.length ? intervalDays : DEFAULT_REVIEW_INTERVALS).map(d => -(Math.max(0.1, d) * 24) / Math.log(thresholdFrac));
         };
 
+        // 復習回数が0回の論点は、経過時間に関わらず強制的に定着率0%として扱う
+        // （＝まだ一度も復習していない論点は「未定着」というシンプルな状態を明示する）
         const getMemoryRetention = (hours, reviewCount, sValues) => {
+            if (!reviewCount || reviewCount <= 0) return 0;
             if (hours <= 0) return 100;
             const values = sValues && sValues.length ? sValues : computeSValues(DEFAULT_REVIEW_INTERVALS);
             const s = values[Math.min(reviewCount, values.length - 1)];
@@ -545,6 +577,11 @@
             const [reviewLog, setReviewLog] = useState([]);
             const [settings, setSettings] = useState(DEFAULT_SETTINGS);
             const [loading, setLoading] = useState(true);
+            // Firestoreの cpa_memory / cpa_subjects の初回スナップショットが確定したかどうか。
+            // これが確定するまではシード判定も画面描画も行わず、ローディング表示を維持することで
+            // 「データ未確定のまま空データとして描画→シード追加」という旧来のチラつきを排除する。
+            const [topicsLoaded, setTopicsLoaded] = useState(false);
+            const [subjectsLoaded, setSubjectsLoaded] = useState(false);
             const [isSubmitting, setIsSubmitting] = useState(false);
             const [activeSubject, setActiveSubject] = useState(null);
             const [sortKey, setSortKey] = useState('order'); // 'order' | 'lastStudied' | 'reviewCount' | 'retention'
@@ -589,16 +626,24 @@
             };
 
             useEffect(() => {
-                if (!user) { setTopics([]); setSubjectsDb([]); setStatsHistory([]); setReviewLog([]); seededRef.current = false; return; }
+                if (!user) {
+                    setTopics([]); setSubjectsDb([]); setStatsHistory([]); setReviewLog([]);
+                    seededRef.current = false;
+                    setTopicsLoaded(false);
+                    setSubjectsLoaded(false);
+                    return;
+                }
                 if (window.fb && window.fb.db) {
                     const { db, appId, collection, query, onSnapshot } = window.fb;
                     const unsubMemory = onSnapshot(query(collection(db, 'artifacts', appId, 'users', user.uid, 'cpa_memory')), (snapshot) => {
                         setTopics(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
-                    }, (err) => console.error("Fetch error:", err));
+                        setTopicsLoaded(true);
+                    }, (err) => { console.error("Fetch error:", err); setTopicsLoaded(true); });
 
                     const unsubSubjects = onSnapshot(query(collection(db, 'artifacts', appId, 'users', user.uid, 'cpa_subjects')), (snapshot) => {
                         setSubjectsDb(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
-                    }, (err) => console.error("Fetch error:", err));
+                        setSubjectsLoaded(true);
+                    }, (err) => { console.error("Fetch error:", err); setSubjectsLoaded(true); });
 
                     const unsubStats = onSnapshot(query(collection(db, 'artifacts', appId, 'users', user.uid, 'cpa_stats')), (snapshot) => {
                         const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -675,32 +720,41 @@
                 setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'cpa_settings', 'main'), { reviewIntervals: newIntervals }, { merge: true }).catch(() => {});
             };
 
-            // 初回のみデフォルトタブ＆論点を投入
+            // 初期論点のシード投入（重複防止・チラつき防止版）
+            // 「cpa_memory / cpa_subjects の初回スナップショットが両方確定してから」判定を行い、
+            // かつ「その科目に紐づく論点が cpa_memory に1つも存在しない場合のみ」その科目の初期論点を追加する。
+            // これにより、既にデータが存在するユーザーに対して誤って初期論点が再投入されることがなくなる。
             useEffect(() => {
                 if (!user || seededRef.current) return;
                 if (loading) return;
-                if (subjectsDb.length === 0) {
-                    seededRef.current = true;
-                    (async () => {
-                        const { db, appId, collection, addDoc } = window.fb;
-                        for (let i = 0; i < DEFAULT_SUBJECTS.length; i++) {
-                            const subjectName = DEFAULT_SUBJECTS[i];
+                if (!topicsLoaded || !subjectsLoaded) return; // データが確定するまで判定しない（チラつき防止）
+                seededRef.current = true;
+                (async () => {
+                    const { db, appId, collection, addDoc } = window.fb;
+                    for (let i = 0; i < DEFAULT_SUBJECTS.length; i++) {
+                        const subjectName = DEFAULT_SUBJECTS[i];
+                        // 厳密な判定：cpa_memory 内にこの科目の論点が1件でもあればスキップ
+                        const hasTopicsForSubject = topics.some(t => (t.subject || '') === subjectName);
+                        if (hasTopicsForSubject) continue;
+
+                        // 科目タブ自体が無ければ作成する（既にあれば追加しない＝重複防止）
+                        const subjectExists = subjectsDb.some(s => s.name === subjectName);
+                        if (!subjectExists) {
                             await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'cpa_subjects'), {
                                 name: subjectName, order: i, createdAt: new Date().toISOString()
                             });
-                            const topicTitles = DEFAULT_TOPICS[subjectName] || [];
-                            for (let j = 0; j < topicTitles.length; j++) {
-                                await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'cpa_memory'), {
-                                    title: topicTitles[j], subject: subjectName, lastStudiedAt: new Date().toISOString(),
-                                    reviewCount: 0, createdAt: new Date().toISOString(), order: Date.now() + j
-                                });
-                            }
                         }
-                    })();
-                } else {
-                    seededRef.current = true;
-                }
-            }, [user, subjectsDb, loading]);
+
+                        const topicTitles = DEFAULT_TOPICS[subjectName] || [];
+                        for (let j = 0; j < topicTitles.length; j++) {
+                            await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'cpa_memory'), {
+                                title: topicTitles[j], subject: subjectName, lastStudiedAt: new Date().toISOString(),
+                                reviewCount: 0, createdAt: new Date().toISOString(), order: Date.now() + j
+                            });
+                        }
+                    }
+                })();
+            }, [user, loading, topicsLoaded, subjectsLoaded, topics, subjectsDb]);
 
             const tabs = useMemo(() => {
                 const map = {};
@@ -746,17 +800,20 @@
                 return stats;
             }, [tabs, topics, intervalDays]);
 
+            // 全体の定着率：登録されている全論点の定着率の「平均値」（四捨五入）
+            // （旧ロジック：定着率>80%＝青の論点の割合 → 新ロジック：全論点の定着率の単純平均）
             const overallStats = useMemo(() => {
-                let blue = 0, warn = 0, red = 0;
+                let blue = 0, warn = 0, red = 0, sum = 0;
                 topics.forEach(t => {
                     const hrs = getHoursSince(t.lastStudiedAt);
                     const ret = getMemoryRetention(hrs, t.reviewCount || 0, computeSValues(getEffectiveIntervals(t)));
+                    sum += ret;
                     if (ret > 80) blue++;
                     else if (ret > REVIEW_THRESHOLD) warn++;
                     else red++;
                 });
                 const total = topics.length;
-                const percentage = total ? Math.round((blue / total) * 100) : 0;
+                const percentage = total ? Math.round(sum / total) : 0;
                 return { blue, warn, red, total, percentage };
             }, [topics, intervalDays]);
 
@@ -769,7 +826,7 @@
                 });
             }, [tabs, topics, intervalDays]);
 
-            // 毎日の定着率（青の割合）をスナップショットとして保存
+            // 毎日の定着率（全論点の平均値）をスナップショットとして保存
             useEffect(() => {
                 if (!user || !window.fb || !window.fb.db) return;
                 if (topics.length === 0) return;
@@ -895,7 +952,11 @@
                 });
             };
 
-            if (loading) return <div className="h-screen flex items-center justify-center text-indigo-500 mono text-xs animate-pulse">LOADING...</div>;
+            // ログイン認証の確定に加え、ユーザーがいる場合は cpa_memory / cpa_subjects の
+            // 初回スナップショットが確定するまでローディングを維持し、チラつきを完全に防止する。
+            if (loading || (user && (!topicsLoaded || !subjectsLoaded))) {
+                return <div className="h-screen flex items-center justify-center text-indigo-500 mono text-xs animate-pulse">LOADING...</div>;
+            }
 
             if (!user) {
                 return (
@@ -1247,7 +1308,7 @@
                 return (
                     <div className="space-y-5">
                         <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-6 text-center shadow-lg">
-                            <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest mb-2">全体の定着率（青の割合）</p>
+                            <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest mb-2">全体の定着率（全論点の平均）</p>
                             <p className={`text-6xl mono-num tracking-tighter ${isPerfect ? 'perfect-glow' : color}`}>{percentage}<span className="text-2xl">%</span></p>
                             <p className="text-xs text-[var(--text-muted)] mt-2 mono-num">{blue} / {total} 論点が良好（青）</p>
                             <div className="flex justify-center gap-4 mt-4 text-xs mono-num font-bold">
