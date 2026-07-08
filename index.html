@@ -145,53 +145,35 @@
         @keyframes flamePulse { 0%,100% { opacity: 0.85; transform: scale(1); } 50% { opacity: 1; transform: scale(1.12); } }
         .flame-pulse { animation: flamePulse 1.6s ease-in-out infinite; }
 
-        /* ===== ランクバッジ オーラ演出（下から上に立ち上る炎） ===== */
-        .rank-aura-common { box-shadow: 0 0 6px -1px currentColor; }
-
-        .rank-flame { position: relative; isolation: isolate; overflow: visible; }
-        .rank-flame::before, .rank-flame::after {
-            content: ''; position: absolute; left: 50%; bottom: 88%;
-            width: 58%; height: 70%; border-radius: 50% 50% 45% 45%;
-            filter: blur(3px); opacity: 0; z-index: -1; pointer-events: none;
-            mix-blend-mode: screen;
-            transform: translateX(-50%) translateY(0) scaleY(0.55) scaleX(0.9);
-        }
-        .rank-flame::before { animation: flameRise 1.6s ease-in infinite; }
-        .rank-flame::after  { width: 40%; left: 40%; animation: flameRise 1.6s ease-in 0.55s infinite; }
-        @keyframes flameRise {
-            0%   { opacity: 0;    transform: translateX(-50%) translateY(0)     scaleY(0.5)  scaleX(0.85); }
-            14%  { opacity: 0.85; }
-            55%  { opacity: 0.5;  transform: translateX(-50%) translateY(-75%)  scaleY(1.15) scaleX(1.05); }
-            100% { opacity: 0;    transform: translateX(-50%) translateY(-150%) scaleY(1.3)  scaleX(0.8); }
-        }
-
-        .rank-aura-ss {
-            --flame-a: radial-gradient(ellipse at 50% 100%, #fdf4ff 0%, #e879f9 45%, transparent 75%);
-            --flame-b: radial-gradient(ellipse at 50% 100%, #f5d0fe 0%, #c026d3 55%, transparent 78%);
-        }
-        .rank-aura-ss::before { background: var(--flame-a); }
-        .rank-aura-ss::after  { background: var(--flame-b); }
+        /* ===== ランクバッジ 発光オーラ（ランクが上がるほど光が段階的に大きく・強くなる） ===== */
+        .rank-aura-d { box-shadow: 0 0 4px 0px rgba(52,211,153,0.35); }
+        .rank-aura-c { box-shadow: 0 0 7px 1px rgba(56,189,248,0.45); }
+        .rank-aura-b { box-shadow: 0 0 10px 1.5px rgba(129,140,248,0.5); }
+        .rank-aura-a { box-shadow: 0 0 13px 2px rgba(192,132,252,0.55); }
 
         .rank-aura-s {
             background: linear-gradient(135deg,#fef3c7,#fbbf24,#f59e0b);
             color: #451a03; border-color: rgba(251,191,36,0.7); font-weight: 900;
-            --flame-a: radial-gradient(ellipse at 50% 100%, #fff7cc 0%, #fbbf24 45%, transparent 75%);
-            --flame-b: radial-gradient(ellipse at 50% 100%, #fde68a 0%, #ea580c 55%, transparent 78%);
+            box-shadow: 0 0 17px 3px rgba(251,191,36,0.65), 0 0 30px 7px rgba(251,191,36,0.28);
+            animation: auraGlowPulse 2.2s ease-in-out infinite;
         }
-        .rank-aura-s::before { background: var(--flame-a); }
-        .rank-aura-s::after  { background: var(--flame-b); }
+
+        .rank-aura-ss {
+            box-shadow: 0 0 21px 4px rgba(232,121,249,0.7), 0 0 38px 10px rgba(232,121,249,0.32);
+            animation: auraGlowPulse 2s ease-in-out infinite;
+        }
 
         .rank-aura-sss {
             background: linear-gradient(90deg,#ff6b6b,#feca57,#1dd1a1,#54a0ff,#c56cf0,#ff6b6b);
             background-size: 300% 100%;
             color: #0b0b0f; border-color: rgba(255,255,255,0.6); font-weight: 900;
+            box-shadow: 0 0 26px 5px rgba(255,255,255,0.7), 0 0 46px 13px rgba(129,140,248,0.4), 0 0 62px 20px rgba(232,121,249,0.25);
             /* 圧倒的な強者感のため、ゆっくりとした周期（4.5秒）で色が移ろう */
-            animation: rainbowShift 4.5s ease-in-out infinite;
+            animation: rainbowShift 4.5s ease-in-out infinite, auraGlowPulseRainbow 3s ease-in-out infinite;
         }
         @keyframes rainbowShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-        .rank-aura-sss::before { background: conic-gradient(from 0deg, #ff6b6b, #feca57, #1dd1a1, #54a0ff, #c56cf0, #ff6b6b); animation: flameRise 1.6s ease-in infinite, flameHue 3s linear infinite; }
-        .rank-aura-sss::after  { background: conic-gradient(from 180deg, #feca57, #1dd1a1, #54a0ff, #c56cf0, #ff6b6b, #feca57); animation: flameRise 1.6s ease-in 0.55s infinite, flameHue 3s linear infinite reverse; }
-        @keyframes flameHue { to { filter: blur(3px) hue-rotate(360deg); } }
+        @keyframes auraGlowPulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.3); } }
+        @keyframes auraGlowPulseRainbow { 0% { filter: brightness(1.1) hue-rotate(0deg); } 50% { filter: brightness(1.35) hue-rotate(180deg); } 100% { filter: brightness(1.1) hue-rotate(360deg); } }
 
         /* ===== 「合計回復」カウントアップ演出 ===== */
         .count-pop-flash { display: inline-block; animation: countPopFlash 0.55s ease-out; }
@@ -210,6 +192,16 @@
             filter: drop-shadow(0 0 16px rgba(129,140,248,0.75));
         }
         @keyframes perfectShine { 0% { background-position: 0% 50%; } 50% { background-position: 220% 50%; } 100% { background-position: 0% 50%; } }
+
+        /* ===== 復習ボタン 長押し（ホールド）演出 ===== */
+        @keyframes holdButtonShake {
+            0%, 100% { transform: translate(0, 0); }
+            25% { transform: translate(-1.5px, 1px); }
+            50% { transform: translate(1.5px, -1.5px); }
+            75% { transform: translate(-1px, 1.5px); }
+        }
+        .hold-shake { animation: holdButtonShake 0.09s linear infinite; }
+        .hold-progress-fill { position: absolute; inset: 0; background: rgba(255,255,255,0.28); transform-origin: left center; pointer-events: none; }
     </style>
 </head>
 <body>
@@ -234,13 +226,41 @@
         };
 
         const DEFAULT_SUBJECTS = ['財務会計論(計算)', '財務会計論(理論)', '管理会計論', '企業法', '監査論'];
+        const DEFAULT_TOPICS = {
+            '財務会計論(計算)': [
+                '現金預金', '有形固定資産', '商品売買・棚卸資産', 'リース会計・研究開発費', '減損会計', '税効果会計',
+                '有価証券', '外貨建取引・社債', '外貨建取引', '金融商品・中間財務諸表', 'デリバティブ・ヘッジ',
+                '収益認識', '連結会計', '本支店会計', '持分法', '退職給付・資産除去債務', '包括利益 純資産',
+                '純資産', 'ストックオプション', '外貨建取引 新株予約権付社債', '連結退職給付・在外支店 在外子会社',
+                'キャッシュ・フロー計算書', '連結税効果', 'リース・貸倒引当金', '企業結合・事業分離',
+                '連結キャッシュ・フロー計算書', '1株当たり情報・分配可能額', '連結会計応用'
+            ],
+            '財務会計論(理論)': [
+                '財務会計における基礎概念・一般原則', '資産会計', '負債会計・資本会計', '棚卸資産',
+                '研究開発費・固定資産の減損', '退職給付・資産除去債務', '資本会計', 'ストック・オプション',
+                '外貨建取引等 税効果会計', 'リース取引・会計上の変更及び誤謬の訂正', '中間財務諸表・金融商品',
+                '収益認識', '連結財務諸表', '持分法,包括利益', '退職給付・外貨建取引等', '企業結合・事業分離等',
+                '連結キャッシュ・フロー計算書・概念フレームワーク', '概念フレームワーク・セグメント情報等の開示',
+                '会計基準等・関連当事者の開示等'
+            ],
+            '管理会計論': [
+                '原価計算総論・材料費', '労務費', '経費・製造間接費', '部門別計算・個別原価計算', '総合原価計算',
+                '標準原価計算', 'CVP分析', '予算管理・財務分析', '資金管理', '意思決定会計', '分権組織',
+                '原価管理・活動基準原価計算(ABC)'
+            ],
+            '企業法': [
+                '機関', '株式', '設立・資金調達', '株式会社の計算 組織再編行為等', '事業譲渡等・商法総則・商行為法',
+                '金融商品取引法'
+            ],
+            '監査論': [
+                '監査の全体像・監査総論', '内部統制・リスクアプローチ監査', '監査サンプリング・監査計画', '監査報告',
+                'その他の諸論点・監査の品質管理', '不正・法令違反', 'コミュニケーション・関連当事者',
+                '保証業務・内部統制監査', '公認会計士法・監査制度'
+            ]
+        };
         const REVIEW_THRESHOLD = 65;
-        const DEFAULT_SETTINGS = { weeklyGoal: 15, monthlyGoal: 60, theme: 'dark', lastLoginDate: null, currentStreak: 0, bestStreak: 0 };
-
-        // 1日(24h), 3日(72h), 7日(168h), 14日(336h), 30日(720h), 45日(1080h), 60日(1440h) 経過時に65%になるよう逆算した定数 (-時間 / ln(0.65))
-        const S_VALUES = [
-            55.7, 167.1, 389.9, 779.8, 1671.0, 2506.6, 3342.1
-        ];
+        const DEFAULT_REVIEW_INTERVALS = [1, 3, 7, 14, 30, 45, 60, 60]; // 日数（8番目以降はこの値がずっと適用される）
+        const DEFAULT_SETTINGS = { weeklyGoal: 15, monthlyGoal: 60, theme: 'dark', lastLoginDate: null, currentStreak: 0, bestStreak: 0, reviewIntervals: DEFAULT_REVIEW_INTERVALS };
 
         const RANKS = ['E', 'D', 'C', 'B', 'A', 'S', 'SS', 'SSS'];
         const SORT_OPTIONS = [
@@ -250,13 +270,13 @@
         ];
         const RANK_STYLES = {
             E: 'bg-slate-500/15 text-slate-400 border-slate-400/30',
-            D: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 rank-aura-common',
-            C: 'bg-teal-500/15 text-teal-400 border-teal-500/30 rank-aura-common',
-            B: 'bg-blue-500/15 text-blue-400 border-blue-500/30 rank-aura-common',
-            A: 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30 rank-aura-common',
-            S: 'border-amber-300/70 rank-flame rank-aura-s',
-            SS: 'bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-400/40 rank-flame rank-aura-ss',
-            SSS: 'border-white/50 rank-flame rank-aura-sss'
+            D: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 rank-aura-d',
+            C: 'bg-sky-500/15 text-sky-400 border-sky-500/30 rank-aura-c',
+            B: 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30 rank-aura-b',
+            A: 'bg-purple-500/15 text-purple-400 border-purple-500/30 rank-aura-a',
+            S: 'border-amber-300/70 rank-aura-s',
+            SS: 'bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-400/40 rank-aura-ss',
+            SSS: 'border-white/50 rank-aura-sss'
         };
         const getRank = (rc) => RANKS[Math.min(rc || 0, RANKS.length - 1)];
 
@@ -319,9 +339,52 @@
             tOsc.stop(now + 0.03);
         };
 
-        const getMemoryRetention = (hours, reviewCount) => {
+        // 長押しチャージ中の「コップに水が満たされていく」ような、耳に気持ちいい水滴音
+        // (sine波の短い粒を等間隔で連続再生しながら、徐々にピッチを上げていく)
+        let __chargeDroplets = [];
+        const startChargeSound = (durationMs = 1200) => {
+            const ctx = getAudioCtx();
+            if (!ctx) return;
+            stopChargeSound();
+            const now = ctx.currentTime;
+            const totalSec = durationMs / 1000;
+            const dropletCount = Math.round(durationMs / 85); // 約85msごとに一粒
+            const list = [];
+            for (let i = 0; i < dropletCount; i++) {
+                const t = i / Math.max(1, dropletCount - 1); // 0..1
+                const startTime = now + t * totalSec * 0.9; // 最後の一粒は完了直前に鳴らし切る
+                const freq = 480 + t * t * 1500; // 徐々にピッチが上がる「ポロポロポロ」
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, startTime);
+                osc.frequency.exponentialRampToValueAtTime(Math.max(100, freq * 0.72), startTime + 0.09);
+                gain.gain.setValueAtTime(0.0001, startTime);
+                gain.gain.exponentialRampToValueAtTime(0.3, startTime + 0.006);
+                gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.1);
+                osc.connect(gain).connect(ctx.destination);
+                osc.start(startTime);
+                osc.stop(startTime + 0.12);
+                list.push(osc);
+            }
+            __chargeDroplets = list;
+        };
+        const stopChargeSound = () => {
+            const ctx = getAudioCtx();
+            const now = ctx ? ctx.currentTime : 0;
+            __chargeDroplets.forEach(osc => { try { osc.stop(now); } catch (e) {} });
+            __chargeDroplets = [];
+        };
+
+        const computeSValues = (intervalDays) => {
+            const thresholdFrac = REVIEW_THRESHOLD / 100;
+            return (intervalDays && intervalDays.length ? intervalDays : DEFAULT_REVIEW_INTERVALS).map(d => -(Math.max(0.1, d) * 24) / Math.log(thresholdFrac));
+        };
+
+        const getMemoryRetention = (hours, reviewCount, sValues) => {
             if (hours <= 0) return 100;
-            const s = S_VALUES[Math.min(reviewCount, S_VALUES.length - 1)];
+            const values = sValues && sValues.length ? sValues : computeSValues(DEFAULT_REVIEW_INTERVALS);
+            const s = values[Math.min(reviewCount, values.length - 1)];
             const rate = 100 * Math.exp(-hours / s);
             return Math.max(20, rate);
         };
@@ -332,8 +395,8 @@
             return Math.max(0, (new Date() - d) / (1000 * 60 * 60));
         };
 
-        const getNextIntervalHours = (reviewCount) => {
-            const days = [1, 3, 7, 14, 30, 45, 60];
+        const getNextIntervalHours = (reviewCount, intervalDays) => {
+            const days = intervalDays && intervalDays.length ? intervalDays : DEFAULT_REVIEW_INTERVALS;
             return days[Math.min(reviewCount, days.length - 1)] * 24;
         };
 
@@ -399,6 +462,81 @@
             return <span className={`${className} ${pulse ? 'count-pop-flash' : ''}`}>{prefix}{display}{suffix}</span>;
         };
 
+        // 論点ごとの個別復習間隔設定モーダル（全体設定より優先される）
+        const TopicIntervalModal = ({ topic, globalIntervals, onClose, onSave }) => {
+            const initialEnabled = Array.isArray(topic.customIntervals) && topic.customIntervals.length === DEFAULT_REVIEW_INTERVALS.length;
+            const [enabled, setEnabled] = useState(initialEnabled);
+            const [form, setForm] = useState((initialEnabled ? topic.customIntervals : globalIntervals).slice());
+            const [saved, setSaved] = useState(false);
+
+            const updateField = (idx, val) => {
+                const next = form.slice();
+                next[idx] = val;
+                setForm(next);
+            };
+
+            const handleSave = () => {
+                const parsed = form.map(v => Math.max(0.1, parseFloat(v) || 0.1));
+                onSave(parsed, enabled);
+                setSaved(true);
+                setTimeout(() => { setSaved(false); onClose(); }, 700);
+            };
+
+            return (
+                <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center">
+                    <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose}></div>
+                    <div className="relative w-full sm:max-w-md max-h-[88vh] overflow-y-auto bg-[var(--bg-app-to)] border border-[var(--border-color)] rounded-t-3xl sm:rounded-3xl shadow-2xl animate-in">
+                        <div className="sticky top-0 bg-[var(--bg-header)] backdrop-blur border-b border-[var(--border-color)] px-5 py-4 flex items-center justify-between z-10">
+                            <h2 className="text-sm font-black text-[var(--text-primary)] flex items-center gap-2 min-w-0">
+                                <Icon name="Settings2" size={16} className="text-indigo-400 shrink-0" />
+                                <span className="truncate">{topic.title} の個別設定</span>
+                            </h2>
+                            <button type="button" onClick={onClose} className="h-8 w-8 shrink-0 flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--text-primary)] bg-[var(--bg-card-soft)] rounded-full transition-colors active:scale-90">
+                                <Icon name="X" size={14} />
+                            </button>
+                        </div>
+
+                        <div className="p-5 space-y-5">
+                            <button
+                                type="button"
+                                onClick={() => setEnabled(v => !v)}
+                                className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl border transition-colors ${enabled ? 'bg-indigo-600/15 border-indigo-500/50 text-indigo-300' : 'bg-[var(--bg-card-soft)] border-[var(--border-color)] text-[var(--text-secondary)]'}`}
+                            >
+                                <span className="text-xs font-bold flex items-center gap-2">
+                                    <Icon name={enabled ? 'ToggleRight' : 'ToggleLeft'} size={18} />
+                                    この論点だけ個別の復習間隔を使う
+                                </span>
+                                <span className="text-[10px] font-bold">{enabled ? '個別設定 ON' : '全体設定を使用'}</span>
+                            </button>
+
+                            <div className={`space-y-3 transition-opacity ${enabled ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
+                                <p className="text-[10px] text-[var(--text-tertiary)] font-bold">この論点の復習まで、それぞれ何日空けるかを設定できます。「8回目以降」はそれ以降ずっと同じ間隔が適用されます。</p>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {form.map((d, idx) => (
+                                        <div key={idx}>
+                                            <label className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono block mb-1">{idx === form.length - 1 ? `${idx + 1}回目以降` : `${idx + 1}回目の間隔`}</label>
+                                            <div className="relative">
+                                                <input
+                                                    type="number" min="0.1" step="0.5" disabled={!enabled}
+                                                    className="w-full bg-[var(--bg-input)] border border-[var(--border-strong)] p-2.5 pr-9 rounded-xl outline-none font-bold text-[var(--text-primary)] text-sm mono-num"
+                                                    value={d} onChange={e => updateField(idx, e.target.value)}
+                                                />
+                                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[var(--text-muted)] mono">日後</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <button type="button" onClick={handleSave} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5">
+                                <Icon name={saved ? "Check" : "Save"} size={14} />{saved ? '保存しました' : '保存する'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
         function App() {
             const [user, setUser] = useState(null);
             const [topics, setTopics] = useState([]);
@@ -417,6 +555,7 @@
             const [view, setView] = useState('review');
             const [editingGoals, setEditingGoals] = useState(false);
             const [goalForm, setGoalForm] = useState({ weekly: DEFAULT_SETTINGS.weeklyGoal, monthly: DEFAULT_SETTINGS.monthlyGoal });
+            const [showSettings, setShowSettings] = useState(false);
             const seededRef = useRef(false);
             const settingsLoadedRef = useRef(false);
             const streakCheckedRef = useRef(false);
@@ -530,7 +669,13 @@
                 setEditingGoals(false);
             };
 
-            // 初回のみデフォルトタブを投入
+            const handleSaveIntervals = (newIntervals) => {
+                if (!user) return;
+                const { db, appId, doc, setDoc } = window.fb;
+                setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'cpa_settings', 'main'), { reviewIntervals: newIntervals }, { merge: true }).catch(() => {});
+            };
+
+            // 初回のみデフォルトタブ＆論点を投入
             useEffect(() => {
                 if (!user || seededRef.current) return;
                 if (loading) return;
@@ -539,9 +684,17 @@
                     (async () => {
                         const { db, appId, collection, addDoc } = window.fb;
                         for (let i = 0; i < DEFAULT_SUBJECTS.length; i++) {
+                            const subjectName = DEFAULT_SUBJECTS[i];
                             await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'cpa_subjects'), {
-                                name: DEFAULT_SUBJECTS[i], order: i, createdAt: new Date().toISOString()
+                                name: subjectName, order: i, createdAt: new Date().toISOString()
                             });
+                            const topicTitles = DEFAULT_TOPICS[subjectName] || [];
+                            for (let j = 0; j < topicTitles.length; j++) {
+                                await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'cpa_memory'), {
+                                    title: topicTitles[j], subject: subjectName, lastStudiedAt: new Date().toISOString(),
+                                    reviewCount: 0, createdAt: new Date().toISOString(), order: Date.now() + j
+                                });
+                            }
                         }
                     })();
                 } else {
@@ -567,6 +720,18 @@
                 }
             }, [tabs, activeSubject]);
 
+            const intervalDays = useMemo(() => {
+                const arr = settings.reviewIntervals;
+                return (Array.isArray(arr) && arr.length === DEFAULT_REVIEW_INTERVALS.length) ? arr : DEFAULT_REVIEW_INTERVALS;
+            }, [settings.reviewIntervals]);
+            const sValues = useMemo(() => computeSValues(intervalDays), [intervalDays]);
+
+            // 論点ごとの個別設定があればそちらを優先し、なければ全体設定を使う
+            const getEffectiveIntervals = (t) => {
+                const custom = t && t.customIntervals;
+                return (Array.isArray(custom) && custom.length === DEFAULT_REVIEW_INTERVALS.length) ? custom : intervalDays;
+            };
+
             const tabStats = useMemo(() => {
                 const stats = {};
                 tabs.forEach(t => { stats[t.name] = { total: 0, needReview: 0 }; });
@@ -575,17 +740,17 @@
                     if (!stats[name]) stats[name] = { total: 0, needReview: 0 };
                     stats[name].total += 1;
                     const hrs = getHoursSince(t.lastStudiedAt);
-                    const ret = getMemoryRetention(hrs, t.reviewCount || 0);
+                    const ret = getMemoryRetention(hrs, t.reviewCount || 0, computeSValues(getEffectiveIntervals(t)));
                     if (ret <= REVIEW_THRESHOLD) stats[name].needReview += 1;
                 });
                 return stats;
-            }, [tabs, topics]);
+            }, [tabs, topics, intervalDays]);
 
             const overallStats = useMemo(() => {
                 let blue = 0, warn = 0, red = 0;
                 topics.forEach(t => {
                     const hrs = getHoursSince(t.lastStudiedAt);
-                    const ret = getMemoryRetention(hrs, t.reviewCount || 0);
+                    const ret = getMemoryRetention(hrs, t.reviewCount || 0, computeSValues(getEffectiveIntervals(t)));
                     if (ret > 80) blue++;
                     else if (ret > REVIEW_THRESHOLD) warn++;
                     else red++;
@@ -593,16 +758,16 @@
                 const total = topics.length;
                 const percentage = total ? Math.round((blue / total) * 100) : 0;
                 return { blue, warn, red, total, percentage };
-            }, [topics]);
+            }, [topics, intervalDays]);
 
             const perSubjectGauge = useMemo(() => {
                 return tabs.map(tab => {
                     const items = topics.filter(t => (t.subject || 'その他') === tab.name);
                     if (items.length === 0) return { name: tab.name, avg: null, count: 0 };
-                    const avg = items.reduce((sum, t) => sum + getMemoryRetention(getHoursSince(t.lastStudiedAt), t.reviewCount || 0), 0) / items.length;
+                    const avg = items.reduce((sum, t) => sum + getMemoryRetention(getHoursSince(t.lastStudiedAt), t.reviewCount || 0, computeSValues(getEffectiveIntervals(t))), 0) / items.length;
                     return { name: tab.name, avg, count: items.length };
                 });
-            }, [tabs, topics]);
+            }, [tabs, topics, intervalDays]);
 
             // 毎日の定着率（青の割合）をスナップショットとして保存
             useEffect(() => {
@@ -629,8 +794,8 @@
                 } else if (sortKey === 'retention') {
                     // 定着率が低い順
                     list.sort((a, b) => {
-                        const ra = getMemoryRetention(getHoursSince(a.lastStudiedAt), a.reviewCount || 0);
-                        const rb = getMemoryRetention(getHoursSince(b.lastStudiedAt), b.reviewCount || 0);
+                        const ra = getMemoryRetention(getHoursSince(a.lastStudiedAt), a.reviewCount || 0, computeSValues(getEffectiveIntervals(a)));
+                        const rb = getMemoryRetention(getHoursSince(b.lastStudiedAt), b.reviewCount || 0, computeSValues(getEffectiveIntervals(b)));
                         return ra - rb;
                     });
                 } else {
@@ -642,7 +807,7 @@
                     });
                 }
                 return list;
-            }, [topics, activeSubject, sortKey]);
+            }, [topics, activeSubject, sortKey, intervalDays]);
 
             const weeklyCount = useMemo(() => {
                 const start = getStartOfWeek();
@@ -758,20 +923,31 @@
                 const [isShaking, setIsShaking] = useState(false);
                 const [sweepKey, setSweepKey] = useState(0);
                 const [popup, setPopup] = useState(null);
+                const [holdProgress, setHoldProgress] = useState(0);
+                const [isCharging, setIsCharging] = useState(false);
+                const [showTopicSettings, setShowTopicSettings] = useState(false);
+                const chargeRafRef = useRef(null);
+                const chargeStartRef = useRef(0);
+                const completedRef = useRef(false);
+                const HOLD_DURATION = 1200;
                 const [editForm, setEditForm] = useState({
                     title: t.title, subject: t.subject,
                     reviewCount: t.reviewCount || 0, lastStudiedAt: toDatetimeLocalValue(t.lastStudiedAt)
                 });
 
+                const isCustomInterval = Array.isArray(t.customIntervals) && t.customIntervals.length === DEFAULT_REVIEW_INTERVALS.length;
+                const effIntervalDays = getEffectiveIntervals(t);
+                const effSValues = computeSValues(effIntervalDays);
+
                 const hrs = getHoursSince(t.lastStudiedAt);
                 const rc = t.reviewCount || 0;
-                const ret = getMemoryRetention(hrs, rc);
+                const ret = getMemoryRetention(hrs, rc, effSValues);
 
-                const targetHours = getNextIntervalHours(rc);
+                const targetHours = getNextIntervalHours(rc, effIntervalDays);
                 const GRAPH_STEPS = 80;
                 const pts = Array.from({ length: GRAPH_STEPS + 1 }, (_, i) => {
                     const h = (i / GRAPH_STEPS) * targetHours;
-                    return `${(h / targetHours) * 200},${50 - (getMemoryRetention(h, rc) / 100) * 40}`;
+                    return `${(h / targetHours) * 200},${50 - (getMemoryRetention(h, rc, effSValues) / 100) * 40}`;
                 }).join(' ');
 
                 const isNeedsReview = ret <= REVIEW_THRESHOLD;
@@ -791,9 +967,7 @@
                     setIsEditing(false);
                 };
 
-                const handleReviewClick = (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
+                const fireReview = () => {
                     const recovered = Math.max(0, Math.round(100 - ret));
                     // 視覚(1.5秒)と完全同期したハプティクス（Android）とiOS向けヒットストップ・シェイク、SEを同時発火
                     vibrate(buildRevVibratePattern(1500));
@@ -807,6 +981,46 @@
                     setTimeout(() => setPopup(null), 1750);
                     onReview(t, ret);
                 };
+
+                const cancelCharge = () => {
+                    if (chargeRafRef.current) cancelAnimationFrame(chargeRafRef.current);
+                    chargeRafRef.current = null;
+                    setIsCharging(false);
+                    setHoldProgress(0);
+                };
+
+                const startCharge = (e) => {
+                    if (e.cancelable) e.preventDefault();
+                    if (isEditing) return;
+                    completedRef.current = false;
+                    setIsCharging(true);
+                    setHoldProgress(0);
+                    chargeStartRef.current = performance.now();
+                    startChargeSound(HOLD_DURATION);
+                    vibrate(8);
+                    const tick = (now) => {
+                        const elapsed = now - chargeStartRef.current;
+                        const pct = Math.min(100, (elapsed / HOLD_DURATION) * 100);
+                        setHoldProgress(pct);
+                        if (pct >= 100) {
+                            completedRef.current = true;
+                            setIsCharging(false);
+                            fireReview();
+                            setHoldProgress(0);
+                            return;
+                        }
+                        chargeRafRef.current = requestAnimationFrame(tick);
+                    };
+                    chargeRafRef.current = requestAnimationFrame(tick);
+                };
+
+                const endCharge = () => {
+                    if (completedRef.current) { completedRef.current = false; return; }
+                    stopChargeSound();
+                    cancelCharge();
+                };
+
+                useEffect(() => () => { if (chargeRafRef.current) cancelAnimationFrame(chargeRafRef.current); }, []);
 
                 if (isEditing) {
                     return (
@@ -855,6 +1069,7 @@
                                     {isNeedsReview && <Icon name="AlertCircle" size={16} className="text-red-500 animate-pulse" />}
                                     <h3 className="text-base font-bold text-[var(--text-primary)] leading-tight">{t.title}</h3>
                                     <RankBadge rc={rc} />
+                                    {isCustomInterval && <span className="text-[9px] font-black mono px-1.5 py-0.5 rounded-full border border-indigo-400/40 text-indigo-300 bg-indigo-500/10">個別</span>}
                                 </div>
                                 <p className="text-xs text-[var(--text-tertiary)] mono-num">復習回数: {rc} 回 ・ 最終復習: {new Date(t.lastStudiedAt).toLocaleDateString('ja-JP')}</p>
                             </div>
@@ -877,11 +1092,35 @@
                             <div className="flex gap-1 items-center">
                                 <button type="button" onClick={() => handleAction('delete', t.id, { col: 'cpa_memory' })} className="text-[var(--text-muted)] hover:text-red-400 p-2 rounded-lg hover:bg-[var(--bg-card-soft)] transition-colors"><Icon name="Trash2" size={18} /></button>
                                 <button type="button" onClick={() => setIsEditing(true)} className="text-[var(--text-muted)] hover:text-indigo-400 p-2 rounded-lg hover:bg-[var(--bg-card-soft)] transition-colors"><Icon name="Edit2" size={18} /></button>
+                                <button type="button" onClick={() => setShowTopicSettings(true)} className={`p-2 rounded-lg hover:bg-[var(--bg-card-soft)] transition-colors ${isCustomInterval ? 'text-indigo-400' : 'text-[var(--text-muted)] hover:text-indigo-400'}`}><Icon name="Settings2" size={18} /></button>
                             </div>
-                            <button type="button" onClick={handleReviewClick} className={`font-bold mono py-2.5 px-5 rounded-xl shadow-lg active:scale-90 transition-all text-sm flex items-center gap-2 ${isNeedsReview ? 'bg-red-600 hover:bg-red-500 text-white' : 'bg-indigo-600 hover:bg-indigo-500 text-white'}`}>
-                                <Icon name="Brain" size={18} /> 復習した！
+                            <button
+                                type="button"
+                                onMouseDown={startCharge}
+                                onMouseUp={endCharge}
+                                onMouseLeave={endCharge}
+                                onTouchStart={startCharge}
+                                onTouchEnd={endCharge}
+                                onTouchCancel={endCharge}
+                                onContextMenu={(e) => e.preventDefault()}
+                                className={`relative overflow-hidden font-bold mono py-2.5 px-5 rounded-xl shadow-lg transition-transform text-sm flex items-center gap-2 select-none touch-none ${isNeedsReview ? 'bg-red-600 text-white' : 'bg-indigo-600 text-white'} ${isCharging ? 'scale-95' : ''} ${isCharging && holdProgress >= 50 ? 'hold-shake' : ''}`}
+                            >
+                                <span className="hold-progress-fill" style={{ transform: `scaleX(${holdProgress / 100})`, transition: isCharging ? 'none' : 'transform 0.25s ease-out' }}></span>
+                                <span className="relative flex items-center gap-2">
+                                    <Icon name={isCharging ? "Droplets" : "Brain"} size={18} /> {isCharging ? 'ホールド中…' : '長押しで復習完了'}
+                                </span>
                             </button>
                         </div>
+                        {showTopicSettings && (
+                            <TopicIntervalModal
+                                topic={t}
+                                globalIntervals={intervalDays}
+                                onClose={() => setShowTopicSettings(false)}
+                                onSave={(parsed, enabled) => {
+                                    handleAction('update', t.id, { col: 'cpa_memory', updates: { customIntervals: enabled ? parsed : null } });
+                                }}
+                            />
+                        )}
                     </div>
                 );
             };
@@ -899,6 +1138,93 @@
                         </div>
                         <div className="w-full h-2.5 rounded-full bg-[var(--bg-card-soft)] overflow-hidden">
                             <div className={`h-full rounded-full transition-all duration-500 ${done ? 'bg-gradient-to-r from-amber-300 to-amber-500' : 'bg-gradient-to-r from-indigo-500 to-indigo-400'}`} style={{ width: `${pct}%` }}></div>
+                        </div>
+                    </div>
+                );
+            };
+
+            const SettingsModal = () => {
+                const [form, setForm] = useState(intervalDays.slice());
+                const [saved, setSaved] = useState(false);
+
+                useEffect(() => { setForm(intervalDays.slice()); }, [showSettings]);
+
+                const updateField = (idx, val) => {
+                    const next = form.slice();
+                    next[idx] = val;
+                    setForm(next);
+                };
+
+                const handleSave = () => {
+                    const parsed = form.map(v => Math.max(0.1, parseFloat(v) || 0.1));
+                    handleSaveIntervals(parsed);
+                    setSaved(true);
+                    setTimeout(() => setSaved(false), 1600);
+                };
+
+                const pyramidRows = RANKS.slice().reverse().map(r => {
+                    const idx = RANKS.indexOf(r);
+                    const widthPct = 100 - idx * 9.4; // idx=0(E)→100%（土台）、idx=7(SSS)→約34%（頂点）
+                    const label = idx === RANKS.length - 1 ? `${idx}回以上` : `${idx}回`;
+                    return { rank: r, idx, widthPct, label };
+                });
+
+                return (
+                    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center">
+                        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowSettings(false)}></div>
+                        <div className="relative w-full sm:max-w-md max-h-[88vh] overflow-y-auto bg-[var(--bg-app-to)] border border-[var(--border-color)] rounded-t-3xl sm:rounded-3xl shadow-2xl animate-in">
+                            <div className="sticky top-0 bg-[var(--bg-header)] backdrop-blur border-b border-[var(--border-color)] px-5 py-4 flex items-center justify-between z-10">
+                                <h2 className="text-sm font-black text-[var(--text-primary)] flex items-center gap-2"><Icon name="Settings" size={16} className="text-indigo-400" />設定</h2>
+                                <button type="button" onClick={() => setShowSettings(false)} className="h-8 w-8 flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--text-primary)] bg-[var(--bg-card-soft)] rounded-full transition-colors active:scale-90">
+                                    <Icon name="X" size={14} />
+                                </button>
+                            </div>
+
+                            <div className="p-5 space-y-6">
+                                <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-4">
+                                    <div>
+                                        <p className="text-xs font-black text-[var(--text-primary)] flex items-center gap-1.5"><Icon name="CalendarRange" size={14} className="text-indigo-400" />復習間隔のカスタマイズ（全体設定）</p>
+                                        <p className="text-[10px] text-[var(--text-tertiary)] font-bold mt-1">各回の復習まで、それぞれ何日空けるかを設定できます（記憶定着ゲージの計算に反映されます）。「8回目以降」はそれ以降ずっと同じ間隔が適用されます。なお、論点ごとに個別設定（各カードの歯車アイコン）を行った場合は、そちらがこの全体設定より優先されます。</p>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {form.map((d, idx) => (
+                                            <div key={idx}>
+                                                <label className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono block mb-1">{idx === form.length - 1 ? `${idx + 1}回目以降` : `${idx + 1}回目の間隔`}</label>
+                                                <div className="relative">
+                                                    <input
+                                                        type="number" min="0.1" step="0.5"
+                                                        className="w-full bg-[var(--bg-input)] border border-[var(--border-strong)] p-2.5 pr-9 rounded-xl outline-none font-bold text-[var(--text-primary)] text-sm mono-num"
+                                                        value={d} onChange={e => updateField(idx, e.target.value)}
+                                                    />
+                                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[var(--text-muted)] mono">日後</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <button type="button" onClick={handleSave} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5">
+                                        <Icon name={saved ? "Check" : "Save"} size={14} />{saved ? '保存しました' : '保存する'}
+                                    </button>
+                                </div>
+
+                                <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-4">
+                                    <div>
+                                        <p className="text-xs font-black text-[var(--text-primary)] flex items-center gap-1.5"><Icon name="Trophy" size={14} className="text-amber-400" />ランクアップ・ピラミッド</p>
+                                        <p className="text-[10px] text-[var(--text-tertiary)] font-bold mt-1">頂点のSSSを目指して、復習を積み重ねましょう。</p>
+                                    </div>
+                                    <div className="flex flex-col items-center gap-1.5 pt-2 pb-1">
+                                        {pyramidRows.map(row => (
+                                            <div
+                                                key={row.rank}
+                                                style={{ width: `${row.widthPct}%` }}
+                                                className={`flex items-center justify-between px-4 py-2.5 rounded-xl border transition-all ${RANK_STYLES[row.rank]}`}
+                                            >
+                                                <span className="font-black text-xs mono">{row.rank}</span>
+                                                <span className="text-[10px] font-bold mono-num opacity-90">累計 {row.label}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 );
@@ -1024,6 +1350,7 @@
 
             return (
                 <div className="min-h-screen pb-12 bg-gradient-to-b from-[var(--bg-app-from)] to-[var(--bg-app-to)]">
+                    {showSettings && <SettingsModal />}
                     <header className="bg-[var(--bg-header)] backdrop-blur border-b border-[var(--border-color)] px-4 pb-4 pt-safe shadow-2xl sticky top-0 z-50">
                         <div className="max-w-md mx-auto flex justify-between items-center mb-3 gap-2">
                             <h1 className="text-sm font-black text-[var(--text-primary)] tracking-widest flex items-center gap-2 min-w-0 truncate">
@@ -1037,6 +1364,9 @@
                                 )}
                                 <button type="button" onClick={handleToggleTheme} className="h-9 w-9 flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--text-primary)] bg-[var(--bg-card-soft)] rounded-full transition-colors active:scale-90">
                                     <Icon name={settings.theme === 'light' ? 'Moon' : 'Sun'} size={14} />
+                                </button>
+                                <button type="button" onClick={() => setShowSettings(true)} className="h-9 w-9 flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--text-primary)] bg-[var(--bg-card-soft)] rounded-full transition-colors active:scale-90">
+                                    <Icon name="Settings" size={14} />
                                 </button>
                                 <button type="button" onClick={handleLogout} className="h-9 w-9 flex items-center justify-center text-xs font-bold text-[var(--text-tertiary)] hover:text-[var(--text-primary)] bg-[var(--bg-card-soft)] rounded-full transition-colors active:scale-95">
                                     <Icon name="LogOut" size={12} />
