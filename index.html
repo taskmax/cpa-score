@@ -145,35 +145,70 @@
         @keyframes flamePulse { 0%,100% { opacity: 0.85; transform: scale(1); } 50% { opacity: 1; transform: scale(1.12); } }
         .flame-pulse { animation: flamePulse 1.6s ease-in-out infinite; }
 
-        /* ===== ランクバッジ 発光オーラ（ランクが上がるほど光が段階的に大きく・強くなる） ===== */
-        .rank-aura-d { box-shadow: 0 0 4px 0px rgba(52,211,153,0.35); }
-        .rank-aura-c { box-shadow: 0 0 7px 1px rgba(56,189,248,0.45); }
-        .rank-aura-b { box-shadow: 0 0 10px 1.5px rgba(129,140,248,0.5); }
-        .rank-aura-a { box-shadow: 0 0 13px 2px rgba(192,132,252,0.55); }
+        /* ===== ランクバッジ 発光オーラ＋グラデーションアニメーション ===== */
+        /* 低ランクほど控えめ（振れ幅が小さく、周期がゆっくり）、高ランクほど華やか（振れ幅が大きく、周期が速い） */
+        @keyframes gradientDrift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+        @keyframes auraGlowPulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.3); } }
+        @keyframes auraGlowPulseRainbow { 0% { filter: brightness(1.1) hue-rotate(0deg); } 50% { filter: brightness(1.35) hue-rotate(180deg); } 100% { filter: brightness(1.1) hue-rotate(360deg); } }
+        @keyframes rainbowShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
-        .rank-aura-s {
-            background: linear-gradient(135deg,#fef3c7,#fbbf24,#f59e0b);
+        .rank-badge { background-size: 260% 100%; transition: filter .3s ease; }
+
+        .rank-e {
+            background-image: linear-gradient(120deg, rgba(100,116,139,0.14), rgba(148,163,184,0.24), rgba(100,116,139,0.14));
+            color: #94a3b8; border-color: rgba(148,163,184,0.28);
+            animation: gradientDrift 11s ease-in-out infinite;
+        }
+        .rank-d {
+            background-image: linear-gradient(120deg, rgba(16,185,129,0.14), rgba(52,211,153,0.28), rgba(16,185,129,0.14));
+            color: #34d399; border-color: rgba(52,211,153,0.32);
+            box-shadow: 0 0 4px 0px rgba(52,211,153,0.3);
+            animation: gradientDrift 9.5s ease-in-out infinite;
+        }
+        .rank-c {
+            background-image: linear-gradient(120deg, rgba(14,165,233,0.15), rgba(56,189,248,0.3), rgba(14,165,233,0.15));
+            color: #38bdf8; border-color: rgba(56,189,248,0.38);
+            box-shadow: 0 0 7px 1px rgba(56,189,248,0.4);
+            animation: gradientDrift 8s ease-in-out infinite;
+        }
+        .rank-b {
+            background-image: linear-gradient(120deg, rgba(99,102,241,0.17), rgba(129,140,248,0.34), rgba(99,102,241,0.17));
+            color: #818cf8; border-color: rgba(129,140,248,0.42);
+            box-shadow: 0 0 10px 1.5px rgba(129,140,248,0.45);
+            animation: gradientDrift 6.5s ease-in-out infinite;
+        }
+        .rank-a {
+            background-image: linear-gradient(120deg, rgba(168,85,247,0.2), rgba(192,132,252,0.38), rgba(168,85,247,0.2));
+            color: #c084fc; border-color: rgba(192,132,252,0.48);
+            box-shadow: 0 0 13px 2px rgba(192,132,252,0.5);
+            animation: gradientDrift 5s ease-in-out infinite;
+        }
+
+        .rank-s {
+            background-image: linear-gradient(100deg, #fef3c7, #fbbf24, #f59e0b, #fbbf24, #fef3c7);
+            background-size: 320% 100%;
             color: #451a03; border-color: rgba(251,191,36,0.7); font-weight: 900;
             box-shadow: 0 0 17px 3px rgba(251,191,36,0.65), 0 0 30px 7px rgba(251,191,36,0.28);
-            animation: auraGlowPulse 2.2s ease-in-out infinite;
+            animation: gradientDrift 4s ease-in-out infinite, auraGlowPulse 2.2s ease-in-out infinite;
         }
 
-        .rank-aura-ss {
-            box-shadow: 0 0 21px 4px rgba(232,121,249,0.7), 0 0 38px 10px rgba(232,121,249,0.32);
-            animation: auraGlowPulse 2s ease-in-out infinite;
+        /* SS: Sより一段上の「金」— より白く輝くゴールドで、Sより速く強い輝き */
+        .rank-ss {
+            background-image: linear-gradient(100deg, #fff8dc, #ffd700, #f5b301, #ffe066, #ffd700, #fff8dc);
+            background-size: 340% 100%;
+            color: #3d2900; border-color: rgba(255,215,0,0.8); font-weight: 900;
+            box-shadow: 0 0 22px 4px rgba(255,215,0,0.68), 0 0 40px 10px rgba(255,196,0,0.32);
+            animation: gradientDrift 3.1s ease-in-out infinite, auraGlowPulse 1.8s ease-in-out infinite;
         }
 
-        .rank-aura-sss {
-            background: linear-gradient(90deg,#ff6b6b,#feca57,#1dd1a1,#54a0ff,#c56cf0,#ff6b6b);
+        .rank-sss {
+            background-image: linear-gradient(90deg,#ff6b6b,#feca57,#1dd1a1,#54a0ff,#c56cf0,#ff6b6b);
             background-size: 300% 100%;
             color: #0b0b0f; border-color: rgba(255,255,255,0.6); font-weight: 900;
             box-shadow: 0 0 26px 5px rgba(255,255,255,0.7), 0 0 46px 13px rgba(129,140,248,0.4), 0 0 62px 20px rgba(232,121,249,0.25);
             /* 圧倒的な強者感のため、ゆっくりとした周期（4.5秒）で色が移ろう */
             animation: rainbowShift 4.5s ease-in-out infinite, auraGlowPulseRainbow 3s ease-in-out infinite;
         }
-        @keyframes rainbowShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-        @keyframes auraGlowPulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.3); } }
-        @keyframes auraGlowPulseRainbow { 0% { filter: brightness(1.1) hue-rotate(0deg); } 50% { filter: brightness(1.35) hue-rotate(180deg); } 100% { filter: brightness(1.1) hue-rotate(360deg); } }
 
         /* ===== 「合計回復」カウントアップ演出 ===== */
         .count-pop-flash { display: inline-block; animation: countPopFlash 0.55s ease-out; }
@@ -202,6 +237,14 @@
         }
         .hold-shake { animation: holdButtonShake 0.09s linear infinite; }
         .hold-progress-fill { position: absolute; inset: 0; background: rgba(255,255,255,0.28); transform-origin: left center; pointer-events: none; }
+
+        /* ===== 論点 編集モード（並び替え・一括削除） ===== */
+        .edit-row { touch-action: pan-y; }
+        .edit-row.is-dragging { z-index: 40; touch-action: none; }
+        .drag-handle { touch-action: none; cursor: grab; }
+        .drag-handle:active { cursor: grabbing; }
+        @keyframes checkPop { 0% { transform: scale(0.6); opacity: 0; } 60% { transform: scale(1.15); } 100% { transform: scale(1); opacity: 1; } }
+        .check-pop { animation: checkPop 0.2s ease-out; }
     </style>
 </head>
 <body>
@@ -269,14 +312,14 @@
             { key: 'retention', label: '定着率', sub: '低い順（要復習優先）', icon: 'Gauge' }
         ];
         const RANK_STYLES = {
-            E: 'bg-slate-500/15 text-slate-400 border-slate-400/30',
-            D: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 rank-aura-d',
-            C: 'bg-sky-500/15 text-sky-400 border-sky-500/30 rank-aura-c',
-            B: 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30 rank-aura-b',
-            A: 'bg-purple-500/15 text-purple-400 border-purple-500/30 rank-aura-a',
-            S: 'border-amber-300/70 rank-aura-s',
-            SS: 'bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-400/40 rank-aura-ss',
-            SSS: 'border-white/50 rank-aura-sss'
+            E: 'rank-badge rank-e',
+            D: 'rank-badge rank-d',
+            C: 'rank-badge rank-c',
+            B: 'rank-badge rank-b',
+            A: 'rank-badge rank-a',
+            S: 'rank-badge rank-s',
+            SS: 'rank-badge rank-ss',
+            SSS: 'rank-badge rank-sss'
         };
         const getRank = (rc) => RANKS[Math.min(rc || 0, RANKS.length - 1)];
 
@@ -593,6 +636,16 @@
             const [editingGoals, setEditingGoals] = useState(false);
             const [goalForm, setGoalForm] = useState({ weekly: DEFAULT_SETTINGS.weeklyGoal, monthly: DEFAULT_SETTINGS.monthlyGoal });
             const [showSettings, setShowSettings] = useState(false);
+
+            // ===== 論点の編集モード（スライドで並び替え／選択して一括削除） =====
+            const [editMode, setEditMode] = useState(false);
+            const [selectedIds, setSelectedIds] = useState(() => new Set());
+            const [editList, setEditList] = useState([]);
+            const [dragging, setDragging] = useState(null); // { id, startClientY, deltaY }
+            const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+            const dragInfoRef = useRef({ id: null, startClientY: 0 });
+            const rowRefs = useRef({});
+
             const seededRef = useRef(false);
             const settingsLoadedRef = useRef(false);
             const streakCheckedRef = useRef(false);
@@ -865,6 +918,117 @@
                 }
                 return list;
             }, [topics, activeSubject, sortKey, intervalDays]);
+
+            // 編集モード中はドラッグで並び替え可能な独自リストを保持する。
+            // ドラッグ中（dragging !== null）は外部の topics 更新で上書きしないようにし、チラつきを防ぐ。
+            useEffect(() => {
+                if (editMode && !dragging) {
+                    const list = topics.filter(t => (t.subject || 'その他') === activeSubject).slice();
+                    list.sort((a, b) => {
+                        const oa = a.order ?? (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+                        const ob = b.order ?? (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+                        return oa - ob;
+                    });
+                    setEditList(list);
+                }
+            }, [topics, editMode, activeSubject, dragging]);
+
+            const handleToggleEditMode = () => {
+                if (!activeSubject) return;
+                setEditMode(v => {
+                    const next = !v;
+                    if (next) {
+                        setSortKey('order');
+                        setSelectedIds(new Set());
+                    } else {
+                        setSelectedIds(new Set());
+                    }
+                    return next;
+                });
+            };
+
+            const toggleSelected = (id) => {
+                setSelectedIds(prev => {
+                    const next = new Set(prev);
+                    if (next.has(id)) next.delete(id); else next.add(id);
+                    return next;
+                });
+                vibrate(6);
+            };
+
+            const handleSelectAllToggle = () => {
+                setSelectedIds(prev => {
+                    if (prev.size === editList.length) return new Set();
+                    return new Set(editList.map(t => t.id));
+                });
+            };
+
+            const handleBulkDelete = async () => {
+                if (!user || selectedIds.size === 0 || isBulkDeleting) return;
+                if (!window.confirm(`選択した${selectedIds.size}件の論点を削除しますか？`)) return;
+                setIsBulkDeleting(true);
+                try {
+                    const { db, appId, doc, deleteDoc } = window.fb;
+                    await Promise.all(Array.from(selectedIds).map(id => deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'cpa_memory', id))));
+                    setSelectedIds(new Set());
+                } finally {
+                    setIsBulkDeleting(false);
+                }
+            };
+
+            const persistEditListOrder = async (list) => {
+                if (!user) return;
+                const { db, appId, doc, updateDoc } = window.fb;
+                await Promise.all(list.map((t, i) => {
+                    if ((t.order ?? null) === i) return null;
+                    return updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'cpa_memory', t.id), { order: i }).catch(() => {});
+                }).filter(Boolean));
+            };
+
+            const handleDragPointerDown = (e, topic) => {
+                if (e.pointerType === 'mouse' && e.button !== 0) return;
+                const rowEl = rowRefs.current[topic.id];
+                if (!rowEl) return;
+                dragInfoRef.current = { id: topic.id, startClientY: e.clientY };
+                setDragging({ id: topic.id, startClientY: e.clientY, deltaY: 0 });
+                try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {}
+                vibrate(8);
+            };
+
+            const handleDragPointerMove = (e) => {
+                if (!dragInfoRef.current.id) return;
+                const deltaY = e.clientY - dragInfoRef.current.startClientY;
+                setDragging(prev => (prev && prev.id === dragInfoRef.current.id) ? { ...prev, deltaY } : prev);
+
+                const draggedId = dragInfoRef.current.id;
+                const idx = editList.findIndex(t => t.id === draggedId);
+                if (idx === -1) return;
+                let targetIdx = idx;
+                for (let i = 0; i < editList.length; i++) {
+                    if (i === idx) continue;
+                    const el = rowRefs.current[editList[i].id];
+                    if (!el) continue;
+                    const r = el.getBoundingClientRect();
+                    if (e.clientY > r.top && e.clientY < r.bottom) { targetIdx = i; break; }
+                }
+                if (targetIdx !== idx) {
+                    setEditList(prev => {
+                        const next = prev.slice();
+                        const [moved] = next.splice(idx, 1);
+                        next.splice(targetIdx, 0, moved);
+                        return next;
+                    });
+                }
+            };
+
+            const handleDragPointerUp = async (e) => {
+                const draggedId = dragInfoRef.current.id;
+                dragInfoRef.current = { id: null, startClientY: 0 };
+                setDragging(null);
+                if (!draggedId) return;
+                vibrate(10);
+                await persistEditListOrder(editList);
+            };
 
             const weeklyCount = useMemo(() => {
                 const start = getStartOfWeek();
@@ -1182,6 +1346,49 @@
                                 }}
                             />
                         )}
+                    </div>
+                );
+            };
+
+            // 編集モード用の行：チェックボックスで選択 & ドラッグハンドルで並び替え
+            const EditableTopicRow = ({ t, index }) => {
+                const rank = getRank(t.reviewCount || 0);
+                const isDraggingThis = dragging && dragging.id === t.id;
+                const isSelected = selectedIds.has(t.id);
+                const style = isDraggingThis
+                    ? { transform: `translateY(${dragging.deltaY}px)`, transition: 'none' }
+                    : { transform: 'none', transition: 'transform 0.18s ease' };
+                return (
+                    <div
+                        ref={(el) => { if (el) rowRefs.current[t.id] = el; else delete rowRefs.current[t.id]; }}
+                        style={style}
+                        className={`edit-row relative flex items-center gap-3 bg-[var(--bg-card)] border rounded-2xl px-3 py-3 shadow-lg ${isDraggingThis ? 'is-dragging border-indigo-500/60 shadow-2xl' : 'border-[var(--border-color)]'} ${isSelected ? 'ring-2 ring-indigo-500/60' : ''}`}
+                    >
+                        <button
+                            type="button"
+                            onClick={() => toggleSelected(t.id)}
+                            className={`shrink-0 h-6 w-6 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected ? 'bg-indigo-600 border-indigo-500' : 'border-[var(--border-strong)] bg-[var(--bg-card-soft)]'}`}
+                        >
+                            {isSelected && <Icon name="Check" size={14} className="text-white check-pop" />}
+                        </button>
+
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <h3 className="text-sm font-bold text-[var(--text-primary)] truncate">{t.title}</h3>
+                                <span className={`text-[10px] font-black mono px-2 py-0.5 rounded-full border shrink-0 ${RANK_STYLES[rank]}`}>{rank}</span>
+                            </div>
+                            <p className="text-[10px] text-[var(--text-tertiary)] mono-num mt-0.5">復習回数: {t.reviewCount || 0} 回</p>
+                        </div>
+
+                        <div
+                            className="drag-handle shrink-0 h-9 w-9 flex items-center justify-center text-[var(--text-muted)] hover:text-indigo-400 rounded-lg hover:bg-[var(--bg-card-soft)]"
+                            onPointerDown={(e) => handleDragPointerDown(e, t)}
+                            onPointerMove={handleDragPointerMove}
+                            onPointerUp={handleDragPointerUp}
+                            onPointerCancel={handleDragPointerUp}
+                        >
+                            <Icon name="GripVertical" size={20} />
+                        </div>
                     </div>
                 );
             };
@@ -1524,25 +1731,38 @@
                                                 </>
                                             )}
                                         </div>
-                                        {tabs.find(t => t.name === activeSubject)?.id && (
-                                            <button type="button" onClick={() => handleDeleteSubject(tabs.find(t => t.name === activeSubject))} className="text-xs font-bold flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-[var(--bg-card-soft)] text-[var(--text-muted)] hover:text-red-400 hover:bg-[var(--bg-card-soft-hover)] transition-colors">
-                                                <Icon name="Trash2" size={12} />
-                                            </button>
-                                        )}
+                                        <button type="button" onClick={handleToggleEditMode} className={`text-xs font-bold flex items-center gap-1 px-3 py-1.5 rounded-full transition-colors ${editMode ? 'bg-indigo-600 text-white' : 'bg-[var(--bg-card-soft)] text-[var(--text-tertiary)] hover:text-indigo-400 hover:bg-[var(--bg-card-soft-hover)]'}`}>
+                                            <Icon name={editMode ? "Check" : "ListChecks"} size={12} />
+                                            {editMode ? '完了' : '編集'}
+                                        </button>
                                     </div>
                                 </div>
 
-                                {visibleTopics.length === 0 ? (
-                                    <div className="text-center py-16 text-[var(--text-tertiary)] text-sm font-bold border-2 border-dashed border-[var(--border-color)] rounded-3xl">論点を登録して記憶をトラッキングしましょう</div>
+                                {editMode ? (
+                                    editList.length === 0 ? (
+                                        <div className="text-center py-16 text-[var(--text-tertiary)] text-sm font-bold border-2 border-dashed border-[var(--border-color)] rounded-3xl">論点がありません</div>
+                                    ) : (
+                                        <>
+                                            <p className="text-[10px] text-[var(--text-tertiary)] font-bold px-1 flex items-center gap-1.5"><Icon name="Info" size={11} />右のハンドルをドラッグして並び替え、○をタップして選択できます</p>
+                                            <div className="space-y-2.5">
+                                                {editList.map((t, i) => <EditableTopicRow key={t.id} t={t} index={i} />)}
+                                            </div>
+                                        </>
+                                    )
                                 ) : (
-                                    <div className="space-y-4">
-                                        {visibleTopics.map((t) => <TopicCard key={t.id} t={t} onReview={handleReviewAction} />)}
-                                    </div>
+                                    visibleTopics.length === 0 ? (
+                                        <div className="text-center py-16 text-[var(--text-tertiary)] text-sm font-bold border-2 border-dashed border-[var(--border-color)] rounded-3xl">論点を登録して記憶をトラッキングしましょう</div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {visibleTopics.map((t) => <TopicCard key={t.id} t={t} onReview={handleReviewAction} />)}
+                                        </div>
+                                    )
                                 )}
                             </div>
                         )}
 
                         {/* 学習が進むほど頻度が下がるため、追加フォームはリストの一番下（ナビゲーションバーの直前）に配置 */}
+                        {!editMode && (
                         <form onSubmit={handleAddTopic} className="bg-[var(--bg-card)] p-5 rounded-3xl border border-[var(--border-color)] flex flex-col gap-3 shadow-lg">
                             <label className="text-xs font-black text-[var(--text-primary)] uppercase mono tracking-widest ml-1 flex items-center gap-2">
                                 <Icon name="FolderTree" size={14} className="text-indigo-400" /> {activeSubject || '—'} に論点を追加
@@ -1552,24 +1772,46 @@
                                 <button type="submit" disabled={isSubmitting || !activeSubject} className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white px-5 rounded-xl font-bold flex items-center justify-center transition-colors"><Icon name="Plus" size={24} /></button>
                             </div>
                         </form>
+                        )}
                         </>
                         ) : (
                             <StatsView />
                         )}
                     </main>
 
-                    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[var(--bg-header)] backdrop-blur border-t border-[var(--border-color)] pb-safe">
-                        <div className="max-w-md mx-auto grid grid-cols-2 gap-2 p-3">
-                            <button type="button" onClick={() => setView('review')} className={`flex flex-col items-center gap-1 py-2 rounded-2xl text-xs font-bold transition-colors ${view === 'review' ? 'bg-indigo-600 text-white' : 'text-[var(--text-tertiary)] hover:bg-[var(--bg-card-soft)]'}`}>
-                                <Icon name="Brain" size={20} />
-                                復習
-                            </button>
-                            <button type="button" onClick={() => setView('stats')} className={`flex flex-col items-center gap-1 py-2 rounded-2xl text-xs font-bold transition-colors ${view === 'stats' ? 'bg-indigo-600 text-white' : 'text-[var(--text-tertiary)] hover:bg-[var(--bg-card-soft)]'}`}>
-                                <Icon name="LineChart" size={20} />
-                                グラフ
-                            </button>
+                    {editMode ? (
+                        <div className="fixed bottom-0 left-0 right-0 z-[60] bg-[var(--bg-header)] backdrop-blur border-t border-[var(--border-color)] pb-safe animate-in">
+                            <div className="max-w-md mx-auto flex items-center justify-between gap-2 p-3">
+                                <button type="button" onClick={handleSelectAllToggle} className="text-xs font-bold flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg-card-soft)] text-[var(--text-secondary)] hover:bg-[var(--bg-card-soft-hover)] transition-colors">
+                                    <Icon name={selectedIds.size === editList.length && editList.length > 0 ? "CheckSquare" : "Square"} size={14} />
+                                    全選択
+                                </button>
+                                <span className="text-xs font-bold mono-num text-[var(--text-tertiary)]">{selectedIds.size}件選択中</span>
+                                <button
+                                    type="button"
+                                    onClick={handleBulkDelete}
+                                    disabled={selectedIds.size === 0 || isBulkDeleting}
+                                    className="text-xs font-bold flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 disabled:opacity-30 text-white transition-colors"
+                                >
+                                    <Icon name="Trash2" size={14} />
+                                    削除
+                                </button>
+                            </div>
                         </div>
-                    </nav>
+                    ) : (
+                        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[var(--bg-header)] backdrop-blur border-t border-[var(--border-color)] pb-safe">
+                            <div className="max-w-md mx-auto grid grid-cols-2 gap-2 p-3">
+                                <button type="button" onClick={() => setView('review')} className={`flex flex-col items-center gap-1 py-2 rounded-2xl text-xs font-bold transition-colors ${view === 'review' ? 'bg-indigo-600 text-white' : 'text-[var(--text-tertiary)] hover:bg-[var(--bg-card-soft)]'}`}>
+                                    <Icon name="Brain" size={20} />
+                                    復習
+                                </button>
+                                <button type="button" onClick={() => setView('stats')} className={`flex flex-col items-center gap-1 py-2 rounded-2xl text-xs font-bold transition-colors ${view === 'stats' ? 'bg-indigo-600 text-white' : 'text-[var(--text-tertiary)] hover:bg-[var(--bg-card-soft)]'}`}>
+                                    <Icon name="LineChart" size={20} />
+                                    グラフ
+                                </button>
+                            </div>
+                        </nav>
+                    )}
                 </div>
             );
         }
