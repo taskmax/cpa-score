@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>復習管理</title>
+    <title>復習マネージャー</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
@@ -102,15 +102,15 @@
         }
         .card-impact-glow { animation: cardImpactGlow 0.6s ease-out both; }
 
-        /* ===== 定着率パーセンテージの高速カウントアップ（オドメーター風スピン） =====
-           以前は「+X% 回復」という別テキストが浮き上がる演出だったが、廃止。
-           代わりに定着率の数字そのものが約1.5秒かけて高速で回転しながらカウントアップする。 */
-        @keyframes retentionSpin {
-            0%   { transform: translateY(0); filter: blur(0px); }
-            50%  { transform: translateY(-1.5px); filter: blur(0.7px); }
-            100% { transform: translateY(0); filter: blur(0px); }
+        /* ===== 定着率パーセンテージのカウントアップ =====
+           以前は数字がブレる／震えるオドメーター風の演出だったが、安っぽく見えるため廃止。
+           数字そのものは動かさず、光彩（text-shadow）のみをゆっくり明滅させて
+           「今まさに数字が動いている」ことをさりげなく伝える、揺れのないスムーズな演出にする。 */
+        @keyframes retentionGlow {
+            0%, 100% { text-shadow: 0 0 6px currentColor; }
+            50% { text-shadow: 0 0 16px currentColor; }
         }
-        .retention-counting { animation: retentionSpin 0.09s linear infinite; text-shadow: 0 0 12px currentColor; }
+        .retention-counting { animation: retentionGlow 0.5s ease-in-out infinite; }
         @keyframes flamePulse { 0%,100% { opacity: 0.85; transform: scale(1); } 50% { opacity: 1; transform: scale(1.12); } }
         .flame-pulse { animation: flamePulse 1.6s ease-in-out infinite; }
 
@@ -556,6 +556,87 @@
             osc.stop(now + 0.1);
         };
 
+        // ===== 定着率カウントアップ中の「フューン」という上昇SE =====
+        // カウントアップの所要時間にぴったり合わせて、周波数がなめらかに上昇していく
+        // サイン波を鳴らす。音量は控えめにし、最後にふわっと減衰させて聴き疲れしないようにする。
+        let __retentionRiseOsc = null;
+        const playRetentionRiseSound = (durationMs = 1500) => {
+            const ctx = getAudioCtx();
+            if (!ctx) return;
+            stopRetentionRiseSound();
+            const now = ctx.currentTime;
+            const dur = durationMs / 1000;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(260, now);
+            osc.frequency.exponentialRampToValueAtTime(1100, now + dur * 0.92);
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.exponentialRampToValueAtTime(0.11, now + dur * 0.15);
+            gain.gain.setValueAtTime(0.11, now + dur * 0.8);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+            osc.connect(gain).connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + dur + 0.05);
+            __retentionRiseOsc = osc;
+        };
+        const stopRetentionRiseSound = () => {
+            if (__retentionRiseOsc) { try { __retentionRiseOsc.stop(); } catch (e) {} __retentionRiseOsc = null; }
+        };
+
+        // ===== ランクアップ達成音（華やかな上昇アルペジオ） =====
+        const playRankUpSound = () => {
+            const ctx = getAudioCtx();
+            if (!ctx) return;
+            const now = ctx.currentTime;
+            const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
+            notes.forEach((freq, i) => {
+                const t = now + i * 0.09;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, t);
+                gain.gain.setValueAtTime(0.0001, t);
+                gain.gain.exponentialRampToValueAtTime(0.22, t + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+                osc.connect(gain).connect(ctx.destination);
+                osc.start(t);
+                osc.stop(t + 0.4);
+            });
+            // 仕上げのきらめき
+            const sparkle = ctx.createOscillator();
+            const sGain = ctx.createGain();
+            sparkle.type = 'sine';
+            sparkle.frequency.setValueAtTime(1568, now + 0.3);
+            sparkle.frequency.exponentialRampToValueAtTime(2093, now + 0.55);
+            sGain.gain.setValueAtTime(0.0001, now + 0.3);
+            sGain.gain.exponentialRampToValueAtTime(0.15, now + 0.32);
+            sGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.65);
+            sparkle.connect(sGain).connect(ctx.destination);
+            sparkle.start(now + 0.3);
+            sparkle.stop(now + 0.7);
+        };
+
+        // ===== 経験値バー増加音（軽やかな2音チャイム） =====
+        const playXpGainSound = () => {
+            const ctx = getAudioCtx();
+            if (!ctx) return;
+            const now = ctx.currentTime;
+            [ [740, 0], [988, 0.08] ].forEach(([freq, delay]) => {
+                const t = now + delay;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, t);
+                gain.gain.setValueAtTime(0.0001, t);
+                gain.gain.exponentialRampToValueAtTime(0.18, t + 0.015);
+                gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+                osc.connect(gain).connect(ctx.destination);
+                osc.start(t);
+                osc.stop(t + 0.25);
+            });
+        };
+
         const computeSValues = (intervalDays) => {
             const thresholdFrac = REVIEW_THRESHOLD / 100;
             return (intervalDays && intervalDays.length ? intervalDays : DEFAULT_REVIEW_INTERVALS).map(d => -(Math.max(0.1, d) * 24) / Math.log(thresholdFrac));
@@ -565,7 +646,8 @@
         // （＝まだ一度も復習していない論点は「未定着」というシンプルな状態を明示する）
         const getMemoryRetention = (hours, reviewCount, sValues) => {
             if (!reviewCount || reviewCount <= 0) return 0;
-            if (hours <= 0) return 100;
+            // 復習完了から1分間は、演出上・体感上の分かりやすさのため定着率を100%固定表示する
+            if (hours <= (1 / 60)) return 100;
             const values = sValues && sValues.length ? sValues : computeSValues(DEFAULT_REVIEW_INTERVALS);
             const s = values[Math.min(reviewCount, values.length - 1)];
             const rate = 100 * Math.exp(-hours / s);
@@ -744,6 +826,7 @@
             const [editingGoals, setEditingGoals] = useState(false);
             const [goalForm, setGoalForm] = useState({ weekly: DEFAULT_SETTINGS.weeklyGoal, monthly: DEFAULT_SETTINGS.monthlyGoal });
             const [showSettings, setShowSettings] = useState(false);
+            const [showStreakModal, setShowStreakModal] = useState(false);
 
             // ===== iOSオーディオアンロック用オーバーレイ =====
             const [audioUnlocked, setAudioUnlocked] = useState(false);
@@ -1016,6 +1099,11 @@
                 return { blue, warn, red, total, percentage };
             }, [topics, intervalDays]);
 
+            // ===== レベル・経験値システム =====
+            // レベルは「全論点の定着率の平均（overallStats.percentage）」と完全連動する（最大Lv100）。
+            // 定着率が下がればレベルも自動的に下がる（＝レベルダウンが起こる）。
+            const level = Math.max(0, Math.min(100, overallStats.percentage));
+
             const perSubjectGauge = useMemo(() => {
                 return tabs.map(tab => {
                     const items = topics.filter(t => (t.subject || 'その他') === tab.name);
@@ -1205,7 +1293,14 @@
                 const start = getStartOfWeek();
                 return reviewLog.filter(r => new Date(r.timestamp) >= start);
             }, [reviewLog]);
-            const weeklyRecovered = useMemo(() => weeklyLog.reduce((s, r) => s + (r.recovered || 0), 0), [weeklyLog]);
+            // 「今週の合計回復」＝ 今週開始時点の定着率（全体平均）と、現在の定着率（全体平均）との差分。
+            // 今週開始より前の最新スナップショットを基準値とする（無ければ現在値＝差分0）。
+            const weeklyStartBaseline = useMemo(() => {
+                const startKey = getLocalDateKey(getStartOfWeek());
+                const before = statsHistory.filter(h => h.date < startKey).sort((a, b) => (a.date < b.date ? 1 : -1));
+                return before.length > 0 ? before[0].percentage : overallStats.percentage;
+            }, [statsHistory, overallStats.percentage]);
+            const weeklyRecovered = useMemo(() => overallStats.percentage - weeklyStartBaseline, [overallStats.percentage, weeklyStartBaseline]);
 
             const handleAddTopic = async (e) => {
                 e.preventDefault();
@@ -1270,6 +1365,9 @@
                 if (!user) return;
                 const rc = topic.reviewCount || 0;
                 const recovered = Math.max(0, Math.round(100 - retBefore));
+                // ④ 経験値バー増加・レベル更新演出（データ確定と同時に、達成感のある軽いチャイムを鳴らす）
+                playXpGainSound();
+                vibrate(12);
                 const { db, appId, doc, updateDoc, collection, addDoc } = window.fb;
                 await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'cpa_memory', topic.id), {
                     lastStudiedAt: new Date().toISOString(), reviewCount: rc + 1
@@ -1414,11 +1512,11 @@
                     }
                 }, [rc, pendingNewRc]);
 
-                // 復習完了フロー：
-                // ① 長押し完了（この関数の呼び出し時点） → 視覚/聴覚/触覚エフェクトのみ即時発火（データはまだ更新しない）
-                // ② 0.7秒後 → ランクアップしていれば「旧ランクが破裂して消える」演出を開始
-                // ③ 破裂完了後（+0.36秒） → 「新ランクが爆誕する」演出。新旧が重なって見える瞬間は一切無い
-                // ④ 完了から約2.0秒後 → 実際にステート（Firestore）を更新し、リストが正しい位置へ再ソートされる
+                // 復習完了フロー（各演出は前の演出が完全に終わってから次を開始する）：
+                // ① 長押し完了（この関数の呼び出し時点） → 視覚/聴覚/触覚エフェクトが即時発火
+                // ② 定着率が「フューン」という上昇SEと共に、揺れずスムーズにカウントアップ（約1.5秒）
+                // ③ カウントアップが完全に終わった後 → ランクアップしていれば専用SE付きの昇格演出（破裂→爆誕）
+                // ④ ランクアップ演出（無ければ③の直後）が終わった後 → 実データを確定し、経験値バー増加・レベル更新
                 const fireReview = () => {
                     const startRet = ret;
                     const newRc = rc + 1;
@@ -1433,11 +1531,35 @@
                     setPendingNewRc(newRc);
                     setTimeout(() => setIsImpacting(false), 600);
 
-                    // 定着率の数字を約1.5秒かけて高速回転しながら100%までカウントアップさせる（オドメーター演出）
+                    // ④ 実データ更新（この時点で経験値バー・レベルが連動して更新される）
+                    const commitReview = () => {
+                        onReview(t, startRet);
+                    };
+
+                    // ③ ランクアップ演出（破裂→爆誕の2段階。新旧が重なって見える瞬間は一切無い）
+                    const runRankUpThenCommit = () => {
+                        if (!willRankUp) { commitReview(); return; }
+                        setRankAnimPhase('exploding');
+                        vibrate([0, 12, 30, 10]);
+                        setTimeout(() => {
+                            setLockedRc(newRc);
+                            setRankAnimPhase('entering');
+                            playRankUpSound();
+                            vibrate([0, 20, 40, 30]);
+                            setTimeout(() => {
+                                setRankAnimPhase('idle');
+                                commitReview();
+                            }, 460);
+                        }, 360);
+                    };
+
+                    // ② 定着率の数字を約1.5秒かけて、上昇SEと共にスムーズにカウントアップさせる
+                    //    （数字自体はブレさせず、光彩の明滅のみで「動いている」ことを伝える）
                     if (retRafRef.current) cancelAnimationFrame(retRafRef.current);
                     setIsCountingRet(true);
-                    const countStart = performance.now();
                     const COUNT_DURATION = 1500;
+                    playRetentionRiseSound(COUNT_DURATION);
+                    const countStart = performance.now();
                     const tickRet = (now) => {
                         const p = Math.min(1, (now - countStart) / COUNT_DURATION);
                         const eased = 1 - Math.pow(1 - p, 3);
@@ -1447,28 +1569,11 @@
                         } else {
                             setDisplayRet(100);
                             setIsCountingRet(false);
+                            // カウントアップが完全に終わってから、次の演出（ランクアップ→データ確定）へ進む
+                            runRankUpThenCommit();
                         }
                     };
                     retRafRef.current = requestAnimationFrame(tickRet);
-
-                    // ②③ ランクアップ演出（0.7秒後に開始。破裂→爆誕の2段階で新旧は絶対に重ならない）
-                    if (willRankUp) {
-                        setTimeout(() => {
-                            setRankAnimPhase('exploding');
-                            vibrate([0, 12, 30, 10]);
-                            setTimeout(() => {
-                                setLockedRc(newRc);
-                                setRankAnimPhase('entering');
-                                vibrate([0, 20, 40, 30]);
-                                setTimeout(() => setRankAnimPhase('idle'), 460);
-                            }, 360);
-                        }, 700);
-                    }
-
-                    // ④ 実データ更新（完了から約2.0秒後、演出が落ち着いてから）
-                    setTimeout(() => {
-                        onReview(t, startRet);
-                    }, 2000);
                 };
 
 
@@ -1513,6 +1618,7 @@
                 useEffect(() => () => {
                     if (chargeRafRef.current) cancelAnimationFrame(chargeRafRef.current);
                     if (retRafRef.current) cancelAnimationFrame(retRafRef.current);
+                    stopRetentionRiseSound();
                 }, []);
 
                 if (isEditing) {
@@ -1531,7 +1637,9 @@
                                 </div>
                                 <div>
                                     <label className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono block mb-1">総復習回数</label>
-                                    <input type="number" min="0" className="w-full h-11 min-w-0 box-border bg-[var(--bg-input)] border border-[var(--border-strong)] px-3 rounded-xl outline-none font-bold text-[var(--text-primary)] text-sm mono-num" value={editForm.reviewCount} onChange={e => setEditForm({ ...editForm, reviewCount: e.target.value })} />
+                                    <select className="w-full h-11 min-w-0 box-border bg-[var(--bg-input)] border border-[var(--border-strong)] px-3 rounded-xl outline-none font-bold text-[var(--text-primary)] text-sm mono-num appearance-none" value={editForm.reviewCount} onChange={e => setEditForm({ ...editForm, reviewCount: e.target.value })}>
+                                        {Array.from({ length: 101 }, (_, i) => i).map(n => <option key={n} value={n}>{n} 回</option>)}
+                                    </select>
                                 </div>
                                 <div>
                                     <label className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono block mb-1">最終復習日</label>
@@ -1774,6 +1882,69 @@
                 );
             };
 
+            // ===== 連続記録（ストリーク）画面 =====
+            const StreakModal = () => {
+                const current = settings.currentStreak || 0;
+                const best = settings.bestStreak || 0;
+                const lastDate = settings.lastLoginDate;
+                const milestones = [3, 7, 14, 30, 60, 100];
+                const nextMilestone = milestones.find(m => m > current) || null;
+
+                return (
+                    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center">
+                        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowStreakModal(false)}></div>
+                        <div className="relative w-full sm:max-w-md max-h-[88vh] overflow-y-auto bg-[var(--bg-app-to)] border border-[var(--border-color)] rounded-t-3xl sm:rounded-3xl shadow-2xl animate-in">
+                            <div className="sticky top-0 bg-[var(--bg-header)] backdrop-blur border-b border-[var(--border-color)] px-5 py-4 flex items-center justify-between z-10">
+                                <h2 className="text-sm font-black text-[var(--text-primary)] flex items-center gap-2"><Icon name="Flame" size={16} className="text-orange-400" />連続記録</h2>
+                                <button type="button" onClick={() => setShowStreakModal(false)} className="h-8 w-8 flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--text-primary)] bg-[var(--bg-card-soft)] rounded-full transition-colors active:scale-90">
+                                    <Icon name="X" size={14} />
+                                </button>
+                            </div>
+
+                            <div className="p-5 space-y-5">
+                                <div className="bg-gradient-to-b from-orange-500/15 to-transparent border border-orange-400/30 rounded-3xl p-6 text-center shadow-lg">
+                                    <Icon name="Flame" size={40} className="text-orange-400 mx-auto mb-2 flame-pulse" />
+                                    <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest mb-1">現在の連続日数</p>
+                                    <p className="text-6xl mono-num tracking-tighter text-orange-400"><CountUpNumber value={current} suffix=" 日" /></p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-4 text-center shadow-lg">
+                                        <Icon name="Trophy" size={16} className="text-amber-400 mx-auto mb-1.5" />
+                                        <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono mb-1">自己ベスト</p>
+                                        <p className="text-2xl mono-num font-black text-[var(--text-primary)]">{best} 日</p>
+                                    </div>
+                                    <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-4 text-center shadow-lg">
+                                        <Icon name="CalendarCheck" size={16} className="text-indigo-400 mx-auto mb-1.5" />
+                                        <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono mb-1">最終ログイン</p>
+                                        <p className="text-sm mono-num font-black text-[var(--text-primary)]">{lastDate || '—'}</p>
+                                    </div>
+                                </div>
+
+                                <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-3">
+                                    <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest flex items-center gap-1.5"><Icon name="Target" size={13} className="text-indigo-400" />次の目標</p>
+                                    {nextMilestone ? (
+                                        <>
+                                            <div className="flex justify-between items-center text-xs mono-num">
+                                                <span className="text-[var(--text-tertiary)] font-bold">{nextMilestone}日連続まで</span>
+                                                <span className="text-[var(--text-primary)] font-black">あと{nextMilestone - current}日</span>
+                                            </div>
+                                            <div className="w-full h-2.5 rounded-full bg-[var(--bg-card-soft)] overflow-hidden">
+                                                <div className="h-full rounded-full bg-gradient-to-r from-orange-500 to-amber-400 transition-all duration-500" style={{ width: `${Math.min(100, (current / nextMilestone) * 100)}%` }}></div>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <p className="text-xs font-black text-emerald-400 flex items-center gap-1.5"><Icon name="Trophy" size={14} />全マイルストーンを達成済みです！</p>
+                                    )}
+                                </div>
+
+                                <p className="text-[10px] text-[var(--text-muted)] font-bold leading-relaxed text-center">毎日ログインして復習することで連続記録が伸びます。1日でも間隔が空くと記録はリセットされます。</p>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
             const StatsView = () => {
                 const { blue, warn, red, total, percentage } = overallStats;
                 const color = percentage > 80 ? 'text-indigo-400' : percentage > REVIEW_THRESHOLD ? 'text-yellow-400' : 'text-red-400';
@@ -1837,11 +2008,11 @@
                             </div>
                         </div>
 
-                        <div className="bg-gradient-to-b from-indigo-500/10 to-transparent border border-indigo-400/30 rounded-3xl p-6 text-center shadow-lg relative overflow-hidden">
-                            <Icon name="Sparkles" size={16} className="text-indigo-400 mx-auto mb-1" />
-                            <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest mb-1">今週の合計回復</p>
-                            <p className="text-5xl mono-num tracking-tighter text-indigo-400">
-                                <CountUpNumber value={weeklyRecovered} prefix="+" suffix="%" />
+                        <div className={`bg-gradient-to-b ${weeklyRecovered >= 0 ? 'from-indigo-500/10' : 'from-red-500/10'} to-transparent border ${weeklyRecovered >= 0 ? 'border-indigo-400/30' : 'border-red-400/30'} rounded-3xl p-6 text-center shadow-lg relative overflow-hidden`}>
+                            <Icon name="Sparkles" size={16} className={`${weeklyRecovered >= 0 ? 'text-indigo-400' : 'text-red-400'} mx-auto mb-1`} />
+                            <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest mb-1">今週の合計回復（週初との差分）</p>
+                            <p className={`text-5xl mono-num tracking-tighter ${weeklyRecovered >= 0 ? 'text-indigo-400' : 'text-red-400'}`}>
+                                <CountUpNumber value={weeklyRecovered} prefix={weeklyRecovered >= 0 ? '+' : ''} suffix="%" />
                             </p>
                         </div>
 
@@ -1985,6 +2156,7 @@
             return (
                 <div className="min-h-screen pb-12 bg-gradient-to-b from-[var(--bg-app-from)] to-[var(--bg-app-to)]">
                     {showSettings && <SettingsModal />}
+                    {showStreakModal && <StreakModal />}
                     {showBulkCountModal && (
                         <div className="fixed inset-0 z-[120] flex items-end sm:items-center justify-center">
                             <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => !isBulkSettingCount && setShowBulkCountModal(false)}></div>
@@ -2019,22 +2191,33 @@
                     )}
                     <header className="bg-[var(--bg-header)] backdrop-blur border-b border-[var(--border-color)] px-4 pb-4 pt-safe shadow-2xl sticky top-0 z-50">
                         <div className="max-w-md mx-auto flex justify-between items-center mb-3 gap-2">
-                            <h1 className="text-sm font-black text-[var(--text-primary)] tracking-widest flex items-center gap-2 min-w-0 truncate">
-                                <Icon name="Brain" size={18} className="text-indigo-400 shrink-0" /> <span className="truncate">復習管理</span>
-                            </h1>
+                            <div className="flex flex-col min-w-0 flex-1 gap-1.5">
+                                <h1 className="text-sm font-black text-[var(--text-primary)] tracking-widest flex items-center gap-2 min-w-0 truncate">
+                                    <Icon name="Brain" size={18} className="text-indigo-400 shrink-0" /> <span className="truncate">復習管理</span>
+                                </h1>
+                                {/* ===== 経験値バー：全論点の平均定着率と完全連動するレベル表示 ===== */}
+                                <div className="flex items-center gap-2 max-w-[190px]">
+                                    <span className="text-[10px] font-black mono text-amber-300 shrink-0 flex items-center gap-0.5">
+                                        <Icon name="Star" size={11} className="text-amber-400" />Lv<CountUpNumber value={level} className="tabular-nums" />
+                                    </span>
+                                    <div className="flex-1 h-2 rounded-full bg-black/40 border border-amber-400/25 overflow-hidden">
+                                        <div className="h-full rounded-full bg-gradient-to-r from-amber-500 via-amber-300 to-yellow-200 transition-all duration-700 ease-out" style={{ width: `${level}%` }}></div>
+                                    </div>
+                                </div>
+                            </div>
                             <div className="flex items-center gap-1.5 shrink-0">
                                 {(settings.currentStreak || 0) > 0 && (
-                                    <span className="h-9 min-w-9 px-2.5 flex items-center justify-center gap-1 text-[10px] font-black mono-num text-orange-400 bg-orange-500/10 border border-orange-500/30 rounded-full">
+                                    <button type="button" onClick={() => { playTapSound(); setShowStreakModal(true); }} className="h-9 min-w-9 px-2.5 flex items-center justify-center gap-1 text-[10px] font-black mono-num text-orange-400 bg-orange-500/10 border border-orange-500/30 rounded-full active:scale-90 transition-transform">
                                         <Icon name="Flame" size={13} className="flame-pulse" />{settings.currentStreak}
-                                    </span>
+                                    </button>
                                 )}
-                                <button type="button" onClick={handleToggleTheme} className="h-9 w-9 flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--text-primary)] bg-[var(--bg-card-soft)] rounded-full transition-colors active:scale-90">
+                                <button type="button" onClick={() => { playTapSound(); handleToggleTheme(); }} className="h-9 w-9 flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--text-primary)] bg-[var(--bg-card-soft)] rounded-full transition-colors active:scale-90">
                                     <Icon name={settings.theme === 'light' ? 'Moon' : 'Sun'} size={14} />
                                 </button>
-                                <button type="button" onClick={() => setShowSettings(true)} className="h-9 w-9 flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--text-primary)] bg-[var(--bg-card-soft)] rounded-full transition-colors active:scale-90">
+                                <button type="button" onClick={() => { playTapSound(); setShowSettings(true); }} className="h-9 w-9 flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--text-primary)] bg-[var(--bg-card-soft)] rounded-full transition-colors active:scale-90">
                                     <Icon name="Settings" size={14} />
                                 </button>
-                                <button type="button" onClick={handleLogout} className="h-9 w-9 flex items-center justify-center text-xs font-bold text-[var(--text-tertiary)] hover:text-[var(--text-primary)] bg-[var(--bg-card-soft)] rounded-full transition-colors active:scale-95">
+                                <button type="button" onClick={() => { playTapSound(); handleLogout(); }} className="h-9 w-9 flex items-center justify-center text-xs font-bold text-[var(--text-tertiary)] hover:text-[var(--text-primary)] bg-[var(--bg-card-soft)] rounded-full transition-colors active:scale-95">
                                     <Icon name="LogOut" size={12} />
                                 </button>
                             </div>
