@@ -118,19 +118,16 @@
             animation: reviewEdgeMove 1.5s cubic-bezier(.22,.61,.36,1) forwards;
         }
 
-        /* ===== iOS向け ヒットストップ＆シェイク（視覚的な衝撃） ===== */
-        @keyframes cardHitStopShake {
-            0%   { transform: scale(1) translate(0,0) rotate(0deg); }
-            7%   { transform: scale(0.982) translate(0,0) rotate(0deg); }
-            15%  { transform: scale(0.982) translate(0,0) rotate(0deg); }
-            26%  { transform: scale(1) translate(-4px,1px) rotate(-0.9deg); }
-            38%  { transform: scale(1) translate(4px,-1px) rotate(0.9deg); }
-            50%  { transform: scale(1) translate(-3px,1px) rotate(-0.5deg); }
-            63%  { transform: scale(1) translate(3px,-1px) rotate(0.5deg); }
-            78%  { transform: scale(1) translate(-1px,0) rotate(-0.2deg); }
-            100% { transform: scale(1) translate(0,0) rotate(0deg); }
+        /* ===== 復習完了時の「衝撃」演出 =====
+           以前はカード全体を左右にガタつかせる shake 演出だったが、安っぽく見えるとの
+           フィードバックを受け、位置・回転を一切動かさない「発光パルス」のみに変更した。
+           transform（位置/回転/拡大）は使わず、box-shadow の明滅だけで達成感を出す。 */
+        @keyframes cardImpactGlow {
+            0%   { box-shadow: 0 0 0 0 rgba(129,140,248,0); }
+            30%  { box-shadow: 0 0 0 3px rgba(129,140,248,0.35), 0 0 24px 4px rgba(129,140,248,0.28); }
+            100% { box-shadow: 0 0 0 0 rgba(129,140,248,0); }
         }
-        .card-impact-shake { animation: cardHitStopShake 0.42s cubic-bezier(.36,.07,.19,.97) both; }
+        .card-impact-glow { animation: cardImpactGlow 0.6s ease-out both; }
 
         @keyframes floatUp {
             0% { transform: translateY(0) scale(0.8); opacity: 0; }
@@ -228,15 +225,63 @@
         }
         @keyframes perfectShine { 0% { background-position: 0% 50%; } 50% { background-position: 220% 50%; } 100% { background-position: 0% 50%; } }
 
-        /* ===== 復習ボタン 長押し（ホールド）演出 ===== */
-        @keyframes holdButtonShake {
-            0%, 100% { transform: translate(0, 0); }
-            25% { transform: translate(-1.5px, 1px); }
-            50% { transform: translate(1.5px, -1.5px); }
-            75% { transform: translate(-1px, 1.5px); }
+        /* ===== 復習ボタン 長押し（ホールド）演出 =====
+           以前は holdProgress >= 50% でボタンを小刻みに震わせていたが、安っぽく見えるため廃止。
+           代わりに charge が進むほど内側の光がじわっと強まる、上品な発光の高まりだけで力の高まりを表現する。 */
+        @keyframes holdGlowPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+            50% { box-shadow: inset 0 0 18px 2px rgba(255,255,255,0.22); }
         }
-        .hold-shake { animation: holdButtonShake 0.09s linear infinite; }
+        .hold-glow { animation: holdGlowPulse 0.85s ease-in-out infinite; }
         .hold-progress-fill { position: absolute; inset: 0; background: rgba(255,255,255,0.28); transform-origin: left center; pointer-events: none; }
+
+        /* ===== チャージゲージ先端のスパーク（溶接火花風）発光エフェクト ===== */
+        @keyframes sparkFlicker {
+            0%, 100% { opacity: 0.35; transform: translate(-50%, -50%) scale(0.7); }
+            20% { opacity: 1; transform: translate(-50%, -50%) scale(1.25); }
+            35% { opacity: 0.5; transform: translate(-50%, -50%) scale(0.85); }
+            55% { opacity: 1; transform: translate(-50%, -50%) scale(1.35); }
+            70% { opacity: 0.4; transform: translate(-50%, -50%) scale(0.75); }
+            85% { opacity: 0.9; transform: translate(-50%, -50%) scale(1.15); }
+        }
+        @keyframes sparkParticle {
+            0% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--ang)) translateX(0) scale(1); }
+            15% { opacity: 1; }
+            100% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--ang)) translateX(14px) scale(0.3); }
+        }
+        .hold-spark-tip {
+            position: absolute; top: 50%; width: 0; height: 0; pointer-events: none; z-index: 6;
+        }
+        .hold-spark-core {
+            position: absolute; top: 0; left: 0; width: 14px; height: 14px; border-radius: 50%;
+            background: radial-gradient(circle, #ffffff 0%, #fff2b8 30%, #ffd54a 55%, rgba(255,180,40,0) 75%);
+            box-shadow: 0 0 8px 2px rgba(255,214,90,0.9), 0 0 18px 6px rgba(255,150,30,0.55);
+            animation: sparkFlicker 0.32s ease-in-out infinite;
+        }
+        .hold-spark-particle {
+            position: absolute; top: 0; left: 0; width: 4px; height: 4px; border-radius: 50%;
+            background: #ffe27a; box-shadow: 0 0 4px 1px rgba(255,214,90,0.9);
+            animation: sparkParticle 0.5s linear infinite;
+            animation-delay: var(--delay);
+        }
+
+        /* ===== ランクバッジ フリップ演出（回転して新ランクへ切り替え） ===== */
+        @keyframes rankFlip {
+            0% { transform: perspective(240px) rotateY(0deg); }
+            45% { transform: perspective(240px) rotateY(90deg); }
+            55% { transform: perspective(240px) rotateY(90deg); }
+            100% { transform: perspective(240px) rotateY(0deg); }
+        }
+        .rank-flip-anim { animation: rankFlip 0.6s cubic-bezier(.4,0,.2,1) both; display: inline-block; }
+        @keyframes rankUpBurst {
+            0% { opacity: 0; transform: scale(0.6); }
+            30% { opacity: 1; transform: scale(1.15); }
+            100% { opacity: 0; transform: scale(1.6); }
+        }
+        .rank-up-burst {
+            position: absolute; inset: -6px; border-radius: 999px; pointer-events: none;
+            border: 2px solid rgba(250,204,21,0.85); animation: rankUpBurst 0.7s ease-out forwards;
+        }
 
         /* ===== 論点 編集モード（並び替え・一括削除） ===== */
         .edit-row { touch-action: pan-y; }
@@ -245,6 +290,10 @@
         .drag-handle:active { cursor: grabbing; }
         @keyframes checkPop { 0% { transform: scale(0.6); opacity: 0; } 60% { transform: scale(1.15); } 100% { transform: scale(1); opacity: 1; } }
         .check-pop { animation: checkPop 0.2s ease-out; }
+
+        /* ===== ランクピラミッド行：改行防止レイアウト ===== */
+        .pyramid-row { white-space: nowrap; flex-wrap: nowrap; }
+        .pyramid-row > span { white-space: nowrap; }
     </style>
 </head>
 <body>
@@ -323,6 +372,37 @@
         };
         const getRank = (rc) => RANKS[Math.min(rc || 0, RANKS.length - 1)];
 
+        // ===== 公認会計士試験 得点率(%)別人数分布 =====
+        // 「得点率(%):人数」形式の文字列から生成。全体の定着率平均をこの分布に重ね合わせて、
+        // 仮に得点率とみなした場合の推定順位・上位パーセンタイル・グレード(A〜D)を試算する。
+        const SCORE_DISTRIBUTION_RAW = "96:2,95:0,94:0,93:0,92:0,91:0,90:54,89:73,88:0,87:28,86:43,85:65,84:59,83:72,82:100,81:108,80:147,79:144,78:139,77:158,76:152,75:218,74:194,73:197,72:195,71:162,70:222,69:199,68:186,67:202,66:191,65:200,64:222,63:164,62:179,61:169,60:201,59:171,58:168,57:180,56:193,55:181,54:161,53:129,52:199,51:177,50:197,49:138,48:144,47:180,46:138,45:195,44:160,43:160,42:189,41:207,40:187,39:190,38:185,37:200,36:201,35:212,34:199,33:204,32:219,31:246,30:246,29:224,28:226,27:230,26:233,25:241,24:198,23:187,22:182,21:175,20:135,19:116,18:96,17:81,16:42,15:38,14:18,13:29,12:18,11:13,10:23,9:14,8:7,7:15,6:7,5:7,4:5,3:2,2:5,1:0,0:1";
+        const SCORE_DISTRIBUTION = SCORE_DISTRIBUTION_RAW.split(',').map(s => {
+            const [r, c] = s.split(':').map(Number);
+            return { rate: r, count: c };
+        });
+        const SCORE_DISTRIBUTION_MAX_RATE = Math.max(...SCORE_DISTRIBUTION.map(d => d.rate));
+        const SCORE_DISTRIBUTION_TOTAL = SCORE_DISTRIBUTION.reduce((s, d) => s + d.count, 0);
+        const SCORE_DISTRIBUTION_MAX_COUNT = Math.max(...SCORE_DISTRIBUTION.map(d => d.count), 1);
+        const GRADE_STYLES = {
+            A: 'text-amber-300 border-amber-400/50 bg-amber-500/10',
+            B: 'text-indigo-300 border-indigo-400/50 bg-indigo-500/10',
+            C: 'text-sky-300 border-sky-400/50 bg-sky-500/10',
+            D: 'text-slate-300 border-slate-400/40 bg-slate-500/10'
+        };
+        // 定着率(%)を仮に得点率とみなし、この分布の中での推定順位・上位パーセンタイル・グレードを算出する
+        const getDistributionRankInfo = (percentage) => {
+            const clampedRate = Math.max(0, Math.min(SCORE_DISTRIBUTION_MAX_RATE, Math.round(percentage)));
+            let higherCount = 0;
+            SCORE_DISTRIBUTION.forEach(d => { if (d.rate > clampedRate) higherCount += d.count; });
+            const rank = higherCount + 1;
+            const topPercent = SCORE_DISTRIBUTION_TOTAL > 0 ? (higherCount / SCORE_DISTRIBUTION_TOTAL) * 100 : 0;
+            let grade = 'D';
+            if (topPercent <= 25) grade = 'A';
+            else if (topPercent <= 50) grade = 'B';
+            else if (topPercent <= 75) grade = 'C';
+            return { rank, total: SCORE_DISTRIBUTION_TOTAL, topPercent, grade, clampedRate };
+        };
+
         const vibrate = (pattern) => {
             try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) {}
         };
@@ -351,6 +431,30 @@
                 if (__audioCtx.state === 'suspended') __audioCtx.resume();
                 return __audioCtx;
             } catch (e) { return null; }
+        };
+
+        // ===== iOSオーディオアンロック =====
+        // iOS（Safari）ではユーザーの Click イベント（TouchStart経由の一部イベントは無効）を
+        // トリガーとしてしか AudioContext のロックを解除できない。
+        // 「学習を開始する」ボタンの onClick 内でごく短い無音オシレーターを鳴らすことで、
+        // 以降の TouchStart（長押しチャージ音）でも確実に音が鳴るようにする。
+        const unlockAudioContext = () => {
+            const ctx = getAudioCtx();
+            if (!ctx) return;
+            try {
+                const buffer = ctx.createBuffer(1, 1, 22050);
+                const source = ctx.createBufferSource();
+                source.buffer = buffer;
+                source.connect(ctx.destination);
+                if (source.start) source.start(0); else source.noteOn(0);
+                // 念のため、ごく短い無音のオシレーターも鳴らしてロック解除を確実にする
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+                osc.connect(gain).connect(ctx.destination);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.01);
+            } catch (e) { /* noop */ }
         };
         // ===== 完了音（水系・統一）=====
         // チャージ中の「ポロポロ」水滴音との統一感を持たせるため、
@@ -637,6 +741,12 @@
             const [goalForm, setGoalForm] = useState({ weekly: DEFAULT_SETTINGS.weeklyGoal, monthly: DEFAULT_SETTINGS.monthlyGoal });
             const [showSettings, setShowSettings] = useState(false);
 
+            // ===== iOSオーディオアンロック用オーバーレイ =====
+            const [audioUnlocked, setAudioUnlocked] = useState(false);
+
+            // ===== 論点自動追加（手動トリガー） =====
+            const [isSeeding, setIsSeeding] = useState(false);
+
             // ===== 論点の編集モード（スライドで並び替え／選択して一括削除） =====
             const [editMode, setEditMode] = useState(false);
             const [selectedIds, setSelectedIds] = useState(() => new Set());
@@ -676,6 +786,7 @@
                 if (window.fb && window.fb.auth) {
                     try { await window.fb.signOut(window.fb.auth); } catch (error) {}
                 }
+                setAudioUnlocked(false);
             };
 
             useEffect(() => {
@@ -773,41 +884,69 @@
                 setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'cpa_settings', 'main'), { reviewIntervals: newIntervals }, { merge: true }).catch(() => {});
             };
 
-            // 初期論点のシード投入（重複防止・チラつき防止版）
-            // 「cpa_memory / cpa_subjects の初回スナップショットが両方確定してから」判定を行い、
-            // かつ「その科目に紐づく論点が cpa_memory に1つも存在しない場合のみ」その科目の初期論点を追加する。
-            // これにより、既にデータが存在するユーザーに対して誤って初期論点が再投入されることがなくなる。
+            // ===== デフォルト論点のシード投入処理（初回ログイン時の自動実行／設定画面からの手動実行の両方から呼ばれる共通関数） =====
+            // 「その科目に紐づく論点が cpa_memory に1つも存在しない場合のみ」その科目の初期論点を追加する。
+            // これにより、既にデータが存在するユーザーに対して誤って初期論点が再投入されることがない。
+            const runSeedDefaults = async () => {
+                if (!user || !window.fb || !window.fb.db) return { added: 0 };
+                const { db, appId, collection, addDoc } = window.fb;
+                let addedSubjects = 0;
+                for (let i = 0; i < DEFAULT_SUBJECTS.length; i++) {
+                    const subjectName = DEFAULT_SUBJECTS[i];
+                    // 厳密な判定：cpa_memory 内にこの科目の論点が1件でもあればスキップ
+                    const hasTopicsForSubject = topics.some(t => (t.subject || '') === subjectName);
+                    if (hasTopicsForSubject) continue;
+
+                    // 科目タブ自体が無ければ作成する（既にあれば追加しない＝重複防止）
+                    const subjectExists = subjectsDb.some(s => s.name === subjectName);
+                    if (!subjectExists) {
+                        await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'cpa_subjects'), {
+                            name: subjectName, order: i, createdAt: new Date().toISOString()
+                        });
+                    }
+
+                    const topicTitles = DEFAULT_TOPICS[subjectName] || [];
+                    for (let j = 0; j < topicTitles.length; j++) {
+                        await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'cpa_memory'), {
+                            title: topicTitles[j], subject: subjectName, lastStudiedAt: new Date().toISOString(),
+                            reviewCount: 0, createdAt: new Date().toISOString(), order: Date.now() + j
+                        });
+                    }
+                    addedSubjects++;
+                }
+                return { added: addedSubjects };
+            };
+
+            // 初回ログイン時のみ、データが完全に空の場合に自動でシードを投入する。
+            // 以降（2回目以降のログインや、既にデータがあるユーザー）は自動実行しない。
+            // 追加のシードが必要な場合は、設定画面の「デフォルト論点を追加」ボタンから手動で実行する。
             useEffect(() => {
                 if (!user || seededRef.current) return;
                 if (loading) return;
                 if (!topicsLoaded || !subjectsLoaded) return; // データが確定するまで判定しない（チラつき防止）
                 seededRef.current = true;
-                (async () => {
-                    const { db, appId, collection, addDoc } = window.fb;
-                    for (let i = 0; i < DEFAULT_SUBJECTS.length; i++) {
-                        const subjectName = DEFAULT_SUBJECTS[i];
-                        // 厳密な判定：cpa_memory 内にこの科目の論点が1件でもあればスキップ
-                        const hasTopicsForSubject = topics.some(t => (t.subject || '') === subjectName);
-                        if (hasTopicsForSubject) continue;
-
-                        // 科目タブ自体が無ければ作成する（既にあれば追加しない＝重複防止）
-                        const subjectExists = subjectsDb.some(s => s.name === subjectName);
-                        if (!subjectExists) {
-                            await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'cpa_subjects'), {
-                                name: subjectName, order: i, createdAt: new Date().toISOString()
-                            });
-                        }
-
-                        const topicTitles = DEFAULT_TOPICS[subjectName] || [];
-                        for (let j = 0; j < topicTitles.length; j++) {
-                            await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'cpa_memory'), {
-                                title: topicTitles[j], subject: subjectName, lastStudiedAt: new Date().toISOString(),
-                                reviewCount: 0, createdAt: new Date().toISOString(), order: Date.now() + j
-                            });
-                        }
-                    }
-                })();
+                // 初回ログイン＝そのユーザーにまだ論点も科目も1件も無い場合のみ自動実行
+                const isBrandNewUser = topics.length === 0 && subjectsDb.length === 0;
+                if (!isBrandNewUser) return;
+                runSeedDefaults();
             }, [user, loading, topicsLoaded, subjectsLoaded, topics, subjectsDb]);
+
+            // 設定画面からの手動トリガー。処理中は全画面ローディングでガードし、チラつき・操作の競合を防ぐ。
+            const handleManualSeed = async () => {
+                if (!user || isSeeding) return;
+                setIsSeeding(true);
+                try {
+                    const result = await runSeedDefaults();
+                    if (result.added === 0) {
+                        alert('追加できるデフォルト論点はありませんでした（既にすべて登録済みです）。');
+                    }
+                } catch (e) {
+                    console.error('Manual seed error:', e);
+                    alert('論点の自動追加に失敗しました。');
+                } finally {
+                    setIsSeeding(false);
+                }
+            };
 
             const tabs = useMemo(() => {
                 const map = {};
@@ -1137,20 +1276,58 @@
                 );
             }
 
+            // ===== iOSオーディオアンロック・オーバーレイ =====
+            // ログイン直後（画面初回表示時）に必ず一度、Clickイベントを要求する。
+            // このワンタップの onClick 内で無音オシレーターを鳴らし AudioContext のロックを解除しておくことで、
+            // 以降の「長押し（TouchStart）」チャージ音が iOS Safari でも確実に再生されるようにする。
+            if (!audioUnlocked) {
+                return (
+                    <div className="h-screen flex flex-col items-center justify-center p-6 space-y-8 pb-safe bg-gradient-to-b from-[#0a0a0f] to-black">
+                        <div className="text-center space-y-4">
+                            <Icon name="Brain" size={64} className="text-indigo-500 mx-auto flame-pulse" />
+                            <h1 className="text-2xl font-black text-white tracking-wider">準備OK！</h1>
+                            <p className="text-slate-400 text-sm font-bold leading-relaxed">タップして学習を開始します。<br />（音とハプティクスの準備を行います）</p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => { unlockAudioContext(); vibrate(10); setAudioUnlocked(true); }}
+                            className="bg-indigo-600 hover:bg-indigo-500 text-white font-black py-4 px-10 rounded-2xl shadow-xl active:scale-[0.98] transition-all flex items-center gap-3 w-full max-w-sm justify-center"
+                        >
+                            <Icon name="Play" size={20} /> 学習を開始する
+                        </button>
+                    </div>
+                );
+            }
+
             const RankBadge = ({ rc }) => {
                 const rank = getRank(rc);
                 return <span className={`text-[10px] font-black mono px-2 py-0.5 rounded-full border shrink-0 ${RANK_STYLES[rank]}`}>{rank}</span>;
             };
 
+            // ランクがフリップ演出付きで切り替わるバッジ（復習完了の余韻演出専用）
+            const FlippableRankBadge = ({ rc, flipToRc, flipping }) => {
+                const displayRc = flipping ? flipToRc : rc;
+                const rank = getRank(displayRc);
+                return (
+                    <span className="relative inline-block">
+                        {flipping && <span className="rank-up-burst"></span>}
+                        <span key={flipping ? 'flip' : 'still'} className={`text-[10px] font-black mono px-2 py-0.5 rounded-full border shrink-0 ${RANK_STYLES[rank]} ${flipping ? 'rank-flip-anim' : ''}`}>{rank}</span>
+                    </span>
+                );
+            };
+
             const TopicCard = ({ t, onReview }) => {
                 const [isEditing, setIsEditing] = useState(false);
                 const [isSweeping, setIsSweeping] = useState(false);
-                const [isShaking, setIsShaking] = useState(false);
+                const [isImpacting, setIsImpacting] = useState(false);
                 const [sweepKey, setSweepKey] = useState(0);
                 const [popup, setPopup] = useState(null);
                 const [holdProgress, setHoldProgress] = useState(0);
                 const [isCharging, setIsCharging] = useState(false);
                 const [showTopicSettings, setShowTopicSettings] = useState(false);
+                // ===== 完了後の余韻・ランクアップ演出用ステート =====
+                const [rankFlipping, setRankFlipping] = useState(false);
+                const [pendingRc, setPendingRc] = useState(null); // フリップ先に表示するランク回数
                 const chargeRafRef = useRef(null);
                 const chargeStartRef = useRef(0);
                 const completedRef = useRef(false);
@@ -1192,19 +1369,42 @@
                     setIsEditing(false);
                 };
 
+                // 復習完了フロー：
+                // ① 長押し完了（この関数の呼び出し時点） → 視覚/聴覚/触覚エフェクトのみ即時発火（データはまだ更新しない）
+                // ② 0.5秒後 → ランクアップしていればバッジがクルッと回転して新ランクに切り替わる演出
+                // ③ 完了から約1.8秒後 → 実際にステート（Firestore）を更新し、リストが正しい位置へ再ソートされる
                 const fireReview = () => {
                     const recovered = Math.max(0, Math.round(100 - ret));
-                    // 視覚(1.5秒)と完全同期したハプティクス（Android）とiOS向けヒットストップ・シェイク、SEを同時発火
+                    const newRc = rc + 1;
+                    const rankBefore = getRank(rc);
+                    const rankAfter = getRank(newRc);
+                    const willRankUp = rankAfter !== rankBefore;
+
+                    // ① 即時エフェクト（視覚・聴覚・触覚）。データはまだ更新しない。
                     vibrate(buildRevVibratePattern(1500));
                     playReviewSound();
                     setSweepKey(k => k + 1);
                     setIsSweeping(true);
-                    setIsShaking(true);
+                    setIsImpacting(true);
                     setPopup({ id: Date.now(), text: `+${recovered}% 回復` });
-                    setTimeout(() => setIsShaking(false), 420);
+                    setTimeout(() => setIsImpacting(false), 600);
                     setTimeout(() => setIsSweeping(false), 1550);
                     setTimeout(() => setPopup(null), 1750);
-                    onReview(t, ret);
+
+                    // ② ランクアップ演出（0.5秒後）
+                    if (willRankUp) {
+                        setTimeout(() => {
+                            setPendingRc(newRc);
+                            setRankFlipping(true);
+                            vibrate([0, 15, 40, 25]);
+                            setTimeout(() => setRankFlipping(false), 900);
+                        }, 500);
+                    }
+
+                    // ③ 実データ更新（完了から約1.8秒後、演出が落ち着いてから）
+                    setTimeout(() => {
+                        onReview(t, ret);
+                    }, 1800);
                 };
 
                 const cancelCharge = () => {
@@ -1279,7 +1479,7 @@
                 }
 
                 return (
-                    <div className={`relative rounded-2xl border p-5 flex flex-col gap-4 shadow-lg transition-colors overflow-hidden ${isNeedsReview ? 'border-red-500/50' : 'border-[var(--border-color)]'} ${isShaking ? 'card-impact-shake' : ''}`} style={{ backgroundColor: isNeedsReview ? 'var(--bg-danger-card)' : 'var(--bg-card)' }}>
+                    <div className={`relative rounded-2xl border p-5 flex flex-col gap-4 shadow-lg transition-colors overflow-hidden ${isNeedsReview ? 'border-red-500/50' : 'border-[var(--border-color)]'} ${isImpacting ? 'card-impact-glow' : ''}`} style={{ backgroundColor: isNeedsReview ? 'var(--bg-danger-card)' : 'var(--bg-card)' }}>
                         {isNeedsReview && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)] z-10" />}
                         {isSweeping && (
                             <div key={sweepKey} className="review-fill-el">
@@ -1291,9 +1491,11 @@
                         <div className="flex justify-between items-start">
                             <div className="flex-1 mr-4">
                                 <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                    {isNeedsReview && <Icon name="AlertCircle" size={16} className="text-red-500 animate-pulse" />}
+                                    <span className="w-4 h-4 shrink-0 flex items-center justify-center">
+                                        {isNeedsReview && <Icon name="AlertCircle" size={16} className="text-red-500 animate-pulse" />}
+                                    </span>
                                     <h3 className="text-base font-bold text-[var(--text-primary)] leading-tight">{t.title}</h3>
-                                    <RankBadge rc={rc} />
+                                    <FlippableRankBadge rc={rc} flipToRc={pendingRc} flipping={rankFlipping} />
                                     {isCustomInterval && <span className="text-[9px] font-black mono px-1.5 py-0.5 rounded-full border border-indigo-400/40 text-indigo-300 bg-indigo-500/10">個別</span>}
                                 </div>
                                 <p className="text-xs text-[var(--text-tertiary)] mono-num">復習回数: {rc} 回 ・ 最終復習: {new Date(t.lastStudiedAt).toLocaleDateString('ja-JP')}</p>
@@ -1328,9 +1530,18 @@
                                 onTouchEnd={endCharge}
                                 onTouchCancel={endCharge}
                                 onContextMenu={(e) => e.preventDefault()}
-                                className={`relative overflow-hidden font-bold mono py-2.5 px-5 rounded-xl shadow-lg transition-transform text-sm flex items-center gap-2 select-none touch-none ${isNeedsReview ? 'bg-red-600 text-white' : 'bg-indigo-600 text-white'} ${isCharging ? 'scale-95' : ''} ${isCharging && holdProgress >= 50 ? 'hold-shake' : ''}`}
+                                className={`relative overflow-hidden font-bold mono py-2.5 px-5 rounded-xl shadow-lg transition-transform text-sm flex items-center gap-2 select-none touch-none ${isNeedsReview ? 'bg-red-600 text-white' : 'bg-indigo-600 text-white'} ${isCharging ? 'scale-95' : ''} ${isCharging && holdProgress >= 50 ? 'hold-glow' : ''}`}
                             >
                                 <span className="hold-progress-fill" style={{ transform: `scaleX(${holdProgress / 100})`, transition: isCharging ? 'none' : 'transform 0.25s ease-out' }}></span>
+                                {isCharging && holdProgress > 4 && (
+                                    <span className="hold-spark-tip" style={{ left: `${holdProgress}%` }}>
+                                        <span className="hold-spark-core"></span>
+                                        <span className="hold-spark-particle" style={{ '--ang': '-25deg', '--delay': '0s' }}></span>
+                                        <span className="hold-spark-particle" style={{ '--ang': '10deg', '--delay': '0.12s' }}></span>
+                                        <span className="hold-spark-particle" style={{ '--ang': '-55deg', '--delay': '0.24s' }}></span>
+                                        <span className="hold-spark-particle" style={{ '--ang': '40deg', '--delay': '0.36s' }}></span>
+                                    </span>
+                                )}
                                 <span className="relative flex items-center gap-2">
                                     <Icon name={isCharging ? "Droplets" : "Brain"} size={18} /> {isCharging ? 'ホールド中…' : '長押しで復習完了'}
                                 </span>
@@ -1476,6 +1687,17 @@
 
                                 <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-4">
                                     <div>
+                                        <p className="text-xs font-black text-[var(--text-primary)] flex items-center gap-1.5"><Icon name="FolderPlus" size={14} className="text-emerald-400" />論点の自動追加</p>
+                                        <p className="text-[10px] text-[var(--text-tertiary)] font-bold mt-1">デフォルトの科目・論点のうち、まだ登録されていないものだけを追加します。既に論点が存在する科目はスキップされるため、何度実行しても重複追加はされません。</p>
+                                    </div>
+                                    <button type="button" onClick={handleManualSeed} disabled={isSeeding} className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5">
+                                        <Icon name={isSeeding ? "Loader2" : "FolderPlus"} size={14} className={isSeeding ? "animate-spin" : ""} />
+                                        {isSeeding ? '追加中…' : 'デフォルト論点を追加'}
+                                    </button>
+                                </div>
+
+                                <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-4">
+                                    <div>
                                         <p className="text-xs font-black text-[var(--text-primary)] flex items-center gap-1.5"><Icon name="Trophy" size={14} className="text-amber-400" />ランクアップ・ピラミッド</p>
                                         <p className="text-[10px] text-[var(--text-tertiary)] font-bold mt-1">頂点のSSSを目指して、復習を積み重ねましょう。</p>
                                     </div>
@@ -1484,10 +1706,10 @@
                                             <div
                                                 key={row.rank}
                                                 style={{ width: `${row.widthPct}%` }}
-                                                className={`flex items-center justify-between px-4 py-2.5 rounded-xl border transition-all ${RANK_STYLES[row.rank]}`}
+                                                className={`pyramid-row flex items-center justify-between gap-2 px-4 py-2.5 rounded-xl border transition-all ${RANK_STYLES[row.rank]}`}
                                             >
-                                                <span className="font-black text-xs mono">{row.rank}</span>
-                                                <span className="text-[10px] font-bold mono-num opacity-90">累計 {row.label}</span>
+                                                <span className="font-black text-xs mono shrink-0">{row.rank}</span>
+                                                <span className="text-[10px] font-bold mono-num opacity-90 shrink-0">累計 {row.label}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -1512,6 +1734,15 @@
                 }).join(' ');
 
                 const isPerfect = percentage >= 100;
+
+                // ===== 公認会計士試験 得点分布との比較 =====
+                const distInfo = getDistributionRankInfo(percentage);
+                const distSorted = SCORE_DISTRIBUTION.slice().sort((a, b) => a.rate - b.rate);
+                const DIST_CHART_W = 388;
+                const DIST_CHART_H = 100;
+                const distBarW = DIST_CHART_W / distSorted.length;
+                const distMarkerX = distInfo.clampedRate * distBarW + distBarW / 2;
+
                 return (
                     <div className="space-y-5">
                         <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-6 text-center shadow-lg">
@@ -1561,6 +1792,36 @@
                                     <GoalBar label="今月" count={monthlyCount} goal={settings.monthlyGoal || 1} icon="Calendar" />
                                 </div>
                             )}
+                        </div>
+
+                        <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-4">
+                            <div className="flex items-center justify-between">
+                                <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest flex items-center gap-1.5"><Icon name="Users" size={13} className="text-indigo-400" />公認会計士試験 得点分布との比較</p>
+                                <span className={`text-xs font-black mono px-2.5 py-1 rounded-full border shrink-0 ${GRADE_STYLES[distInfo.grade]}`}>{distInfo.grade}</span>
+                            </div>
+
+                            <div className="relative h-28 w-full bg-black/20 rounded-xl border border-[var(--border-color)] p-2 overflow-visible">
+                                <svg viewBox={`0 0 ${DIST_CHART_W} ${DIST_CHART_H}`} className="w-full h-full overflow-visible" preserveAspectRatio="none">
+                                    {distSorted.map((d, i) => {
+                                        const h = (d.count / SCORE_DISTRIBUTION_MAX_COUNT) * (DIST_CHART_H - 6);
+                                        const x = i * distBarW;
+                                        return <rect key={d.rate} x={x + 0.4} y={DIST_CHART_H - h} width={Math.max(0.6, distBarW - 0.8)} height={h} fill="#6366f1" opacity="0.5" rx="0.6" />;
+                                    })}
+                                    <line x1={distMarkerX} y1="0" x2={distMarkerX} y2={DIST_CHART_H} stroke="#facc15" strokeWidth="2" strokeDasharray="4,3" />
+                                    <circle cx={distMarkerX} cy="4" r="3.2" fill="#facc15" stroke="#000" strokeWidth="0.8" />
+                                </svg>
+                                <div className="absolute top-0 flex flex-col items-center pointer-events-none" style={{ left: `${(distMarkerX / DIST_CHART_W) * 100}%`, transform: 'translate(-50%, -100%)' }}>
+                                    <span className="text-[9px] font-black mono px-1.5 py-0.5 rounded-full bg-yellow-400 text-black whitespace-nowrap shadow">あなた {percentage}%</span>
+                                </div>
+                                <div className="absolute bottom-1 left-2 right-2 flex justify-between text-[9px] mono text-[var(--text-muted)] font-bold"><span>0%</span><span>{SCORE_DISTRIBUTION_MAX_RATE}%〜</span></div>
+                            </div>
+
+                            <div className="flex justify-between items-center text-xs mono-num">
+                                <span className="text-[var(--text-tertiary)] font-bold">推定順位</span>
+                                <span className="text-[var(--text-primary)] font-black">{distInfo.rank.toLocaleString()}位 / {distInfo.total.toLocaleString()}人中（上位{distInfo.topPercent.toFixed(1)}%）</span>
+                            </div>
+
+                            <p className="text-[10px] text-[var(--text-muted)] font-bold leading-relaxed">※実際の公認会計士試験の得点率(%)別人数分布に、あなたの「定着率」を仮に得点率とみなして重ね合わせた参考値です。実際の試験結果や合否を保証・示唆するものではありません。</p>
                         </div>
 
                         {perSubjectGauge.length > 0 && (
@@ -1619,6 +1880,14 @@
             return (
                 <div className="min-h-screen pb-12 bg-gradient-to-b from-[var(--bg-app-from)] to-[var(--bg-app-to)]">
                     {showSettings && <SettingsModal />}
+                    {isSeeding && (
+                        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+                            <div className="text-indigo-400 mono text-xs animate-pulse flex flex-col items-center gap-3">
+                                <Icon name="Loader2" size={28} className="animate-spin text-indigo-500" />
+                                LOADING...
+                            </div>
+                        </div>
+                    )}
                     <header className="bg-[var(--bg-header)] backdrop-blur border-b border-[var(--border-color)] px-4 pb-4 pt-safe shadow-2xl sticky top-0 z-50">
                         <div className="max-w-md mx-auto flex justify-between items-center mb-3 gap-2">
                             <h1 className="text-sm font-black text-[var(--text-primary)] tracking-widest flex items-center gap-2 min-w-0 truncate">
