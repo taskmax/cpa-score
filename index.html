@@ -208,14 +208,20 @@
         .hold-glow { animation: holdGlowPulse 0.85s ease-in-out infinite; }
         .hold-progress-fill { position: absolute; inset: 0; background: rgba(255,255,255,0.28); transform-origin: left center; pointer-events: none; }
 
-        /* ===== ランクバッジ フリップ演出（回転して新ランクへ切り替え） ===== */
-        @keyframes rankFlip {
-            0% { transform: perspective(240px) rotateY(0deg); }
-            45% { transform: perspective(240px) rotateY(90deg); }
-            55% { transform: perspective(240px) rotateY(90deg); }
-            100% { transform: perspective(240px) rotateY(0deg); }
+        /* ===== ランクバッジ 昇格演出（旧ランクが破裂して消える → 新ランクが爆誕する、2段階・非重複） ===== */
+        @keyframes rankExplodeOut {
+            0% { transform: scale(1); opacity: 1; filter: brightness(1); }
+            35% { transform: scale(1.4); opacity: 1; filter: brightness(1.7); }
+            100% { transform: scale(0.15); opacity: 0; filter: brightness(2.2); }
         }
-        .rank-flip-anim { animation: rankFlip 0.6s cubic-bezier(.4,0,.2,1) both; display: inline-block; }
+        .rank-explode-out { animation: rankExplodeOut 0.36s cubic-bezier(.55,0,1,0.45) both; display: inline-block; }
+        @keyframes rankBurstIn {
+            0% { transform: scale(0.1); opacity: 0; }
+            55% { transform: scale(1.3); opacity: 1; }
+            75% { transform: scale(0.9); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .rank-burst-in { animation: rankBurstIn 0.46s cubic-bezier(.34,1.56,.64,1) both; display: inline-block; }
         @keyframes rankUpBurst {
             0% { opacity: 0; transform: scale(0.6); }
             30% { opacity: 1; transform: scale(1.15); }
@@ -235,8 +241,35 @@
         .check-pop { animation: checkPop 0.2s ease-out; }
 
         /* ===== ランクピラミッド行：改行防止レイアウト ===== */
-        .pyramid-row { white-space: nowrap; flex-wrap: nowrap; }
-        .pyramid-row > span { white-space: nowrap; }
+        .pyramid-row { position: relative; overflow: hidden; white-space: nowrap; flex-wrap: nowrap; }
+        .pyramid-row > span { white-space: nowrap; position: relative; z-index: 1; }
+        /* D以上のランクにのみ、ゆっくりと漂うようなオーラの光沢（ギラつかない、上品な斜めシーン）を追加 */
+        @keyframes pyramidAuraSweep {
+            0% { background-position: 220% 0; opacity: 0; }
+            18% { opacity: 0.7; }
+            50% { background-position: -40% 0; opacity: 0.45; }
+            82% { opacity: 0.7; }
+            100% { background-position: -220% 0; opacity: 0; }
+        }
+        .pyramid-row.rank-d::after,
+        .pyramid-row.rank-c::after,
+        .pyramid-row.rank-b::after,
+        .pyramid-row.rank-a::after,
+        .pyramid-row.rank-s::after,
+        .pyramid-row.rank-ss::after,
+        .pyramid-row.rank-sss::after {
+            content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+            background: linear-gradient(115deg, transparent 25%, rgba(255,255,255,0.4) 50%, transparent 75%);
+            background-size: 260% 100%;
+            mix-blend-mode: overlay;
+            animation: pyramidAuraSweep 6s ease-in-out infinite;
+        }
+        .pyramid-row.rank-c::after { animation-duration: 5.4s; }
+        .pyramid-row.rank-b::after { animation-duration: 4.8s; }
+        .pyramid-row.rank-a::after { animation-duration: 4.2s; }
+        .pyramid-row.rank-s::after { animation-duration: 3.6s; }
+        .pyramid-row.rank-ss::after { animation-duration: 3.2s; }
+        .pyramid-row.rank-sss::after { animation-duration: 2.8s; }
     </style>
 </head>
 <body>
@@ -299,6 +332,7 @@
 
         const RANKS = ['E', 'D', 'C', 'B', 'A', 'S', 'SS', 'SSS'];
         const SORT_OPTIONS = [
+            { key: 'order', label: 'カスタム', sub: '自由な順序（編集モードでドラッグ）', icon: 'Hand' },
             { key: 'lastStudied', label: '最終復習日', sub: '古い順（要復習優先）', icon: 'CalendarClock' },
             { key: 'reviewCount', label: '復習回数', sub: '少ない順', icon: 'Repeat' },
             { key: 'retention', label: '定着率', sub: '低い順（要復習優先）', icon: 'Gauge' }
@@ -498,6 +532,42 @@
             const now = ctx ? ctx.currentTime : 0;
             __chargeDroplets.forEach(osc => { try { osc.stop(now); } catch (e) {} });
             __chargeDroplets = [];
+        };
+
+        // ===== タップ／切り替え用の短い心地よいサウンド =====
+        // 長押し完了音（水滴・波紋）と同じ「柔らかいサイン波」の方向性で統一しつつ、
+        // タップ用途向けにごく短く控えめにした「コトン」という気持ちいいクリック音。
+        // 派手にならないよう、音量は小さめ・減衰は速め（〜90ms）に抑える。
+        const playTapSound = (variant = 'tap') => {
+            const ctx = getAudioCtx();
+            if (!ctx) return;
+            const now = ctx.currentTime;
+            const baseFreq = variant === 'switch' ? 640 : 720;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(baseFreq, now);
+            osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.28, now + 0.05);
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.exponentialRampToValueAtTime(0.16, now + 0.008);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+            osc.connect(gain).connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.1);
+
+            // タブ切り替えなど「場面が変わる」操作には、ごく薄く高音のきらめきを添えて質感を出す
+            if (variant === 'switch') {
+                const osc2 = ctx.createOscillator();
+                const gain2 = ctx.createGain();
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(baseFreq * 1.9, now + 0.03);
+                gain2.gain.setValueAtTime(0.0001, now + 0.03);
+                gain2.gain.exponentialRampToValueAtTime(0.07, now + 0.045);
+                gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+                osc2.connect(gain2).connect(ctx.destination);
+                osc2.start(now + 0.03);
+                osc2.stop(now + 0.14);
+            }
         };
 
         const computeSValues = (intervalDays) => {
@@ -1022,6 +1092,7 @@
 
             const handleToggleEditMode = () => {
                 if (!activeSubject) return;
+                playTapSound();
                 setEditMode(v => {
                     const next = !v;
                     if (next) {
@@ -1252,14 +1323,18 @@
                 return <span className={`text-[10px] font-black mono px-2 py-0.5 rounded-full border shrink-0 ${RANK_STYLES[rank]}`}>{rank}</span>;
             };
 
-            // ランクがフリップ演出付きで切り替わるバッジ（復習完了の余韻演出専用）
-            const FlippableRankBadge = ({ rc, flipToRc, flipping }) => {
-                const displayRc = flipping ? flipToRc : rc;
+            // 昇格演出付きバッジ（復習完了の余韻演出専用）
+            // phase: 'idle' | 'exploding'（旧ランクが破裂して消える） | 'entering'（新ランクが爆誕する）
+            // lockedRc が設定されている間は、実データがまだ追いついていなくても新ランクの表示を維持し続けることで
+            // 「旧ランクへ一瞬戻ってチラつく」不具合を防ぐ。
+            const RankTransitionBadge = ({ rc, phase, lockedRc }) => {
+                const displayRc = lockedRc !== null ? lockedRc : rc;
                 const rank = getRank(displayRc);
+                const animClass = phase === 'exploding' ? 'rank-explode-out' : phase === 'entering' ? 'rank-burst-in' : '';
                 return (
                     <span className="relative inline-block">
-                        {flipping && <span className="rank-up-burst"></span>}
-                        <span key={flipping ? 'flip' : 'still'} className={`text-[10px] font-black mono px-2 py-0.5 rounded-full border shrink-0 ${RANK_STYLES[rank]} ${flipping ? 'rank-flip-anim' : ''}`}>{rank}</span>
+                        {phase === 'entering' && <span className="rank-up-burst"></span>}
+                        <span className={`text-[10px] font-black mono px-2 py-0.5 rounded-full border shrink-0 ${RANK_STYLES[rank]} ${animClass}`}>{rank}</span>
                     </span>
                 );
             };
@@ -1272,8 +1347,10 @@
                 const [isCharging, setIsCharging] = useState(false);
                 const [showTopicSettings, setShowTopicSettings] = useState(false);
                 // ===== 完了後の余韻・ランクアップ演出用ステート =====
-                const [rankFlipping, setRankFlipping] = useState(false);
-                const [pendingRc, setPendingRc] = useState(null); // フリップ先に表示するランク回数
+                // phase: 'idle' | 'exploding'（旧ランク破裂）| 'entering'（新ランク爆誕）
+                const [rankAnimPhase, setRankAnimPhase] = useState('idle');
+                // lockedRc: 演出完了後もFirestoreの実データが追いつくまで新ランクの表示を固定しておくための値
+                const [lockedRc, setLockedRc] = useState(null);
                 const chargeRafRef = useRef(null);
                 const chargeStartRef = useRef(0);
                 const completedRef = useRef(false);
@@ -1315,10 +1392,16 @@
                     setIsEditing(false);
                 };
 
+                // 実データ（Firestoreから届いた rc）が演出後に固定していたランクへ追いついたら、固定を解除する
+                useEffect(() => {
+                    if (lockedRc !== null && rc >= lockedRc) setLockedRc(null);
+                }, [rc, lockedRc]);
+
                 // 復習完了フロー：
                 // ① 長押し完了（この関数の呼び出し時点） → 視覚/聴覚/触覚エフェクトのみ即時発火（データはまだ更新しない）
-                // ② 0.9秒後 → ランクアップしていればバッジがクルッと回転して新ランクに切り替わる演出
-                // ③ 完了から約2.2秒後 → 実際にステート（Firestore）を更新し、リストが正しい位置へ再ソートされる
+                // ② 0.9秒後 → ランクアップしていれば「旧ランクが破裂して消える」演出を開始
+                // ③ 破裂完了後（+0.36秒） → 「新ランクが爆誕する」演出。新旧が重なって見える瞬間は一切無い
+                // ④ 完了から約2.2秒後 → 実際にステート（Firestore）を更新し、リストが正しい位置へ再ソートされる
                 const fireReview = () => {
                     const recovered = Math.max(0, Math.round(100 - ret));
                     const newRc = rc + 1;
@@ -1334,17 +1417,21 @@
                     setTimeout(() => setIsImpacting(false), 600);
                     setTimeout(() => setPopup(null), 1750);
 
-                    // ② ランクアップ演出（0.9秒後）
+                    // ②③ ランクアップ演出（0.9秒後に開始。破裂→爆誕の2段階で新旧は絶対に重ならない）
                     if (willRankUp) {
                         setTimeout(() => {
-                            setPendingRc(newRc);
-                            setRankFlipping(true);
-                            vibrate([0, 15, 40, 25]);
-                            setTimeout(() => setRankFlipping(false), 900);
+                            setRankAnimPhase('exploding');
+                            vibrate([0, 12, 30, 10]);
+                            setTimeout(() => {
+                                setLockedRc(newRc);
+                                setRankAnimPhase('entering');
+                                vibrate([0, 20, 40, 30]);
+                                setTimeout(() => setRankAnimPhase('idle'), 460);
+                            }, 360);
                         }, 900);
                     }
 
-                    // ③ 実データ更新（完了から約2.2秒後、演出が落ち着いてから）
+                    // ④ 実データ更新（完了から約2.2秒後、演出が落ち着いてから）
                     setTimeout(() => {
                         onReview(t, ret);
                     }, 2200);
@@ -1393,7 +1480,7 @@
 
                 if (isEditing) {
                     return (
-                        <div className="bg-[var(--bg-card)] rounded-2xl border border-indigo-500/50 p-5 flex flex-col gap-4 shadow-lg animate-in">
+                        <div className="bg-[var(--bg-card)] rounded-2xl border border-indigo-500/50 p-5 flex flex-col gap-4 shadow-lg animate-in overflow-hidden">
                             <div className="space-y-3">
                                 <label className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono">論点名</label>
                                 <input type="text" className="w-full bg-[var(--bg-input)] border border-[var(--border-strong)] p-3 rounded-xl outline-none font-bold text-[var(--text-primary)] text-sm" value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} />
@@ -1404,13 +1491,13 @@
                                 </select>
 
                                 <div className="grid grid-cols-2 gap-3 mt-2">
-                                    <div>
+                                    <div className="min-w-0">
                                         <label className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono block mb-1">総復習回数</label>
-                                        <input type="number" min="0" className="w-full bg-[var(--bg-input)] border border-[var(--border-strong)] p-3 rounded-xl outline-none font-bold text-[var(--text-primary)] text-sm mono-num" value={editForm.reviewCount} onChange={e => setEditForm({ ...editForm, reviewCount: e.target.value })} />
+                                        <input type="number" min="0" className="w-full min-w-0 bg-[var(--bg-input)] border border-[var(--border-strong)] p-3 rounded-xl outline-none font-bold text-[var(--text-primary)] text-sm mono-num" value={editForm.reviewCount} onChange={e => setEditForm({ ...editForm, reviewCount: e.target.value })} />
                                     </div>
-                                    <div>
+                                    <div className="min-w-0">
                                         <label className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono block mb-1">最終復習日</label>
-                                        <input type="datetime-local" className="w-full bg-[var(--bg-input)] border border-[var(--border-strong)] p-3 rounded-xl outline-none font-bold text-[var(--text-primary)] text-xs mono" value={editForm.lastStudiedAt} onChange={e => setEditForm({ ...editForm, lastStudiedAt: e.target.value })} />
+                                        <input type="datetime-local" className="w-full min-w-0 max-w-full box-border bg-[var(--bg-input)] border border-[var(--border-strong)] p-2 rounded-xl outline-none font-bold text-[var(--text-primary)] text-[11px] mono" value={editForm.lastStudiedAt} onChange={e => setEditForm({ ...editForm, lastStudiedAt: e.target.value })} />
                                     </div>
                                 </div>
                             </div>
@@ -1431,10 +1518,11 @@
                             <div className="flex-1 mr-4">
                                 <div className="flex items-center gap-2 mb-1 flex-wrap">
                                     <h3 className="text-base font-bold text-[var(--text-primary)] leading-tight">{t.title}</h3>
-                                    <FlippableRankBadge rc={rc} flipToRc={pendingRc} flipping={rankFlipping} />
+                                    <RankTransitionBadge rc={rc} phase={rankAnimPhase} lockedRc={lockedRc} />
                                     {isCustomInterval && <span className="text-[9px] font-black mono px-1.5 py-0.5 rounded-full border border-indigo-400/40 text-indigo-300 bg-indigo-500/10">個別</span>}
                                 </div>
                                 <p className="text-xs text-[var(--text-tertiary)] mono-num">復習回数: {rc} 回 ・ 最終復習: {new Date(t.lastStudiedAt).toLocaleDateString('ja-JP')}</p>
+                                <p className="text-xs text-[var(--text-tertiary)] mono-num">次回復習目安: {new Date(new Date(t.lastStudiedAt).getTime() + targetHours * 3600 * 1000).toLocaleDateString('ja-JP')}</p>
                             </div>
                             <div className="text-right">
                                 <span className="text-[10px] font-bold text-[var(--text-tertiary)] block mono mb-1">定着率</span>
@@ -1674,6 +1762,32 @@
                 // 得点が高いほど上（y座標は小さく）になるよう、rateの昇順インデックスを反転させて位置を求める
                 const distMarkerY = DIST_CHART_H - (distInfo.clampedRate + 1) * distBarH + distBarH / 2;
 
+                // ===== 順位の推移（全履歴。日数が増えるほど自動的に1点あたりの間隔が詰まり、粒度が粗くなる） =====
+                const rankTrend = statsHistory.map(h => ({ date: h.date, rank: getDistributionRankInfo(h.percentage).rank }));
+                const rtN = rankTrend.length;
+                const rtScaleMax = Math.max(distInfo.total, 1);
+                const RT_W = 300, RT_H = 100;
+                const rtPts = rankTrend.map((r, i) => {
+                    const x = rtN > 1 ? (i / (rtN - 1)) * RT_W : RT_W / 2;
+                    const y = 6 + (r.rank / rtScaleMax) * (RT_H - 12);
+                    return `${x},${y}`;
+                }).join(' ');
+
+                // ===== 撃墜人数（週間・月間）＝ 期間開始時点の順位と現在の順位を比較 =====
+                const getPeriodStartPercentage = (startDate) => {
+                    const startKey = getLocalDateKey(startDate);
+                    const inPeriod = statsHistory.filter(h => h.date >= startKey).sort((a, b) => (a.date < b.date ? -1 : 1));
+                    if (inPeriod.length > 0) return inPeriod[0].percentage;
+                    const before = statsHistory.filter(h => h.date < startKey).sort((a, b) => (a.date < b.date ? 1 : -1));
+                    return before.length > 0 ? before[0].percentage : percentage;
+                };
+                const weeklyStartRank = getDistributionRankInfo(getPeriodStartPercentage(getStartOfWeek())).rank;
+                const monthlyStartRank = getDistributionRankInfo(getPeriodStartPercentage(getStartOfMonth())).rank;
+                const weeklyKills = weeklyStartRank - distInfo.rank;
+                const monthlyKills = monthlyStartRank - distInfo.rank;
+                const passLineRank = Math.max(1, Math.ceil(distInfo.total * 0.10));
+                const remainToPass = Math.max(0, distInfo.rank - passLineRank);
+
                 return (
                     <div className="space-y-5">
                         <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-6 text-center shadow-lg">
@@ -1693,36 +1807,6 @@
                             <p className="text-5xl mono-num tracking-tighter text-indigo-400">
                                 <CountUpNumber value={weeklyRecovered} prefix="+" suffix="%" />
                             </p>
-                        </div>
-
-                        <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-4">
-                            <div className="flex items-center justify-between">
-                                <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest flex items-center gap-1.5"><Icon name="Target" size={13} className="text-indigo-400" />目標達成率</p>
-                                <button type="button" onClick={() => setEditingGoals(v => !v)} className="text-[var(--text-muted)] hover:text-indigo-400 p-1.5 rounded-lg hover:bg-[var(--bg-card-soft)] transition-colors">
-                                    <Icon name={editingGoals ? "X" : "Settings"} size={14} />
-                                </button>
-                            </div>
-
-                            {editingGoals ? (
-                                <div className="space-y-3 animate-in">
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <label className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono block mb-1">週間目標（回）</label>
-                                            <input type="number" min="1" className="w-full bg-[var(--bg-input)] border border-[var(--border-strong)] p-2.5 rounded-xl outline-none font-bold text-[var(--text-primary)] text-sm mono-num" value={goalForm.weekly} onChange={e => setGoalForm({ ...goalForm, weekly: e.target.value })} />
-                                        </div>
-                                        <div>
-                                            <label className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono block mb-1">月間目標（回）</label>
-                                            <input type="number" min="1" className="w-full bg-[var(--bg-input)] border border-[var(--border-strong)] p-2.5 rounded-xl outline-none font-bold text-[var(--text-primary)] text-sm mono-num" value={goalForm.monthly} onChange={e => setGoalForm({ ...goalForm, monthly: e.target.value })} />
-                                        </div>
-                                    </div>
-                                    <button type="button" onClick={handleSaveGoals} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-xs transition-colors">保存する</button>
-                                </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    <GoalBar label="今週" count={weeklyCount} goal={settings.weeklyGoal || 1} icon="CalendarDays" />
-                                    <GoalBar label="今月" count={monthlyCount} goal={settings.monthlyGoal || 1} icon="Calendar" />
-                                </div>
-                            )}
                         </div>
 
                         <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-4">
@@ -1758,7 +1842,55 @@
                                 <span className="text-[var(--text-primary)] font-black">{distInfo.rank.toLocaleString()}位 / {distInfo.total.toLocaleString()}人中（上位{distInfo.topPercent.toFixed(1)}%）</span>
                             </div>
 
+                            <div>
+                                <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest mb-2 flex items-center gap-1.5"><Icon name="TrendingUp" size={12} className="text-yellow-400" />順位の推移{rtN > 0 ? `（全${rtN}日分）` : ''}</p>
+                                {rtN === 0 ? (
+                                    <div className="text-center py-8 text-[var(--text-muted)] text-[10px] font-bold bg-black/20 rounded-xl border border-[var(--border-color)]">データがまだありません</div>
+                                ) : (
+                                    <div className="relative h-24 w-full bg-black/20 rounded-xl border border-[var(--border-color)] p-2 overflow-visible">
+                                        <svg viewBox={`0 0 ${RT_W} ${RT_H}`} className="w-full h-full overflow-visible" preserveAspectRatio="none">
+                                            {rtN > 1 && <polyline fill="none" stroke="#facc15" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" points={rtPts} opacity="0.85" />}
+                                            {rankTrend.map((r, i) => {
+                                                const x = rtN > 1 ? (i / (rtN - 1)) * RT_W : RT_W / 2;
+                                                const y = 6 + (r.rank / rtScaleMax) * (RT_H - 12);
+                                                return <circle key={r.date} cx={x} cy={y} r="2.2" fill="#facc15" stroke="#000" strokeWidth="0.7" />;
+                                            })}
+                                        </svg>
+                                        <div className="absolute top-1 left-2 text-[8px] mono text-[var(--text-muted)] font-bold">上＝好順位</div>
+                                        <div className="absolute bottom-1 left-2 right-2 flex justify-between text-[9px] mono text-[var(--text-muted)] font-bold">
+                                            <span>{rankTrend[0]?.date}</span>
+                                            <span>{rankTrend[rtN - 1]?.date}</span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
                             <p className="text-[10px] text-[var(--text-muted)] font-bold leading-relaxed">※実際の公認会計士試験の得点率(%)別人数分布に、あなたの「定着率」を仮に得点率とみなして重ね合わせた参考値です。実際の試験結果や合否を保証・示唆するものではありません。</p>
+                        </div>
+
+                        <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-4">
+                            <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest flex items-center gap-1.5"><Icon name="Crosshair" size={13} className="text-red-400" />撃墜人数（順位争い）</p>
+                            <div className="grid grid-cols-2 gap-3">
+                                {[{ label: '今週', value: weeklyKills }, { label: '今月', value: monthlyKills }].map(k => (
+                                    <div key={k.label} className={`rounded-2xl p-3 border ${k.value >= 0 ? 'bg-indigo-500/10 border-indigo-400/30' : 'bg-red-500/10 border-red-400/30'}`}>
+                                        <p className="text-[10px] font-bold text-[var(--text-tertiary)] mb-1">{k.label}</p>
+                                        {k.value >= 0 ? (
+                                            <p className="text-lg font-black mono-num text-indigo-300 flex items-center gap-1"><Icon name="Swords" size={14} />{k.value}人 撃墜</p>
+                                        ) : (
+                                            <p className="text-[11px] font-black mono-num text-red-300 leading-snug">あなたが撃墜される側でした<br /><span className="text-base">{Math.abs(k.value)}人</span>に抜かれました</p>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="flex justify-between items-center text-xs mono-num pt-3 border-t border-[var(--border-color)]">
+                                <span className="text-[var(--text-tertiary)] font-bold">合格（上位10%）までの残り</span>
+                                {remainToPass > 0 ? (
+                                    <span className="text-[var(--text-primary)] font-black">あと{remainToPass.toLocaleString()}人</span>
+                                ) : (
+                                    <span className="text-emerald-400 font-black flex items-center gap-1"><Icon name="Trophy" size={12} />合格圏内！</span>
+                                )}
+                            </div>
+                            <p className="text-[10px] text-[var(--text-muted)] font-bold leading-relaxed">※期間開始時点の定着率と現在の定着率をそれぞれ得点分布に照らし合わせ、順位の変動から算出した参考値です。</p>
                         </div>
 
                         {perSubjectGauge.length > 0 && (
@@ -1857,7 +1989,7 @@
                                     <button
                                         type="button"
                                         key={tab.name}
-                                        onClick={() => setActiveSubject(tab.name)}
+                                        onClick={() => { playTapSound('switch'); setActiveSubject(tab.name); }}
                                         onContextMenu={(e) => { e.preventDefault(); handleDeleteSubject(tab); }}
                                         className={`relative shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all whitespace-nowrap border ${
                                             active
@@ -1911,9 +2043,9 @@
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <div className="relative">
-                                            <button type="button" onClick={() => setShowSortMenu(v => !v)} className={`text-xs font-bold flex items-center gap-1 px-3 py-1.5 rounded-full transition-colors ${sortKey !== 'order' ? 'bg-indigo-600 text-white' : 'bg-[var(--bg-card-soft)] text-[var(--text-tertiary)] hover:bg-[var(--bg-card-soft-hover)]'}`}>
+                                            <button type="button" onClick={() => { playTapSound(); setShowSortMenu(v => !v); }} className={`text-xs font-bold flex items-center gap-1 px-3 py-1.5 rounded-full transition-colors ${sortKey !== 'order' ? 'bg-indigo-600 text-white' : 'bg-[var(--bg-card-soft)] text-[var(--text-tertiary)] hover:bg-[var(--bg-card-soft-hover)]'}`}>
                                                 <Icon name="ArrowUpDown" size={12} />
-                                                並び替え{sortKey !== 'order' && `：${SORT_OPTIONS.find(o => o.key === sortKey)?.label}`}
+                                                並び替え：{SORT_OPTIONS.find(o => o.key === sortKey)?.label || 'カスタム'}
                                             </button>
                                             {showSortMenu && (
                                                 <>
@@ -1922,7 +2054,7 @@
                                                         {SORT_OPTIONS.map(opt => (
                                                             <button
                                                                 type="button" key={opt.key}
-                                                                onClick={() => { setSortKey(sortKey === opt.key ? 'order' : opt.key); setShowSortMenu(false); }}
+                                                                onClick={() => { playTapSound('switch'); setSortKey(opt.key); setShowSortMenu(false); }}
                                                                 className={`w-full text-left px-4 py-2.5 flex items-center gap-2.5 transition-colors ${sortKey === opt.key ? 'bg-indigo-600 text-white' : 'text-[var(--text-secondary)] hover:bg-[var(--bg-card-soft-hover)]'}`}
                                                             >
                                                                 <Icon name={opt.icon} size={14} className="shrink-0" />
@@ -2007,11 +2139,11 @@
                     ) : (
                         <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[var(--bg-header)] backdrop-blur border-t border-[var(--border-color)] pb-safe">
                             <div className="max-w-md mx-auto grid grid-cols-2 gap-2 p-3">
-                                <button type="button" onClick={() => setView('review')} className={`flex flex-col items-center gap-1 py-2 rounded-2xl text-xs font-bold transition-colors ${view === 'review' ? 'bg-indigo-600 text-white' : 'text-[var(--text-tertiary)] hover:bg-[var(--bg-card-soft)]'}`}>
+                                <button type="button" onClick={() => { playTapSound('switch'); setView('review'); }} className={`flex flex-col items-center gap-1 py-2 rounded-2xl text-xs font-bold transition-colors ${view === 'review' ? 'bg-indigo-600 text-white' : 'text-[var(--text-tertiary)] hover:bg-[var(--bg-card-soft)]'}`}>
                                     <Icon name="Brain" size={20} />
                                     復習
                                 </button>
-                                <button type="button" onClick={() => setView('stats')} className={`flex flex-col items-center gap-1 py-2 rounded-2xl text-xs font-bold transition-colors ${view === 'stats' ? 'bg-indigo-600 text-white' : 'text-[var(--text-tertiary)] hover:bg-[var(--bg-card-soft)]'}`}>
+                                <button type="button" onClick={() => { playTapSound('switch'); setView('stats'); }} className={`flex flex-col items-center gap-1 py-2 rounded-2xl text-xs font-bold transition-colors ${view === 'stats' ? 'bg-indigo-600 text-white' : 'text-[var(--text-tertiary)] hover:bg-[var(--bg-card-soft)]'}`}>
                                     <Icon name="LineChart" size={20} />
                                     グラフ
                                 </button>
