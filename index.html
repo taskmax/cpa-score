@@ -324,8 +324,8 @@
         .heatmap-cell:active { transform: scale(0.9); }
         .heatmap-cell.is-selected { box-shadow: 0 0 0 2px #facc15; }
         .heatmap-cell-label {
-            width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
-            font-size: 8px; font-weight: 900; line-height: 1; letter-spacing: -0.02em; user-select: none;
+            width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-size: 9px; font-weight: 900; line-height: 1.25; letter-spacing: -0.02em; user-select: none; gap: 1px;
         }
 
         /* ===== ヒートマップ：タップ時のふきだし（吹き出し） ===== */
@@ -444,17 +444,17 @@
 
         // ===== ヒートマップの配色（0%:白 → 100%:焦茶色）。各段の間は線形補間で滑らかにつなぐ =====
         const HEATMAP_COLOR_STOPS = [
-            { pct: 0, rgb: [255, 255, 255] },   // 白
-            { pct: 10, rgb: [253, 226, 232] },  // ごく薄いピンク
-            { pct: 20, rgb: [249, 197, 208] },  // 薄いピンク
-            { pct: 30, rgb: [240, 148, 143] },  // サーモンピンク
-            { pct: 40, rgb: [224, 96, 92] },    // ピンクレッド
-            { pct: 50, rgb: [199, 42, 42] },    // 赤
-            { pct: 60, rgb: [163, 27, 27] },    // 深い赤
-            { pct: 70, rgb: [128, 58, 40] },    // 赤茶
-            { pct: 80, rgb: [102, 58, 37] },    // 茶色
-            { pct: 90, rgb: [72, 42, 27] },     // ダークブラウン
-            { pct: 100, rgb: [40, 22, 14] }     // 焦茶色
+            { pct: 0, rgb: [255, 255, 255] },   // 白 #FFFFFF
+            { pct: 10, rgb: [255, 253, 242] },  // アイボリー #FFFDF2
+            { pct: 20, rgb: [255, 246, 191] },  // ペールイエロー #FFF6BF
+            { pct: 30, rgb: [255, 237, 122] },  // ライトイエロー #FFED7A
+            { pct: 40, rgb: [255, 213, 74] },   // ゴールドイエロー #FFD54A
+            { pct: 50, rgb: [255, 179, 71] },   // オレンジ #FFB347
+            { pct: 60, rgb: [255, 140, 66] },   // ダークオレンジ #FF8C42
+            { pct: 70, rgb: [255, 99, 71] },    // オレンジレッド #FF6347
+            { pct: 80, rgb: [244, 67, 54] },    // レッド #F44336
+            { pct: 90, rgb: [211, 47, 47] },    // ディープレッド #D32F2F
+            { pct: 100, rgb: [183, 28, 28] }    // ビビッドレッド #B71C1C
         ];
         const getHeatmapColor = (ret) => {
             const clamped = Math.max(0, Math.min(100, ret || 0));
@@ -914,9 +914,13 @@
             <button
                 type="button" role="switch" aria-checked={checked} disabled={disabled}
                 onClick={onChange}
-                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-30 ${checked ? 'bg-indigo-600' : 'bg-[var(--bg-card-soft-hover)] border border-[var(--border-strong)]'}`}
+                className={`relative inline-flex h-[31px] w-[51px] shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out disabled:opacity-30 active:opacity-90 ${checked ? 'bg-indigo-600' : 'bg-[rgba(120,120,128,0.32)]'}`}
+                style={{ boxShadow: checked ? 'none' : 'inset 0 0 0 1px rgba(120,120,128,0.16)' }}
             >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`}></span>
+                <span
+                    className="inline-block h-[27px] w-[27px] transform rounded-full bg-white transition-transform duration-200 ease-in-out"
+                    style={{ boxShadow: '0 3px 8px rgba(0,0,0,0.18), 0 1px 1px rgba(0,0,0,0.16)', transform: checked ? 'translateX(21px)' : 'translateX(2px)' }}
+                ></span>
             </button>
         );
 
@@ -1044,17 +1048,13 @@
                         </div>
 
                         <div className="p-5 space-y-5">
-                            <button
-                                type="button"
-                                onClick={() => setEnabled(v => !v)}
-                                className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl border transition-colors ${enabled ? 'bg-indigo-600/15 border-indigo-500/50 text-indigo-300' : 'bg-[var(--bg-card-soft)] border-[var(--border-color)] text-[var(--text-secondary)]'}`}
-                            >
-                                <span className="text-xs font-bold flex items-center gap-2">
-                                    <Icon name={enabled ? 'ToggleRight' : 'ToggleLeft'} size={18} />
+                            <div className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl border transition-colors ${enabled ? 'bg-indigo-600/15 border-indigo-500/50 text-indigo-300' : 'bg-[var(--bg-card-soft)] border-[var(--border-color)] text-[var(--text-secondary)]'}`}>
+                                <span className="text-xs font-bold flex flex-col gap-0.5">
                                     この論点だけ個別の復習間隔を使う
+                                    <span className="text-[10px] font-bold opacity-80">{enabled ? '個別設定 ON' : '全体設定を使用'}</span>
                                 </span>
-                                <span className="text-[10px] font-bold">{enabled ? '個別設定 ON' : '全体設定を使用'}</span>
-                            </button>
+                                <Switch checked={enabled} onChange={() => setEnabled(v => !v)} />
+                            </div>
 
                             <div className={`space-y-3 transition-opacity ${enabled ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
                                 <p className="text-[10px] text-[var(--text-tertiary)] font-bold">この論点の復習まで、それぞれ何日空けるかを設定できます。「8回目以降」はそれ以降ずっと同じ間隔が適用されます。</p>
@@ -1083,6 +1083,494 @@
                 </div>
             );
         };
+
+        // ===== 設定モーダル（トップレベルに定義。App内で定義すると再レンダーの度に別コンポーネント
+        //       扱いとなり強制再マウント→スクロール位置リセットが起きてしまうため、props経由で必要な
+        //       値・ハンドラだけを受け取るコンポーネントとして切り出す） =====
+        const SettingsModal = ({
+            onClose, intervalDays, onSaveIntervals,
+            isSeeding, onManualSeed, isSeedingRonbun, onManualSeedRonbun,
+            settings, onToggleUseImportance, onChangeImportanceCoeff,
+            tabs, subjectExcludeMap, onToggleSubjectExclude, onDeleteSubject, tabStats
+        }) => {
+            const [form, setForm] = useState(intervalDays.slice());
+            const [saved, setSaved] = useState(false);
+
+            const updateField = (idx, val) => {
+                const next = form.slice();
+                next[idx] = val;
+                setForm(next);
+            };
+
+            const handleSave = () => {
+                const parsed = form.map(v => Math.max(0.1, parseFloat(v) || 0.1));
+                onSaveIntervals(parsed);
+                setSaved(true);
+                setTimeout(() => setSaved(false), 1600);
+            };
+
+            const pyramidRows = RANKS.slice().reverse().map(r => {
+                const idx = RANKS.indexOf(r);
+                const widthPct = 100 - idx * 9.4; // idx=0(E)→100%（土台）、idx=7(SSS)→約34%（頂点）
+                const label = idx === RANKS.length - 1 ? `${idx}回以上` : `${idx}回`;
+                return { rank: r, idx, widthPct, label };
+            });
+
+            return (
+                <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center">
+                    <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose}></div>
+                    <div className="relative w-full sm:max-w-md max-h-[88vh] overflow-y-auto bg-[var(--bg-app-to)] border border-[var(--border-color)] rounded-t-3xl sm:rounded-3xl shadow-2xl animate-in">
+                        <div className="sticky top-0 bg-[var(--bg-header)] backdrop-blur border-b border-[var(--border-color)] px-5 py-4 flex items-center justify-between z-10">
+                            <h2 className="text-sm font-black text-[var(--text-primary)] flex items-center gap-2"><Icon name="Settings" size={16} className="text-indigo-400" />設定</h2>
+                            <button type="button" onClick={onClose} className="h-8 w-8 flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--text-primary)] bg-[var(--bg-card-soft)] rounded-full transition-colors active:scale-90">
+                                <Icon name="X" size={14} />
+                            </button>
+                        </div>
+
+                        <div className="p-5 space-y-6">
+                            <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-4">
+                                <div>
+                                    <p className="text-xs font-black text-[var(--text-primary)] flex items-center gap-1.5"><Icon name="CalendarRange" size={14} className="text-indigo-400" />復習間隔のカスタマイズ（全体設定）</p>
+                                    <p className="text-[10px] text-[var(--text-tertiary)] font-bold mt-1">各回の復習まで、それぞれ何日空けるかを設定できます（記憶定着ゲージの計算に反映されます）。「8回目以降」はそれ以降ずっと同じ間隔が適用されます。なお、論点ごとに個別設定（各カードの歯車アイコン）を行った場合は、そちらがこの全体設定より優先されます。</p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {form.map((d, idx) => (
+                                        <div key={idx}>
+                                            <label className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono block mb-1">{idx === form.length - 1 ? `${idx + 1}回目以降` : `${idx + 1}回目の間隔`}</label>
+                                            <div className="relative">
+                                                <input
+                                                    type="number" min="0.1" step="0.5"
+                                                    className="w-full bg-[var(--bg-input)] border border-[var(--border-strong)] p-2.5 pr-9 rounded-xl outline-none font-bold text-[var(--text-primary)] text-sm mono-num"
+                                                    value={d} onChange={e => updateField(idx, e.target.value)}
+                                                />
+                                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[var(--text-muted)] mono">日後</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                <button type="button" onClick={handleSave} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5">
+                                    <Icon name={saved ? "Check" : "Save"} size={14} />{saved ? '保存しました' : '保存する'}
+                                </button>
+                            </div>
+
+                            <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-4">
+                                <div>
+                                    <p className="text-xs font-black text-[var(--text-primary)] flex items-center gap-1.5"><Icon name="FolderPlus" size={14} className="text-emerald-400" />論点の自動追加</p>
+                                    <p className="text-[10px] text-[var(--text-tertiary)] font-bold mt-1">デフォルトの科目・論点のうち、まだ登録されていないものだけを追加します。既に論点が存在する科目はスキップされるため、何度実行しても重複追加はされません。</p>
+                                </div>
+                                <button type="button" onClick={onManualSeed} disabled={isSeeding} className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5">
+                                    <Icon name={isSeeding ? "Loader2" : "FolderPlus"} size={14} className={isSeeding ? "animate-spin" : ""} />
+                                    {isSeeding ? '追加中…' : 'デフォルト論点を追加'}
+                                </button>
+                                <div className="pt-1 border-t border-[var(--border-color)]">
+                                    <p className="text-[10px] text-[var(--text-tertiary)] font-bold mt-3 mb-2">論文式試験の論点（経営学・租税法）を、短答式のデフォルト論点とは別に追加できます。</p>
+                                    <button type="button" onClick={onManualSeedRonbun} disabled={isSeedingRonbun} className="w-full bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white font-bold py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5">
+                                        <Icon name={isSeedingRonbun ? "Loader2" : "BookOpenCheck"} size={14} className={isSeedingRonbun ? "animate-spin" : ""} />
+                                        {isSeedingRonbun ? '追加中…' : '論文式試験の論点を追加'}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-4">
+                                <div className="flex items-center justify-between gap-3">
+                                    <div>
+                                        <p className="text-xs font-black text-[var(--text-primary)] flex items-center gap-1.5"><Icon name="Scale" size={14} className="text-sky-400" />重要度（傾斜配点）</p>
+                                        <p className="text-[10px] text-[var(--text-tertiary)] font-bold mt-1">ONにすると、各論点の定着率に重要度の係数を掛けた加重平均で総合定着率を計算します。</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center justify-between px-4 py-3 rounded-2xl border bg-[var(--bg-card-soft)] border-[var(--border-color)]">
+                                    <span className="text-xs font-bold text-[var(--text-secondary)]">重要度を使用する</span>
+                                    <Switch checked={!!settings.useImportance} onChange={onToggleUseImportance} />
+                                </div>
+                                <div className={`grid grid-cols-2 gap-3 transition-opacity ${settings.useImportance ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
+                                    {IMPORTANCE_LEVELS.map(lv => (
+                                        <div key={lv}>
+                                            <label className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono block mb-1">{lv} 係数</label>
+                                            <input
+                                                type="number" min="0" step="0.1"
+                                                className="w-full bg-[var(--bg-input)] border border-[var(--border-strong)] p-2.5 rounded-xl outline-none font-bold text-[var(--text-primary)] text-sm mono-num"
+                                                value={(settings.importanceCoeffs || DEFAULT_IMPORTANCE_COEFFS)[lv]}
+                                                onChange={e => onChangeImportanceCoeff(lv, e.target.value)}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-3">
+                                <div>
+                                    <p className="text-xs font-black text-[var(--text-primary)] flex items-center gap-1.5"><Icon name="EyeOff" size={14} className="text-rose-400" />科目ごとの統計除外・タブ削除</p>
+                                    <p className="text-[10px] text-[var(--text-tertiary)] font-bold mt-1">ONにした科目は、総合定着率・各種統計・グラフの集計対象から除外されます（論点一覧・ヒートマップには表示され続けます）。ゴミ箱アイコンで、論点が0件のタブを削除できます。</p>
+                                </div>
+                                <div className="space-y-2">
+                                    {tabs.map(tab => {
+                                        const topicCount = (tabStats[tab.name] && tabStats[tab.name].total) || 0;
+                                        const canDelete = tabs.length > 1 && topicCount === 0 && !!tab.id;
+                                        return (
+                                            <div key={tab.name} className="flex items-center justify-between gap-2 bg-[var(--bg-card-soft)] rounded-xl px-3 py-2.5">
+                                                <span className="text-xs font-bold text-[var(--text-secondary)] truncate flex-1">{tab.name}</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => onDeleteSubject(tab)}
+                                                    disabled={!canDelete}
+                                                    title={canDelete ? 'このタブを削除' : '論点が残っているタブは削除できません'}
+                                                    className="h-8 w-8 flex items-center justify-center rounded-lg text-[var(--text-muted)] disabled:opacity-25 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                                                >
+                                                    <Icon name="Trash2" size={14} />
+                                                </button>
+                                                <Switch
+                                                    checked={!!subjectExcludeMap[tab.name]}
+                                                    disabled={!tab.id}
+                                                    onChange={() => onToggleSubjectExclude(tab)}
+                                                />
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-4">
+                                <div>
+                                    <p className="text-xs font-black text-[var(--text-primary)] flex items-center gap-1.5"><Icon name="Trophy" size={14} className="text-amber-400" />ランクアップ・ピラミッド</p>
+                                    <p className="text-[10px] text-[var(--text-tertiary)] font-bold mt-1">頂点のSSSを目指して、復習を積み重ねましょう。</p>
+                                </div>
+                                <div className="flex flex-col items-center gap-1.5 pt-2 pb-1">
+                                    {pyramidRows.map(row => (
+                                        <div
+                                            key={row.rank}
+                                            style={{ width: `${row.widthPct}%` }}
+                                            className={`pyramid-row flex items-center justify-between gap-2 px-4 py-2.5 rounded-xl border transition-all ${RANK_STYLES[row.rank]}`}
+                                        >
+                                            <span className="font-black text-xs mono shrink-0">{row.rank}</span>
+                                            <span className="text-[10px] font-bold mono-num opacity-90 shrink-0">累計 {row.label}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+            const RankBadge = ({ rc }) => {
+                const rank = getRank(rc);
+                return <span className={`text-[10px] font-black mono px-2 py-0.5 rounded-full border shrink-0 ${RANK_STYLES[rank]}`}>{rank}</span>;
+            };
+
+            // 昇格演出付きバッジ（復習完了の余韻演出専用）
+            // phase: 'idle' | 'exploding'（旧ランクが破裂して消える） | 'entering'（新ランクが爆誕する）
+            // lockedRc が設定されている間は、実データがまだ追いついていなくても新ランクの表示を維持し続けることで
+            // 「旧ランクへ一瞬戻ってチラつく」不具合を防ぐ。
+            const RankTransitionBadge = ({ rc, phase, lockedRc }) => {
+                const displayRc = lockedRc !== null ? lockedRc : rc;
+                const rank = getRank(displayRc);
+                const animClass = phase === 'exploding' ? 'rank-explode-out' : phase === 'entering' ? 'rank-burst-in' : '';
+                return (
+                    <span className="relative inline-block">
+                        {phase === 'entering' && <span className="rank-up-burst"></span>}
+                        <span className={`text-[10px] font-black mono px-2 py-0.5 rounded-full border shrink-0 ${RANK_STYLES[rank]} ${animClass}`}>{rank}</span>
+                    </span>
+                );
+            };
+
+            const TopicCard = ({ t, onReview, onAnimStart, onAnimEnd, tabs, intervalDays, onUpdate }) => {
+                const [isEditing, setIsEditing] = useState(false);
+                const [isImpacting, setIsImpacting] = useState(false);
+                const [holdProgress, setHoldProgress] = useState(0);
+                const [isCharging, setIsCharging] = useState(false);
+                // ===== 完了後の余韻・ランクアップ演出用ステート =====
+                // phase: 'idle' | 'exploding'（旧ランク破裂）| 'entering'（新ランク爆誕）
+                const [rankAnimPhase, setRankAnimPhase] = useState('idle');
+                // lockedRc: 演出完了後もFirestoreの実データが追いつくまで新ランクの表示を固定しておくための値
+                const [lockedRc, setLockedRc] = useState(null);
+                // pendingNewRc: 復習中は常にセットされ、実データ（rc）が追いつくまでの間、各種演出の固定表示を維持するために使う
+                const [pendingNewRc, setPendingNewRc] = useState(null);
+                // displayRet: 定着率のカウントアップ演出中〜実データ反映までの間、表示上の定着率を上書きする値
+                const [displayRet, setDisplayRet] = useState(null);
+                const [isCountingRet, setIsCountingRet] = useState(false);
+                const retRafRef = useRef(null);
+                const chargeRafRef = useRef(null);
+                const chargeStartRef = useRef(0);
+                const completedRef = useRef(false);
+                const HOLD_DURATION = 1200;
+                const [editForm, setEditForm] = useState({
+                    title: t.title, subject: t.subject,
+                    reviewCount: t.reviewCount || 0, lastStudiedAt: toDatetimeLocalValue(t.lastStudiedAt),
+                    importance: t.importance || 'A', excludeFromStats: !!t.excludeFromStats
+                });
+
+                const isCustomInterval = Array.isArray(t.customIntervals) && t.customIntervals.length === DEFAULT_REVIEW_INTERVALS.length;
+                const effIntervalDays = isCustomInterval ? t.customIntervals : intervalDays;
+                const effSValues = computeSValues(effIntervalDays);
+
+                const hrs = getHoursSince(t.lastStudiedAt);
+                const rc = t.reviewCount || 0;
+                const rawRet = getMemoryRetention(hrs, rc, effSValues);
+                // 演出中〜実データ反映までは displayRet を優先表示する（実データがまだ古い値のままカクッと戻るのを防ぐ）
+                const ret = displayRet !== null ? displayRet : rawRet;
+
+                const targetHours = getNextIntervalHours(rc, effIntervalDays);
+                const GRAPH_STEPS = 80;
+                const pts = Array.from({ length: GRAPH_STEPS + 1 }, (_, i) => {
+                    const h = (i / GRAPH_STEPS) * targetHours;
+                    return `${(h / targetHours) * 200},${50 - (getMemoryRetention(h, rc, effSValues) / 100) * 40}`;
+                }).join(' ');
+
+                const isNeedsReview = ret <= REVIEW_THRESHOLD;
+                const isWarn = ret <= 80 && !isNeedsReview;
+                const isGood = ret > 80;
+
+                const handleSaveEdit = () => {
+                    if (!editForm.title.trim()) return;
+                    onUpdate(t.id, {
+                        title: editForm.title.trim(), subject: editForm.subject,
+                        reviewCount: Math.max(0, parseInt(editForm.reviewCount, 10) || 0),
+                        lastStudiedAt: fromDatetimeLocalValue(editForm.lastStudiedAt),
+                        importance: editForm.importance || 'A',
+                        excludeFromStats: !!editForm.excludeFromStats
+                    });
+                    setIsEditing(false);
+                };
+
+                // 実データ（Firestoreから届いた rc）が演出後に固定していたランク・定着率へ追いついたら、固定を解除する。
+                // データ確定は演出より先に完了することがあるため、ランクアップ演出（'exploding'/'entering'）の
+                // 途中では解除せず、演出が 'idle' に戻ってから解除することで、旧ランクが一瞬すり替わって
+                // 見えるのを防ぐ。このタイミングで、リスト並び替えの凍結（チラつき防止）も解除する。
+                useEffect(() => {
+                    if (pendingNewRc !== null && rc >= pendingNewRc && rankAnimPhase === 'idle') {
+                        setPendingNewRc(null);
+                        setLockedRc(null);
+                        setDisplayRet(null);
+                        setIsCountingRet(false);
+                        if (onAnimEnd) onAnimEnd();
+                    }
+                }, [rc, pendingNewRc, rankAnimPhase]);
+
+                // 復習完了フロー：
+                // ① 長押し完了（この関数の呼び出し時点） → 視覚/聴覚/触覚エフェクトが即時発火
+                // ④ 実データ（定着率・ランク）は、演出の完了を待たずこの時点で即座に確定させる。
+                //    （以前は演出シーケンスの一番最後にFirestoreへ書き込んでいたため、演出のどこかで
+                //     中断・失敗するとデータが確定されず「定着率が上がらない／ランクが変わらない」
+                //     という不具合につながっていた。演出はあくまで見た目の効果とし、データ確定とは
+                //     切り離すことで、ボタン操作は常に確実に反映されるようにする。）
+                // ②／③ 定着率のカウントアップ、ランクアップの破裂→爆誕演出は、確定したデータとは
+                //    独立した「見た目だけの演出」として、この後も引き続き再生される。
+                const fireReview = () => {
+                    const startRet = ret;
+                    const newRc = rc + 1;
+                    const rankBefore = getRank(rc);
+                    const rankAfter = getRank(newRc);
+                    const willRankUp = rankAfter !== rankBefore;
+
+                    // ① 即時エフェクト（視覚・聴覚・触覚）。
+                    // この時点でリストの並び替えを凍結し（チラつき防止）、実データ反映完了まで維持する。
+                    if (onAnimStart) onAnimStart();
+                    vibrate(buildRevVibratePattern(1500));
+                    playReviewSound();
+                    setIsImpacting(true);
+                    setPendingNewRc(newRc);
+                    setTimeout(() => setIsImpacting(false), 600);
+
+                    // ④ 実データ更新は演出を待たず即座に確定する（経験値バー・レベルもこれに連動して更新される）
+                    onReview(t, startRet);
+
+                    // ③ ランクアップ演出（破裂→爆誕の2段階。データ確定とは無関係な見た目のみの演出）。
+                    // データはすでに確定済みで rc が先に新しい値へ届いている可能性があるため、
+                    // 「破裂」段階では明示的に旧ランクをロックしておき、新旧が入れ替わって見えるのを防ぐ。
+                    const runRankUpVisual = () => {
+                        if (!willRankUp) return;
+                        setLockedRc(rc);
+                        setRankAnimPhase('exploding');
+                        vibrate([0, 12, 30, 10]);
+                        setTimeout(() => {
+                            setLockedRc(newRc);
+                            setRankAnimPhase('entering');
+                            playRankUpSound();
+                            vibrate([0, 20, 40, 30]);
+                            setTimeout(() => {
+                                setRankAnimPhase('idle');
+                            }, 460);
+                        }, 360);
+                    };
+
+                    // ② 定着率の数字を約1.5秒かけて、上昇SEと共にスムーズにカウントアップさせる
+                    //    （数字自体はブレさせず、光彩の明滅のみで「動いている」ことを伝える）
+                    if (retRafRef.current) cancelAnimationFrame(retRafRef.current);
+                    setIsCountingRet(true);
+                    const COUNT_DURATION = 1500;
+                    playRetentionRiseSound(COUNT_DURATION);
+                    const countStart = performance.now();
+                    const tickRet = (now) => {
+                        const p = Math.min(1, (now - countStart) / COUNT_DURATION);
+                        const eased = 1 - Math.pow(1 - p, 3);
+                        setDisplayRet(startRet + (100 - startRet) * eased);
+                        if (p < 1) {
+                            retRafRef.current = requestAnimationFrame(tickRet);
+                        } else {
+                            setDisplayRet(100);
+                            setIsCountingRet(false);
+                            // カウントアップが終わったら、ランクアップの見た目演出を続けて再生する
+                            runRankUpVisual();
+                        }
+                    };
+                    retRafRef.current = requestAnimationFrame(tickRet);
+                };
+
+
+                const cancelCharge = () => {
+                    if (chargeRafRef.current) cancelAnimationFrame(chargeRafRef.current);
+                    chargeRafRef.current = null;
+                    setIsCharging(false);
+                    setHoldProgress(0);
+                };
+
+                const startCharge = (e) => {
+                    if (e.cancelable) e.preventDefault();
+                    if (isEditing) return;
+                    completedRef.current = false;
+                    setIsCharging(true);
+                    setHoldProgress(0);
+                    chargeStartRef.current = performance.now();
+                    startChargeSound(HOLD_DURATION);
+                    vibrate(8);
+                    const tick = (now) => {
+                        const elapsed = now - chargeStartRef.current;
+                        const pct = Math.min(100, (elapsed / HOLD_DURATION) * 100);
+                        setHoldProgress(pct);
+                        if (pct >= 100) {
+                            completedRef.current = true;
+                            setIsCharging(false);
+                            fireReview();
+                            setHoldProgress(0);
+                            return;
+                        }
+                        chargeRafRef.current = requestAnimationFrame(tick);
+                    };
+                    chargeRafRef.current = requestAnimationFrame(tick);
+                };
+
+                const endCharge = () => {
+                    if (completedRef.current) { completedRef.current = false; return; }
+                    stopChargeSound();
+                    cancelCharge();
+                };
+
+                useEffect(() => () => {
+                    if (chargeRafRef.current) cancelAnimationFrame(chargeRafRef.current);
+                    if (retRafRef.current) cancelAnimationFrame(retRafRef.current);
+                    stopRetentionRiseSound();
+                }, []);
+
+                if (isEditing) {
+                    return (
+                        <div className="bg-[var(--bg-card)] rounded-2xl border border-indigo-500/50 p-5 flex flex-col gap-4 shadow-lg animate-in overflow-hidden">
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono block mb-1">論点名</label>
+                                    <input type="text" className="w-full h-11 min-w-0 box-border bg-[var(--bg-input)] border border-[var(--border-strong)] px-3 rounded-xl outline-none font-bold text-[var(--text-primary)] text-sm" value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono block mb-1">タブ（科目）</label>
+                                    <select className="w-full h-11 min-w-0 box-border bg-[var(--bg-input)] border border-[var(--border-strong)] px-3 rounded-xl outline-none font-bold text-[var(--text-primary)] text-sm" value={editForm.subject} onChange={e => setEditForm({ ...editForm, subject: e.target.value })}>
+                                        {tabs.map(o => <option key={o.name} value={o.name}>{o.name}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono block mb-1">総復習回数</label>
+                                    <select className="w-full h-11 min-w-0 box-border bg-[var(--bg-input)] border border-[var(--border-strong)] px-3 rounded-xl outline-none font-bold text-[var(--text-primary)] text-sm mono-num appearance-none" value={editForm.reviewCount} onChange={e => setEditForm({ ...editForm, reviewCount: e.target.value })}>
+                                        {Array.from({ length: 101 }, (_, i) => i).map(n => <option key={n} value={n}>{n} 回</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono block mb-1">最終復習日</label>
+                                    <div className="w-full min-w-0 overflow-hidden rounded-xl">
+                                        <input type="datetime-local" className="block w-full h-11 min-w-0 box-border bg-[var(--bg-input)] border border-[var(--border-strong)] px-3 rounded-xl outline-none font-bold text-[var(--text-primary)] text-xs mono" style={{ width: '100%' }} value={editForm.lastStudiedAt} onChange={e => setEditForm({ ...editForm, lastStudiedAt: e.target.value })} />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono block mb-1">重要度（傾斜配点）</label>
+                                    <select className="w-full h-11 min-w-0 box-border bg-[var(--bg-input)] border border-[var(--border-strong)] px-3 rounded-xl outline-none font-bold text-[var(--text-primary)] text-sm" value={editForm.importance} onChange={e => setEditForm({ ...editForm, importance: e.target.value })}>
+                                        {IMPORTANCE_LEVELS.map(lv => <option key={lv} value={lv}>{lv}</option>)}
+                                    </select>
+                                </div>
+                                <div className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl border transition-colors ${editForm.excludeFromStats ? 'bg-red-600/15 border-red-500/50 text-red-300' : 'bg-[var(--bg-card-soft)] border-[var(--border-color)] text-[var(--text-secondary)]'}`}>
+                                    <span className="text-xs font-bold flex flex-col gap-0.5">
+                                        統計に反映させない
+                                        <span className="text-[10px] font-bold opacity-80">{editForm.excludeFromStats ? '除外 ON' : '通常どおり集計'}</span>
+                                    </span>
+                                    <Switch checked={editForm.excludeFromStats} onChange={() => setEditForm({ ...editForm, excludeFromStats: !editForm.excludeFromStats })} />
+                                </div>
+                            </div>
+                            <div className="flex justify-end gap-2 mt-2">
+                                <button type="button" onClick={() => setIsEditing(false)} className="px-4 py-2.5 text-xs font-bold text-[var(--text-tertiary)] hover:text-[var(--text-primary)] bg-[var(--bg-card-soft)] hover:bg-[var(--bg-card-soft-hover)] rounded-xl transition-colors">キャンセル</button>
+                                <button type="button" onClick={handleSaveEdit} className="px-5 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-lg transition-colors">保存する</button>
+                            </div>
+                        </div>
+                    );
+                }
+
+                return (
+                    <div className={`relative rounded-2xl border p-5 flex flex-col gap-4 shadow-lg transition-colors overflow-hidden ${isNeedsReview ? 'border-red-500/50' : 'border-[var(--border-color)]'} ${isImpacting ? 'card-impact-glow' : ''}`} style={{ backgroundColor: isNeedsReview ? 'var(--bg-danger-card)' : 'var(--bg-card)' }}>
+                        {isNeedsReview && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)] z-10" />}
+
+                        <div className="flex justify-between items-start">
+                            <div className="flex-1 mr-4">
+                                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                    <h3 className="text-base font-bold text-[var(--text-primary)] leading-tight">{t.title}</h3>
+                                    <RankTransitionBadge rc={rc} phase={rankAnimPhase} lockedRc={lockedRc} />
+                                    {isCustomInterval && <span className="text-[9px] font-black mono px-1.5 py-0.5 rounded-full border border-indigo-400/40 text-indigo-300 bg-indigo-500/10">個別</span>}
+                                    {(t.importance && t.importance !== 'A') && <span className="text-[9px] font-black mono px-1.5 py-0.5 rounded-full border border-amber-400/40 text-amber-300 bg-amber-500/10">重要度{t.importance}</span>}
+                                    {t.excludeFromStats && <span className="text-[9px] font-black mono px-1.5 py-0.5 rounded-full border border-red-400/40 text-red-300 bg-red-500/10">統計除外</span>}
+                                </div>
+                                <p className="text-xs text-[var(--text-tertiary)] mono-num">復習回数: {rc} 回 ・ 最終復習: {new Date(t.lastStudiedAt).toLocaleDateString('ja-JP')}</p>
+                                <p className="text-xs text-[var(--text-tertiary)] mono-num">次回復習目安: {new Date(new Date(t.lastStudiedAt).getTime() + targetHours * 3600 * 1000).toLocaleDateString('ja-JP')}</p>
+                            </div>
+                            <div className="text-right">
+                                <span className="text-[10px] font-bold text-[var(--text-tertiary)] block mono mb-1">定着率</span>
+                                <span className="flex items-center justify-end gap-1">
+                                    {isNeedsReview && <Icon name="AlertCircle" size={15} className="text-red-500 animate-pulse" />}
+                                    <span className={`text-2xl mono-num tracking-tighter inline-block ${isGood ? 'text-indigo-400' : isWarn ? 'text-yellow-400' : 'text-red-400'} ${isCountingRet ? 'retention-counting' : ''}`}>{Math.floor(ret)}%</span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="h-20 w-full relative bg-black/30 rounded-xl border border-[var(--border-color)] p-2 overflow-visible z-10">
+                            <svg viewBox="0 0 200 50" className="w-full h-full overflow-visible">
+                                <line x1="0" y1={50 - (REVIEW_THRESHOLD / 100) * 40} x2="200" y2={50 - (REVIEW_THRESHOLD / 100) * 40} stroke="#ef4444" strokeOpacity="0.3" strokeDasharray="4,4" strokeWidth="1" />
+                                <polyline fill="none" stroke={isNeedsReview ? "#ef4444" : "#6366f1"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" points={pts} opacity={isNeedsReview ? "0.8" : "0.6"} />
+                                <circle cx={(Math.min(hrs, targetHours) / targetHours) * 200} cy={50 - (ret / 100) * 40} r="4" fill={isGood ? '#818cf8' : isWarn ? '#facc15' : '#ef4444'} stroke="#000" strokeWidth="1.5" className="transition-all duration-300" />
+                            </svg>
+                            <div className="absolute bottom-1 left-2 right-2 flex justify-between text-[9px] mono text-[var(--text-muted)] font-bold"><span>0h</span><span>{targetHours / 24} days</span></div>
+                        </div>
+
+                        <div className="flex justify-between items-center mt-1 z-10">
+                            <div className="flex gap-1 items-center">
+                                <button type="button" onClick={() => setIsEditing(true)} className="text-[var(--text-muted)] hover:text-indigo-400 p-2 rounded-lg hover:bg-[var(--bg-card-soft)] transition-colors flex items-center gap-1.5">
+                                    <Icon name="Edit2" size={18} />
+                                    <span className="text-[10px] font-bold">編集</span>
+                                </button>
+                            </div>
+                            <button
+                                type="button"
+                                onMouseDown={startCharge}
+                                onMouseUp={endCharge}
+                                onMouseLeave={endCharge}
+                                onTouchStart={startCharge}
+                                onTouchEnd={endCharge}
+                                onTouchCancel={endCharge}
+                                onContextMenu={(e) => e.preventDefault()}
+                                className={`relative overflow-hidden font-bold mono py-2.5 px-5 rounded-xl shadow-lg transition-transform text-sm flex items-center gap-2 select-none touch-none ${isNeedsReview ? 'bg-red-600 text-white' : 'bg-indigo-600 text-white'} ${isCharging ? 'scale-95' : ''} ${isCharging && holdProgress >= 50 ? 'hold-glow' : ''}`}
+                            >
+                                <span className="hold-progress-fill" style={{ transform: `scaleX(${holdProgress / 100})`, transition: isCharging ? 'none' : 'transform 0.25s ease-out' }}></span>
+                                <span className="relative flex items-center gap-2">
+                                    <Icon name={isCharging ? "Droplets" : "Brain"} size={18} /> {isCharging ? 'ホールド中…' : '長押しで復習完了'}
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                );
+            };
 
         function App() {
             const [user, setUser] = useState(null);
@@ -1273,6 +1761,19 @@
                 if (!user) return;
                 const { db, appId, doc, setDoc } = window.fb;
                 setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'cpa_settings', 'main'), { reviewIntervals: newIntervals }, { merge: true }).catch(() => {});
+            };
+
+            const handleToggleUseImportance = () => {
+                if (!user) return;
+                const { db, appId, doc, setDoc } = window.fb;
+                setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'cpa_settings', 'main'), { useImportance: !settings.useImportance }, { merge: true }).catch(() => {});
+            };
+
+            const handleChangeImportanceCoeff = (lv, val) => {
+                if (!user) return;
+                const nextCoeffs = { ...(settings.importanceCoeffs || DEFAULT_IMPORTANCE_COEFFS), [lv]: val === '' ? '' : parseFloat(val) };
+                const { db, appId, doc, setDoc } = window.fb;
+                setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'cpa_settings', 'main'), { importanceCoeffs: nextCoeffs }, { merge: true }).catch(() => {});
             };
 
             // ===== 論点シード投入処理（初回ログイン時の自動実行／設定画面からの手動実行の両方から呼ばれる共通関数） =====
@@ -1850,342 +2351,10 @@
                 );
             }
 
-            const RankBadge = ({ rc }) => {
-                const rank = getRank(rc);
-                return <span className={`text-[10px] font-black mono px-2 py-0.5 rounded-full border shrink-0 ${RANK_STYLES[rank]}`}>{rank}</span>;
-            };
-
-            // 昇格演出付きバッジ（復習完了の余韻演出専用）
-            // phase: 'idle' | 'exploding'（旧ランクが破裂して消える） | 'entering'（新ランクが爆誕する）
-            // lockedRc が設定されている間は、実データがまだ追いついていなくても新ランクの表示を維持し続けることで
-            // 「旧ランクへ一瞬戻ってチラつく」不具合を防ぐ。
-            const RankTransitionBadge = ({ rc, phase, lockedRc }) => {
-                const displayRc = lockedRc !== null ? lockedRc : rc;
-                const rank = getRank(displayRc);
-                const animClass = phase === 'exploding' ? 'rank-explode-out' : phase === 'entering' ? 'rank-burst-in' : '';
-                return (
-                    <span className="relative inline-block">
-                        {phase === 'entering' && <span className="rank-up-burst"></span>}
-                        <span className={`text-[10px] font-black mono px-2 py-0.5 rounded-full border shrink-0 ${RANK_STYLES[rank]} ${animClass}`}>{rank}</span>
-                    </span>
-                );
-            };
-
-            const TopicCard = ({ t, onReview, onAnimStart, onAnimEnd }) => {
-                const [isEditing, setIsEditing] = useState(false);
-                const [isImpacting, setIsImpacting] = useState(false);
-                const [holdProgress, setHoldProgress] = useState(0);
-                const [isCharging, setIsCharging] = useState(false);
-                const [showTopicSettings, setShowTopicSettings] = useState(false);
-                // ===== 完了後の余韻・ランクアップ演出用ステート =====
-                // phase: 'idle' | 'exploding'（旧ランク破裂）| 'entering'（新ランク爆誕）
-                const [rankAnimPhase, setRankAnimPhase] = useState('idle');
-                // lockedRc: 演出完了後もFirestoreの実データが追いつくまで新ランクの表示を固定しておくための値
-                const [lockedRc, setLockedRc] = useState(null);
-                // pendingNewRc: 復習中は常にセットされ、実データ（rc）が追いつくまでの間、各種演出の固定表示を維持するために使う
-                const [pendingNewRc, setPendingNewRc] = useState(null);
-                // displayRet: 定着率のカウントアップ演出中〜実データ反映までの間、表示上の定着率を上書きする値
-                const [displayRet, setDisplayRet] = useState(null);
-                const [isCountingRet, setIsCountingRet] = useState(false);
-                const retRafRef = useRef(null);
-                const chargeRafRef = useRef(null);
-                const chargeStartRef = useRef(0);
-                const completedRef = useRef(false);
-                const HOLD_DURATION = 1200;
-                const [editForm, setEditForm] = useState({
-                    title: t.title, subject: t.subject,
-                    reviewCount: t.reviewCount || 0, lastStudiedAt: toDatetimeLocalValue(t.lastStudiedAt),
-                    importance: t.importance || 'A', excludeFromStats: !!t.excludeFromStats
-                });
-
-                const isCustomInterval = Array.isArray(t.customIntervals) && t.customIntervals.length === DEFAULT_REVIEW_INTERVALS.length;
-                const effIntervalDays = getEffectiveIntervals(t);
-                const effSValues = computeSValues(effIntervalDays);
-
-                const hrs = getHoursSince(t.lastStudiedAt);
-                const rc = t.reviewCount || 0;
-                const rawRet = getMemoryRetention(hrs, rc, effSValues);
-                // 演出中〜実データ反映までは displayRet を優先表示する（実データがまだ古い値のままカクッと戻るのを防ぐ）
-                const ret = displayRet !== null ? displayRet : rawRet;
-
-                const targetHours = getNextIntervalHours(rc, effIntervalDays);
-                const GRAPH_STEPS = 80;
-                const pts = Array.from({ length: GRAPH_STEPS + 1 }, (_, i) => {
-                    const h = (i / GRAPH_STEPS) * targetHours;
-                    return `${(h / targetHours) * 200},${50 - (getMemoryRetention(h, rc, effSValues) / 100) * 40}`;
-                }).join(' ');
-
-                const isNeedsReview = ret <= REVIEW_THRESHOLD;
-                const isWarn = ret <= 80 && !isNeedsReview;
-                const isGood = ret > 80;
-
-                const handleSaveEdit = () => {
-                    if (!editForm.title.trim()) return;
-                    handleAction('update', t.id, {
-                        col: 'cpa_memory',
-                        updates: {
-                            title: editForm.title.trim(), subject: editForm.subject,
-                            reviewCount: Math.max(0, parseInt(editForm.reviewCount, 10) || 0),
-                            lastStudiedAt: fromDatetimeLocalValue(editForm.lastStudiedAt),
-                            importance: editForm.importance || 'A',
-                            excludeFromStats: !!editForm.excludeFromStats
-                        }
-                    });
-                    setIsEditing(false);
-                };
-
-                // 実データ（Firestoreから届いた rc）が演出後に固定していたランク・定着率へ追いついたら、固定を解除する。
-                // データ確定は演出より先に完了することがあるため、ランクアップ演出（'exploding'/'entering'）の
-                // 途中では解除せず、演出が 'idle' に戻ってから解除することで、旧ランクが一瞬すり替わって
-                // 見えるのを防ぐ。このタイミングで、リスト並び替えの凍結（チラつき防止）も解除する。
-                useEffect(() => {
-                    if (pendingNewRc !== null && rc >= pendingNewRc && rankAnimPhase === 'idle') {
-                        setPendingNewRc(null);
-                        setLockedRc(null);
-                        setDisplayRet(null);
-                        setIsCountingRet(false);
-                        if (onAnimEnd) onAnimEnd();
-                    }
-                }, [rc, pendingNewRc, rankAnimPhase]);
-
-                // 復習完了フロー：
-                // ① 長押し完了（この関数の呼び出し時点） → 視覚/聴覚/触覚エフェクトが即時発火
-                // ④ 実データ（定着率・ランク）は、演出の完了を待たずこの時点で即座に確定させる。
-                //    （以前は演出シーケンスの一番最後にFirestoreへ書き込んでいたため、演出のどこかで
-                //     中断・失敗するとデータが確定されず「定着率が上がらない／ランクが変わらない」
-                //     という不具合につながっていた。演出はあくまで見た目の効果とし、データ確定とは
-                //     切り離すことで、ボタン操作は常に確実に反映されるようにする。）
-                // ②／③ 定着率のカウントアップ、ランクアップの破裂→爆誕演出は、確定したデータとは
-                //    独立した「見た目だけの演出」として、この後も引き続き再生される。
-                const fireReview = () => {
-                    const startRet = ret;
-                    const newRc = rc + 1;
-                    const rankBefore = getRank(rc);
-                    const rankAfter = getRank(newRc);
-                    const willRankUp = rankAfter !== rankBefore;
-
-                    // ① 即時エフェクト（視覚・聴覚・触覚）。
-                    // この時点でリストの並び替えを凍結し（チラつき防止）、実データ反映完了まで維持する。
-                    if (onAnimStart) onAnimStart();
-                    vibrate(buildRevVibratePattern(1500));
-                    playReviewSound();
-                    setIsImpacting(true);
-                    setPendingNewRc(newRc);
-                    setTimeout(() => setIsImpacting(false), 600);
-
-                    // ④ 実データ更新は演出を待たず即座に確定する（経験値バー・レベルもこれに連動して更新される）
-                    onReview(t, startRet);
-
-                    // ③ ランクアップ演出（破裂→爆誕の2段階。データ確定とは無関係な見た目のみの演出）。
-                    // データはすでに確定済みで rc が先に新しい値へ届いている可能性があるため、
-                    // 「破裂」段階では明示的に旧ランクをロックしておき、新旧が入れ替わって見えるのを防ぐ。
-                    const runRankUpVisual = () => {
-                        if (!willRankUp) return;
-                        setLockedRc(rc);
-                        setRankAnimPhase('exploding');
-                        vibrate([0, 12, 30, 10]);
-                        setTimeout(() => {
-                            setLockedRc(newRc);
-                            setRankAnimPhase('entering');
-                            playRankUpSound();
-                            vibrate([0, 20, 40, 30]);
-                            setTimeout(() => {
-                                setRankAnimPhase('idle');
-                            }, 460);
-                        }, 360);
-                    };
-
-                    // ② 定着率の数字を約1.5秒かけて、上昇SEと共にスムーズにカウントアップさせる
-                    //    （数字自体はブレさせず、光彩の明滅のみで「動いている」ことを伝える）
-                    if (retRafRef.current) cancelAnimationFrame(retRafRef.current);
-                    setIsCountingRet(true);
-                    const COUNT_DURATION = 1500;
-                    playRetentionRiseSound(COUNT_DURATION);
-                    const countStart = performance.now();
-                    const tickRet = (now) => {
-                        const p = Math.min(1, (now - countStart) / COUNT_DURATION);
-                        const eased = 1 - Math.pow(1 - p, 3);
-                        setDisplayRet(startRet + (100 - startRet) * eased);
-                        if (p < 1) {
-                            retRafRef.current = requestAnimationFrame(tickRet);
-                        } else {
-                            setDisplayRet(100);
-                            setIsCountingRet(false);
-                            // カウントアップが終わったら、ランクアップの見た目演出を続けて再生する
-                            runRankUpVisual();
-                        }
-                    };
-                    retRafRef.current = requestAnimationFrame(tickRet);
-                };
-
-
-                const cancelCharge = () => {
-                    if (chargeRafRef.current) cancelAnimationFrame(chargeRafRef.current);
-                    chargeRafRef.current = null;
-                    setIsCharging(false);
-                    setHoldProgress(0);
-                };
-
-                const startCharge = (e) => {
-                    if (e.cancelable) e.preventDefault();
-                    if (isEditing) return;
-                    completedRef.current = false;
-                    setIsCharging(true);
-                    setHoldProgress(0);
-                    chargeStartRef.current = performance.now();
-                    startChargeSound(HOLD_DURATION);
-                    vibrate(8);
-                    const tick = (now) => {
-                        const elapsed = now - chargeStartRef.current;
-                        const pct = Math.min(100, (elapsed / HOLD_DURATION) * 100);
-                        setHoldProgress(pct);
-                        if (pct >= 100) {
-                            completedRef.current = true;
-                            setIsCharging(false);
-                            fireReview();
-                            setHoldProgress(0);
-                            return;
-                        }
-                        chargeRafRef.current = requestAnimationFrame(tick);
-                    };
-                    chargeRafRef.current = requestAnimationFrame(tick);
-                };
-
-                const endCharge = () => {
-                    if (completedRef.current) { completedRef.current = false; return; }
-                    stopChargeSound();
-                    cancelCharge();
-                };
-
-                useEffect(() => () => {
-                    if (chargeRafRef.current) cancelAnimationFrame(chargeRafRef.current);
-                    if (retRafRef.current) cancelAnimationFrame(retRafRef.current);
-                    stopRetentionRiseSound();
-                }, []);
-
-                if (isEditing) {
-                    return (
-                        <div className="bg-[var(--bg-card)] rounded-2xl border border-indigo-500/50 p-5 flex flex-col gap-4 shadow-lg animate-in overflow-hidden">
-                            <div className="space-y-3">
-                                <div>
-                                    <label className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono block mb-1">論点名</label>
-                                    <input type="text" className="w-full h-11 min-w-0 box-border bg-[var(--bg-input)] border border-[var(--border-strong)] px-3 rounded-xl outline-none font-bold text-[var(--text-primary)] text-sm" value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} />
-                                </div>
-                                <div>
-                                    <label className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono block mb-1">タブ（科目）</label>
-                                    <select className="w-full h-11 min-w-0 box-border bg-[var(--bg-input)] border border-[var(--border-strong)] px-3 rounded-xl outline-none font-bold text-[var(--text-primary)] text-sm" value={editForm.subject} onChange={e => setEditForm({ ...editForm, subject: e.target.value })}>
-                                        {tabs.map(o => <option key={o.name} value={o.name}>{o.name}</option>)}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono block mb-1">総復習回数</label>
-                                    <select className="w-full h-11 min-w-0 box-border bg-[var(--bg-input)] border border-[var(--border-strong)] px-3 rounded-xl outline-none font-bold text-[var(--text-primary)] text-sm mono-num appearance-none" value={editForm.reviewCount} onChange={e => setEditForm({ ...editForm, reviewCount: e.target.value })}>
-                                        {Array.from({ length: 101 }, (_, i) => i).map(n => <option key={n} value={n}>{n} 回</option>)}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono block mb-1">最終復習日</label>
-                                    <input type="datetime-local" className="w-full h-11 min-w-0 max-w-full box-border bg-[var(--bg-input)] border border-[var(--border-strong)] px-3 rounded-xl outline-none font-bold text-[var(--text-primary)] text-xs mono" value={editForm.lastStudiedAt} onChange={e => setEditForm({ ...editForm, lastStudiedAt: e.target.value })} />
-                                </div>
-                                <div>
-                                    <label className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono block mb-1">重要度（傾斜配点）</label>
-                                    <select className="w-full h-11 min-w-0 box-border bg-[var(--bg-input)] border border-[var(--border-strong)] px-3 rounded-xl outline-none font-bold text-[var(--text-primary)] text-sm" value={editForm.importance} onChange={e => setEditForm({ ...editForm, importance: e.target.value })}>
-                                        {IMPORTANCE_LEVELS.map(lv => <option key={lv} value={lv}>{lv}</option>)}
-                                    </select>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setEditForm({ ...editForm, excludeFromStats: !editForm.excludeFromStats })}
-                                    className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl border transition-colors ${editForm.excludeFromStats ? 'bg-red-600/15 border-red-500/50 text-red-300' : 'bg-[var(--bg-card-soft)] border-[var(--border-color)] text-[var(--text-secondary)]'}`}
-                                >
-                                    <span className="text-xs font-bold flex items-center gap-2">
-                                        <Icon name={editForm.excludeFromStats ? 'ToggleRight' : 'ToggleLeft'} size={18} />
-                                        統計に反映させない
-                                    </span>
-                                    <span className="text-[10px] font-bold">{editForm.excludeFromStats ? '除外 ON' : '通常どおり集計'}</span>
-                                </button>
-                            </div>
-                            <div className="flex justify-end gap-2 mt-2">
-                                <button type="button" onClick={() => setIsEditing(false)} className="px-4 py-2.5 text-xs font-bold text-[var(--text-tertiary)] hover:text-[var(--text-primary)] bg-[var(--bg-card-soft)] hover:bg-[var(--bg-card-soft-hover)] rounded-xl transition-colors">キャンセル</button>
-                                <button type="button" onClick={handleSaveEdit} className="px-5 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-lg transition-colors">保存する</button>
-                            </div>
-                        </div>
-                    );
-                }
-
-                return (
-                    <div className={`relative rounded-2xl border p-5 flex flex-col gap-4 shadow-lg transition-colors overflow-hidden ${isNeedsReview ? 'border-red-500/50' : 'border-[var(--border-color)]'} ${isImpacting ? 'card-impact-glow' : ''}`} style={{ backgroundColor: isNeedsReview ? 'var(--bg-danger-card)' : 'var(--bg-card)' }}>
-                        {isNeedsReview && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)] z-10" />}
-
-                        <div className="flex justify-between items-start">
-                            <div className="flex-1 mr-4">
-                                <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                    <h3 className="text-base font-bold text-[var(--text-primary)] leading-tight">{t.title}</h3>
-                                    <RankTransitionBadge rc={rc} phase={rankAnimPhase} lockedRc={lockedRc} />
-                                    {isCustomInterval && <span className="text-[9px] font-black mono px-1.5 py-0.5 rounded-full border border-indigo-400/40 text-indigo-300 bg-indigo-500/10">個別</span>}
-                                    {(t.importance && t.importance !== 'A') && <span className="text-[9px] font-black mono px-1.5 py-0.5 rounded-full border border-amber-400/40 text-amber-300 bg-amber-500/10">重要度{t.importance}</span>}
-                                    {t.excludeFromStats && <span className="text-[9px] font-black mono px-1.5 py-0.5 rounded-full border border-red-400/40 text-red-300 bg-red-500/10">統計除外</span>}
-                                </div>
-                                <p className="text-xs text-[var(--text-tertiary)] mono-num">復習回数: {rc} 回 ・ 最終復習: {new Date(t.lastStudiedAt).toLocaleDateString('ja-JP')}</p>
-                                <p className="text-xs text-[var(--text-tertiary)] mono-num">次回復習目安: {new Date(new Date(t.lastStudiedAt).getTime() + targetHours * 3600 * 1000).toLocaleDateString('ja-JP')}</p>
-                            </div>
-                            <div className="text-right">
-                                <span className="text-[10px] font-bold text-[var(--text-tertiary)] block mono mb-1">定着率</span>
-                                <span className="flex items-center justify-end gap-1">
-                                    {isNeedsReview && <Icon name="AlertCircle" size={15} className="text-red-500 animate-pulse" />}
-                                    <span className={`text-2xl mono-num tracking-tighter inline-block ${isGood ? 'text-indigo-400' : isWarn ? 'text-yellow-400' : 'text-red-400'} ${isCountingRet ? 'retention-counting' : ''}`}>{Math.floor(ret)}%</span>
-                                </span>
-                            </div>
-                        </div>
-
-                        <div className="h-20 w-full relative bg-black/30 rounded-xl border border-[var(--border-color)] p-2 overflow-visible z-10">
-                            <svg viewBox="0 0 200 50" className="w-full h-full overflow-visible">
-                                <line x1="0" y1={50 - (REVIEW_THRESHOLD / 100) * 40} x2="200" y2={50 - (REVIEW_THRESHOLD / 100) * 40} stroke="#ef4444" strokeOpacity="0.3" strokeDasharray="4,4" strokeWidth="1" />
-                                <polyline fill="none" stroke={isNeedsReview ? "#ef4444" : "#6366f1"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" points={pts} opacity={isNeedsReview ? "0.8" : "0.6"} />
-                                <circle cx={(Math.min(hrs, targetHours) / targetHours) * 200} cy={50 - (ret / 100) * 40} r="4" fill={isGood ? '#818cf8' : isWarn ? '#facc15' : '#ef4444'} stroke="#000" strokeWidth="1.5" className="transition-all duration-300" />
-                            </svg>
-                            <div className="absolute bottom-1 left-2 right-2 flex justify-between text-[9px] mono text-[var(--text-muted)] font-bold"><span>0h</span><span>{targetHours / 24} days</span></div>
-                        </div>
-
-                        <div className="flex justify-between items-center mt-1 z-10">
-                            <div className="flex gap-1 items-center">
-                                <button type="button" onClick={() => handleAction('delete', t.id, { col: 'cpa_memory' })} className="text-[var(--text-muted)] hover:text-red-400 p-2 rounded-lg hover:bg-[var(--bg-card-soft)] transition-colors"><Icon name="Trash2" size={18} /></button>
-                                <button type="button" onClick={() => setIsEditing(true)} className="text-[var(--text-muted)] hover:text-indigo-400 p-2 rounded-lg hover:bg-[var(--bg-card-soft)] transition-colors"><Icon name="Edit2" size={18} /></button>
-                                <button type="button" onClick={() => setShowTopicSettings(true)} className={`p-2 rounded-lg hover:bg-[var(--bg-card-soft)] transition-colors ${isCustomInterval ? 'text-indigo-400' : 'text-[var(--text-muted)] hover:text-indigo-400'}`}><Icon name="Settings2" size={18} /></button>
-                            </div>
-                            <button
-                                type="button"
-                                onMouseDown={startCharge}
-                                onMouseUp={endCharge}
-                                onMouseLeave={endCharge}
-                                onTouchStart={startCharge}
-                                onTouchEnd={endCharge}
-                                onTouchCancel={endCharge}
-                                onContextMenu={(e) => e.preventDefault()}
-                                className={`relative overflow-hidden font-bold mono py-2.5 px-5 rounded-xl shadow-lg transition-transform text-sm flex items-center gap-2 select-none touch-none ${isNeedsReview ? 'bg-red-600 text-white' : 'bg-indigo-600 text-white'} ${isCharging ? 'scale-95' : ''} ${isCharging && holdProgress >= 50 ? 'hold-glow' : ''}`}
-                            >
-                                <span className="hold-progress-fill" style={{ transform: `scaleX(${holdProgress / 100})`, transition: isCharging ? 'none' : 'transform 0.25s ease-out' }}></span>
-                                <span className="relative flex items-center gap-2">
-                                    <Icon name={isCharging ? "Droplets" : "Brain"} size={18} /> {isCharging ? 'ホールド中…' : '長押しで復習完了'}
-                                </span>
-                            </button>
-                        </div>
-                        {showTopicSettings && (
-                            <TopicIntervalModal
-                                topic={t}
-                                globalIntervals={intervalDays}
-                                onClose={() => setShowTopicSettings(false)}
-                                onSave={(parsed, enabled) => {
-                                    handleAction('update', t.id, { col: 'cpa_memory', updates: { customIntervals: enabled ? parsed : null } });
-                                }}
-                            />
-                        )}
-                    </div>
-                );
-            };
-
             // 編集モード用の行：チェックボックスで選択 & ドラッグハンドルで並び替え
             const EditableTopicRow = ({ t, index }) => {
+                const [showRowSettings, setShowRowSettings] = useState(false);
+                const isCustomInterval = Array.isArray(t.customIntervals) && t.customIntervals.length === DEFAULT_REVIEW_INTERVALS.length;
                 const rank = getRank(t.reviewCount || 0);
                 const isDraggingThis = dragging && dragging.id === t.id;
                 const isSelected = selectedIds.has(t.id);
@@ -2196,7 +2365,7 @@
                     <div
                         ref={(el) => { if (el) rowRefs.current[t.id] = el; else delete rowRefs.current[t.id]; }}
                         style={style}
-                        className={`edit-row relative flex items-center gap-3 bg-[var(--bg-card)] border rounded-2xl px-3 py-3 shadow-lg ${isDraggingThis ? 'is-dragging border-indigo-500/60 shadow-2xl' : 'border-[var(--border-color)]'} ${isSelected ? 'ring-2 ring-indigo-500/60' : ''}`}
+                        className={`edit-row relative flex items-center gap-2 bg-[var(--bg-card)] border rounded-2xl px-3 py-3 shadow-lg ${isDraggingThis ? 'is-dragging border-indigo-500/60 shadow-2xl' : 'border-[var(--border-color)]'} ${isSelected ? 'ring-2 ring-indigo-500/60' : ''}`}
                     >
                         <button
                             type="button"
@@ -2210,9 +2379,25 @@
                             <div className="flex items-center gap-2 flex-wrap">
                                 <h3 className="text-sm font-bold text-[var(--text-primary)] truncate">{t.title}</h3>
                                 <span className={`text-[10px] font-black mono px-2 py-0.5 rounded-full border shrink-0 ${RANK_STYLES[rank]}`}>{rank}</span>
+                                {isCustomInterval && <span className="text-[9px] font-black mono px-1.5 py-0.5 rounded-full border border-indigo-400/40 text-indigo-300 bg-indigo-500/10 shrink-0">個別</span>}
                             </div>
                             <p className="text-[10px] text-[var(--text-tertiary)] mono-num mt-0.5">復習回数: {t.reviewCount || 0} 回</p>
                         </div>
+
+                        <button
+                            type="button"
+                            onClick={() => { playTapSound(); setShowRowSettings(true); }}
+                            className={`shrink-0 h-9 w-9 flex items-center justify-center rounded-lg hover:bg-[var(--bg-card-soft)] transition-colors ${isCustomInterval ? 'text-indigo-400' : 'text-[var(--text-muted)] hover:text-indigo-400'}`}
+                        >
+                            <Icon name="Settings2" size={18} />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => handleAction('delete', t.id, { col: 'cpa_memory' })}
+                            className="shrink-0 h-9 w-9 flex items-center justify-center rounded-lg text-[var(--text-muted)] hover:text-red-400 hover:bg-[var(--bg-card-soft)] transition-colors"
+                        >
+                            <Icon name="Trash2" size={18} />
+                        </button>
 
                         <div
                             className="drag-handle shrink-0 h-9 w-9 flex items-center justify-center text-[var(--text-muted)] hover:text-indigo-400 rounded-lg hover:bg-[var(--bg-card-soft)]"
@@ -2223,6 +2408,17 @@
                         >
                             <Icon name="GripVertical" size={20} />
                         </div>
+
+                        {showRowSettings && (
+                            <TopicIntervalModal
+                                topic={t}
+                                globalIntervals={intervalDays}
+                                onClose={() => setShowRowSettings(false)}
+                                onSave={(parsed, enabled) => {
+                                    handleAction('update', t.id, { col: 'cpa_memory', updates: { customIntervals: enabled ? parsed : null } });
+                                }}
+                            />
+                        )}
                     </div>
                 );
             };
@@ -2240,164 +2436,6 @@
                         </div>
                         <div className="w-full h-2.5 rounded-full bg-[var(--bg-card-soft)] overflow-hidden">
                             <div className={`h-full rounded-full transition-all duration-500 ${done ? 'bg-gradient-to-r from-amber-300 to-amber-500' : 'bg-gradient-to-r from-indigo-500 to-indigo-400'}`} style={{ width: `${pct}%` }}></div>
-                        </div>
-                    </div>
-                );
-            };
-
-            const SettingsModal = () => {
-                const [form, setForm] = useState(intervalDays.slice());
-                const [saved, setSaved] = useState(false);
-
-                useEffect(() => { setForm(intervalDays.slice()); }, [showSettings]);
-
-                const updateField = (idx, val) => {
-                    const next = form.slice();
-                    next[idx] = val;
-                    setForm(next);
-                };
-
-                const handleSave = () => {
-                    const parsed = form.map(v => Math.max(0.1, parseFloat(v) || 0.1));
-                    handleSaveIntervals(parsed);
-                    setSaved(true);
-                    setTimeout(() => setSaved(false), 1600);
-                };
-
-                const pyramidRows = RANKS.slice().reverse().map(r => {
-                    const idx = RANKS.indexOf(r);
-                    const widthPct = 100 - idx * 9.4; // idx=0(E)→100%（土台）、idx=7(SSS)→約34%（頂点）
-                    const label = idx === RANKS.length - 1 ? `${idx}回以上` : `${idx}回`;
-                    return { rank: r, idx, widthPct, label };
-                });
-
-                return (
-                    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center">
-                        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowSettings(false)}></div>
-                        <div className="relative w-full sm:max-w-md max-h-[88vh] overflow-y-auto bg-[var(--bg-app-to)] border border-[var(--border-color)] rounded-t-3xl sm:rounded-3xl shadow-2xl animate-in">
-                            <div className="sticky top-0 bg-[var(--bg-header)] backdrop-blur border-b border-[var(--border-color)] px-5 py-4 flex items-center justify-between z-10">
-                                <h2 className="text-sm font-black text-[var(--text-primary)] flex items-center gap-2"><Icon name="Settings" size={16} className="text-indigo-400" />設定</h2>
-                                <button type="button" onClick={() => setShowSettings(false)} className="h-8 w-8 flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--text-primary)] bg-[var(--bg-card-soft)] rounded-full transition-colors active:scale-90">
-                                    <Icon name="X" size={14} />
-                                </button>
-                            </div>
-
-                            <div className="p-5 space-y-6">
-                                <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-4">
-                                    <div>
-                                        <p className="text-xs font-black text-[var(--text-primary)] flex items-center gap-1.5"><Icon name="CalendarRange" size={14} className="text-indigo-400" />復習間隔のカスタマイズ（全体設定）</p>
-                                        <p className="text-[10px] text-[var(--text-tertiary)] font-bold mt-1">各回の復習まで、それぞれ何日空けるかを設定できます（記憶定着ゲージの計算に反映されます）。「8回目以降」はそれ以降ずっと同じ間隔が適用されます。なお、論点ごとに個別設定（各カードの歯車アイコン）を行った場合は、そちらがこの全体設定より優先されます。</p>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        {form.map((d, idx) => (
-                                            <div key={idx}>
-                                                <label className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono block mb-1">{idx === form.length - 1 ? `${idx + 1}回目以降` : `${idx + 1}回目の間隔`}</label>
-                                                <div className="relative">
-                                                    <input
-                                                        type="number" min="0.1" step="0.5"
-                                                        className="w-full bg-[var(--bg-input)] border border-[var(--border-strong)] p-2.5 pr-9 rounded-xl outline-none font-bold text-[var(--text-primary)] text-sm mono-num"
-                                                        value={d} onChange={e => updateField(idx, e.target.value)}
-                                                    />
-                                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[var(--text-muted)] mono">日後</span>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <button type="button" onClick={handleSave} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5">
-                                        <Icon name={saved ? "Check" : "Save"} size={14} />{saved ? '保存しました' : '保存する'}
-                                    </button>
-                                </div>
-
-                                <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-4">
-                                    <div>
-                                        <p className="text-xs font-black text-[var(--text-primary)] flex items-center gap-1.5"><Icon name="FolderPlus" size={14} className="text-emerald-400" />論点の自動追加</p>
-                                        <p className="text-[10px] text-[var(--text-tertiary)] font-bold mt-1">デフォルトの科目・論点のうち、まだ登録されていないものだけを追加します。既に論点が存在する科目はスキップされるため、何度実行しても重複追加はされません。</p>
-                                    </div>
-                                    <button type="button" onClick={handleManualSeed} disabled={isSeeding} className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5">
-                                        <Icon name={isSeeding ? "Loader2" : "FolderPlus"} size={14} className={isSeeding ? "animate-spin" : ""} />
-                                        {isSeeding ? '追加中…' : 'デフォルト論点を追加'}
-                                    </button>
-                                    <div className="pt-1 border-t border-[var(--border-color)]">
-                                        <p className="text-[10px] text-[var(--text-tertiary)] font-bold mt-3 mb-2">論文式試験の論点（経営学・租税法）を、短答式のデフォルト論点とは別に追加できます。</p>
-                                        <button type="button" onClick={handleManualSeedRonbun} disabled={isSeedingRonbun} className="w-full bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white font-bold py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5">
-                                            <Icon name={isSeedingRonbun ? "Loader2" : "BookOpenCheck"} size={14} className={isSeedingRonbun ? "animate-spin" : ""} />
-                                            {isSeedingRonbun ? '追加中…' : '論文式試験の論点を追加'}
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-4">
-                                    <div className="flex items-center justify-between gap-3">
-                                        <div>
-                                            <p className="text-xs font-black text-[var(--text-primary)] flex items-center gap-1.5"><Icon name="Scale" size={14} className="text-sky-400" />重要度（傾斜配点）</p>
-                                            <p className="text-[10px] text-[var(--text-tertiary)] font-bold mt-1">ONにすると、各論点の定着率に重要度の係数を掛けた加重平均で総合定着率を計算します。</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center justify-between px-4 py-3 rounded-2xl border bg-[var(--bg-card-soft)] border-[var(--border-color)]">
-                                        <span className="text-xs font-bold text-[var(--text-secondary)]">重要度を使用する</span>
-                                        <Switch
-                                            checked={!!settings.useImportance}
-                                            onChange={() => { const { db, appId, doc, setDoc } = window.fb; setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'cpa_settings', 'main'), { useImportance: !settings.useImportance }, { merge: true }).catch(() => {}); }}
-                                        />
-                                    </div>
-                                    <div className={`grid grid-cols-2 gap-3 transition-opacity ${settings.useImportance ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
-                                        {IMPORTANCE_LEVELS.map(lv => (
-                                            <div key={lv}>
-                                                <label className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono block mb-1">{lv} 係数</label>
-                                                <input
-                                                    type="number" min="0" step="0.1"
-                                                    className="w-full bg-[var(--bg-input)] border border-[var(--border-strong)] p-2.5 rounded-xl outline-none font-bold text-[var(--text-primary)] text-sm mono-num"
-                                                    value={(settings.importanceCoeffs || DEFAULT_IMPORTANCE_COEFFS)[lv]}
-                                                    onChange={e => {
-                                                        const val = e.target.value;
-                                                        const nextCoeffs = { ...(settings.importanceCoeffs || DEFAULT_IMPORTANCE_COEFFS), [lv]: val === '' ? '' : parseFloat(val) };
-                                                        const { db, appId, doc, setDoc } = window.fb;
-                                                        setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'cpa_settings', 'main'), { importanceCoeffs: nextCoeffs }, { merge: true }).catch(() => {});
-                                                    }}
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-3">
-                                    <div>
-                                        <p className="text-xs font-black text-[var(--text-primary)] flex items-center gap-1.5"><Icon name="EyeOff" size={14} className="text-rose-400" />科目ごとの統計除外</p>
-                                        <p className="text-[10px] text-[var(--text-tertiary)] font-bold mt-1">ONにした科目は、総合定着率・各種統計・グラフの集計対象から除外されます（論点一覧・ヒートマップには表示され続けます）。</p>
-                                    </div>
-                                    <div className="space-y-2">
-                                        {tabs.map(tab => (
-                                            <div key={tab.name} className="flex items-center justify-between gap-2 bg-[var(--bg-card-soft)] rounded-xl px-3 py-2.5">
-                                                <span className="text-xs font-bold text-[var(--text-secondary)] truncate">{tab.name}</span>
-                                                <Switch
-                                                    checked={!!subjectExcludeMap[tab.name]}
-                                                    disabled={!tab.id}
-                                                    onChange={() => handleToggleSubjectExclude(tab)}
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-4">
-                                    <div>
-                                        <p className="text-xs font-black text-[var(--text-primary)] flex items-center gap-1.5"><Icon name="Trophy" size={14} className="text-amber-400" />ランクアップ・ピラミッド</p>
-                                        <p className="text-[10px] text-[var(--text-tertiary)] font-bold mt-1">頂点のSSSを目指して、復習を積み重ねましょう。</p>
-                                    </div>
-                                    <div className="flex flex-col items-center gap-1.5 pt-2 pb-1">
-                                        {pyramidRows.map(row => (
-                                            <div
-                                                key={row.rank}
-                                                style={{ width: `${row.widthPct}%` }}
-                                                className={`pyramid-row flex items-center justify-between gap-2 px-4 py-2.5 rounded-xl border transition-all ${RANK_STYLES[row.rank]}`}
-                                            >
-                                                <span className="font-black text-xs mono shrink-0">{row.rank}</span>
-                                                <span className="text-[10px] font-bold mono-num opacity-90 shrink-0">累計 {row.label}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 );
@@ -2525,9 +2563,7 @@
             // ・マス内には論点名の略称（先頭2文字）を表示するかどうかを切り替え可能
             // ・タップすると、そのマスの上にふきだしで論点名と定着率を表示する
             const HeatmapCard = () => {
-                const [selected, setSelected] = useState(null); // { id, title, subject, ret, x, y }
-                const [showAbbrev, setShowAbbrev] = useState(true);
-                const gridWrapRef = useRef(null);
+                const [selected, setSelected] = useState(null); // { id, title, subject, ret }
 
                 const cells = topics.map(t => {
                     const hrs = getHoursSince(t.lastStudiedAt);
@@ -2537,58 +2573,47 @@
 
                 if (cells.length === 0) return null;
 
-                const handleCellClick = (e, c) => {
+                const handleCellClick = (c) => {
                     playTapSound();
-                    const cellRect = e.currentTarget.getBoundingClientRect();
-                    const wrapRect = gridWrapRef.current.getBoundingClientRect();
-                    setSelected({
-                        ...c,
-                        x: cellRect.left - wrapRect.left + cellRect.width / 2,
-                        y: cellRect.top - wrapRect.top
-                    });
+                    setSelected(c);
                 };
 
                 return (
                     <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-3">
-                        <div className="flex items-center justify-between gap-2">
-                            <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest flex items-center gap-1.5"><Icon name="Grid3x3" size={13} className="text-indigo-400" />全論点ヒートマップ</p>
-                            <button
-                                type="button"
-                                onClick={() => { playTapSound(); setShowAbbrev(v => !v); }}
-                                className={`shrink-0 text-[9px] font-black px-2.5 py-1 rounded-full border transition-colors flex items-center gap-1 ${showAbbrev ? 'bg-indigo-600/20 border-indigo-500/50 text-indigo-300' : 'bg-[var(--bg-card-soft)] border-[var(--border-color)] text-[var(--text-tertiary)]'}`}
-                            >
-                                <Icon name={showAbbrev ? 'ToggleRight' : 'ToggleLeft'} size={12} />
-                                略称表示
-                            </button>
-                        </div>
-                        <div className="relative" ref={gridWrapRef}>
-                            <div className="grid grid-cols-8 gap-1.5">
-                                {cells.map(c => {
-                                    const textColor = c.ret >= 45 ? 'rgba(255,255,255,0.92)' : 'rgba(15,23,42,0.7)';
-                                    return (
-                                        <button
-                                            type="button" key={c.id}
-                                            onClick={(e) => handleCellClick(e, c)}
-                                            style={{ backgroundColor: getHeatmapColor(c.ret) }}
-                                            className={`heatmap-cell aspect-square ${selected && selected.id === c.id ? 'is-selected' : ''}`}
-                                            title={c.title}
-                                        >
-                                            {showAbbrev && <span className="heatmap-cell-label" style={{ color: textColor }}>{c.abbrev}</span>}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                            {selected && (
-                                <div
-                                    className="heatmap-bubble absolute z-20 animate-in"
-                                    style={{ left: selected.x, top: selected.y - 10, transform: 'translate(-50%, -100%)' }}
-                                >
-                                    <p className="text-xs font-bold text-[var(--text-primary)]">{selected.title}</p>
+                        <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest flex items-center gap-1.5"><Icon name="Grid3x3" size={13} className="text-indigo-400" />全論点ヒートマップ</p>
+
+                        {/* タップした論点の情報を表示するボックス（吹き出しではなく、グリッド上部に固定表示） */}
+                        <div className="min-h-[52px] rounded-2xl border border-[var(--border-color)] bg-black/20 px-4 py-2.5 flex flex-col justify-center">
+                            {selected ? (
+                                <>
+                                    <p className="text-xs font-bold text-[var(--text-primary)] truncate">{selected.title}</p>
                                     <p className="text-[10px] text-[var(--text-tertiary)] font-bold mt-0.5">{selected.subject} ・ 定着率 {Math.floor(selected.ret)}%</p>
-                                </div>
+                                </>
+                            ) : (
+                                <p className="text-[10px] text-[var(--text-muted)] font-bold">マスをタップすると、ここに論点名と定着率が表示されます</p>
                             )}
                         </div>
-                        <p className="text-[9px] text-[var(--text-muted)] font-bold">白→ピンク→赤→茶色→焦茶色の順に定着率が高いことを示します。マスをタップすると詳細を表示します。</p>
+
+                        <div className="grid grid-cols-6 gap-1.5">
+                            {cells.map(c => {
+                                const textColor = c.ret >= 55 ? 'rgba(255,255,255,0.95)' : 'rgba(15,23,42,0.75)';
+                                return (
+                                    <button
+                                        type="button" key={c.id}
+                                        onClick={() => handleCellClick(c)}
+                                        style={{ backgroundColor: getHeatmapColor(c.ret) }}
+                                        className={`heatmap-cell aspect-square ${selected && selected.id === c.id ? 'is-selected' : ''}`}
+                                        title={c.title}
+                                    >
+                                        <span className="heatmap-cell-label" style={{ color: textColor }}>
+                                            <span className="block">{c.abbrev}</span>
+                                            <span className="block text-[7px] font-bold opacity-90">{Math.floor(c.ret)}%</span>
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        <p className="text-[9px] text-[var(--text-muted)] font-bold">白→黄→オレンジ→赤の順に定着率が高いことを示します。マスをタップすると詳細を表示します。</p>
                     </div>
                 );
             };
@@ -2672,7 +2697,7 @@
 
                             <div className="flex items-stretch gap-2">
                                 <div className="w-8 h-72 shrink-0 flex flex-col justify-between items-end py-1 text-[9px] mono text-[var(--text-muted)] font-bold">
-                                    <span className="flex items-center gap-0.5"><Icon name="ArrowUp" size={9} className="text-indigo-400" />{SCORE_DISTRIBUTION_MAX_RATE}%</span>
+                                    <span className="flex items-center gap-0.5"><Icon name="ArrowUp" size={9} className="text-indigo-400" />100%</span>
                                     <span>0%</span>
                                 </div>
                                 <div className="relative h-72 flex-1 bg-black/20 rounded-xl border border-[var(--border-color)] p-2 overflow-visible">
@@ -2803,17 +2828,27 @@
 
             return (
                 <div className="min-h-screen pb-12 bg-gradient-to-b from-[var(--bg-app-from)] to-[var(--bg-app-to)]">
-                    {showSettings && <SettingsModal />}
+                    {showSettings && (
+                        <SettingsModal
+                            onClose={() => setShowSettings(false)}
+                            intervalDays={intervalDays}
+                            onSaveIntervals={handleSaveIntervals}
+                            isSeeding={isSeeding}
+                            onManualSeed={handleManualSeed}
+                            isSeedingRonbun={isSeedingRonbun}
+                            onManualSeedRonbun={handleManualSeedRonbun}
+                            settings={settings}
+                            onToggleUseImportance={handleToggleUseImportance}
+                            onChangeImportanceCoeff={handleChangeImportanceCoeff}
+                            tabs={tabs}
+                            subjectExcludeMap={subjectExcludeMap}
+                            onToggleSubjectExclude={handleToggleSubjectExclude}
+                            onDeleteSubject={handleDeleteSubject}
+                            tabStats={tabStats}
+                        />
+                    )}
                     {showStreakModal && <StreakModal />}
                     {showAchievements && <AchievementsModal />}
-                    {achievementToast && (
-                        <div className="fixed top-4 left-0 right-0 z-[250] flex justify-center px-4 pointer-events-none">
-                            <div className={`achievement-toast pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-2xl border shadow-2xl ${achievementToast.tier}`}>
-                                <Icon name="Trophy" size={18} />
-                                <span className="text-xs font-black">{achievementToast.label}</span>
-                            </div>
-                        </div>
-                    )}
                     {showBulkCountModal && (
                         // 数値入力時にモバイルのキーボードが開くと画面下部が隠れてしまうため、
                         // このモーダルだけは画面上部寄りに表示し、入力欄とボタンがキーボードに
@@ -2934,11 +2969,6 @@
                                 <div className="flex items-center justify-between gap-2 px-1 flex-nowrap">
                                     <div className="flex items-center gap-2 min-w-0 flex-1">
                                         <span className="text-sm font-bold text-[var(--text-primary)] truncate">{activeSubject}</span>
-                                        {activeStat && activeStat.needReview > 0 && (
-                                            <span className="bg-red-500/20 text-red-400 text-xs mono-num font-bold px-2 py-0.5 rounded-full border border-red-500/30 flex items-center gap-1 shrink-0 whitespace-nowrap">
-                                                <Icon name="AlertCircle" size={10} /> 要復習 {activeStat.needReview}
-                                            </span>
-                                        )}
                                     </div>
                                     <div className="flex items-center gap-2 shrink-0">
                                         <div className="relative shrink-0">
@@ -2991,7 +3021,7 @@
                                         <div className="text-center py-16 text-[var(--text-tertiary)] text-sm font-bold border-2 border-dashed border-[var(--border-color)] rounded-3xl">論点を登録して記憶をトラッキングしましょう</div>
                                     ) : (
                                         <div className="space-y-4">
-                                            {visibleTopics.map((t) => <TopicCard key={t.id} t={t} onReview={handleReviewAction} onAnimStart={() => markAnimating(t.id, true)} onAnimEnd={() => markAnimating(t.id, false)} />)}
+                                            {visibleTopics.map((t) => <TopicCard key={t.id} t={t} onReview={handleReviewAction} onAnimStart={() => markAnimating(t.id, true)} onAnimEnd={() => markAnimating(t.id, false)} tabs={tabs} intervalDays={intervalDays} onUpdate={(id, updates) => handleAction('update', id, { col: 'cpa_memory', updates })} />)}
                                         </div>
                                     )
                                 )}
@@ -3032,7 +3062,7 @@
                                         className="text-xs font-bold flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 text-white transition-colors whitespace-nowrap"
                                     >
                                         <Icon name="Hash" size={14} />
-                                        回数を設定
+                                        復習回数を設定
                                     </button>
                                     <button
                                         type="button"
