@@ -153,20 +153,21 @@
             animation: gradientDrift 5s ease-in-out infinite;
         }
 
+        /* S: 「プラチナ」— 白銀に輝く上品なメタリック（SSの金と混同しないよう色相を変更） */
         .rank-s {
-            background-image: linear-gradient(100deg, #fef3c7, #fbbf24, #f59e0b, #fbbf24, #fef3c7);
+            background-image: linear-gradient(100deg, #f1f5f9, #cbd5e1, #94a3b8, #e2e8f0, #f1f5f9);
             background-size: 320% 100%;
-            color: #451a03; border-color: rgba(251,191,36,0.7); font-weight: 900;
-            box-shadow: 0 0 17px 3px rgba(251,191,36,0.65), 0 0 30px 7px rgba(251,191,36,0.28);
+            color: #1e293b; border-color: rgba(203,213,225,0.75); font-weight: 900;
+            box-shadow: 0 0 17px 3px rgba(203,213,225,0.6), 0 0 30px 7px rgba(148,163,184,0.28);
             animation: gradientDrift 4s ease-in-out infinite, auraGlowPulse 2.2s ease-in-out infinite;
         }
 
-        /* SS: Sより一段上の「金」— より白く輝くゴールドで、Sより速く強い輝き */
+        /* SS: Sより一段上の「金」— プラチナのSとはっきり区別できる鮮やかなゴールド */
         .rank-ss {
-            background-image: linear-gradient(100deg, #fff8dc, #ffd700, #f5b301, #ffe066, #ffd700, #fff8dc);
+            background-image: linear-gradient(100deg, #fff3c4, #ffd700, #f59e0b, #ffe066, #ffd700, #fff3c4);
             background-size: 340% 100%;
-            color: #3d2900; border-color: rgba(255,215,0,0.8); font-weight: 900;
-            box-shadow: 0 0 22px 4px rgba(255,215,0,0.68), 0 0 40px 10px rgba(255,196,0,0.32);
+            color: #3d2900; border-color: rgba(255,193,7,0.85); font-weight: 900;
+            box-shadow: 0 0 22px 4px rgba(255,193,7,0.7), 0 0 40px 10px rgba(255,152,0,0.35);
             animation: gradientDrift 3.1s ease-in-out infinite, auraGlowPulse 1.8s ease-in-out infinite;
         }
 
@@ -269,6 +270,46 @@
         .pyramid-row.rank-s::after { animation-duration: 3.6s; }
         .pyramid-row.rank-ss::after { animation-duration: 3.2s; }
         .pyramid-row.rank-sss::after { animation-duration: 2.8s; }
+
+        /* ===== アチーブメント・メダル（レベル帯に応じて豪華になる：銅→銀→金→プラチナ→ダイヤ→レインボー） ===== */
+        .medal-badge {
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+            border-radius: 18px; border: 1px solid; padding: 12px 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+            transition: transform .15s ease;
+        }
+        .medal-badge:active { transform: scale(0.94); }
+        .medal-bronze { background: linear-gradient(135deg,#c9884f,#e0a06a,#a9673a); color:#2e1705; border-color: rgba(205,133,63,0.65); }
+        .medal-silver { background: linear-gradient(135deg,#cbd5e1,#f1f5f9,#94a3b8); color:#1e293b; border-color: rgba(203,213,225,0.75); }
+        .medal-gold { background: linear-gradient(135deg,#fff3c4,#ffd700,#f59e0b); color:#3d2900; border-color: rgba(255,193,7,0.85); }
+        .medal-platinum { background: linear-gradient(135deg,#e0e7ff,#cbd5e1,#94a3b8,#e0e7ff); color:#1e293b; border-color: rgba(203,213,225,0.9); box-shadow: 0 0 12px 2px rgba(203,213,225,0.4), 0 4px 10px rgba(0,0,0,0.25); }
+        .medal-diamond { background: linear-gradient(135deg,#a5f3fc,#67e8f9,#22d3ee,#a5f3fc); color:#0c4a6e; border-color: rgba(103,232,249,0.9); box-shadow: 0 0 16px 3px rgba(103,232,249,0.45), 0 4px 10px rgba(0,0,0,0.25); }
+        .medal-rainbow {
+            background: linear-gradient(90deg,#ff6b6b,#feca57,#1dd1a1,#54a0ff,#c56cf0,#ff6b6b);
+            background-size: 300% 100%; color:#0b0b0f; border-color: rgba(255,255,255,0.7);
+            box-shadow: 0 0 20px 4px rgba(255,255,255,0.4), 0 4px 10px rgba(0,0,0,0.25);
+            animation: rainbowShift 4s ease-in-out infinite;
+        }
+        .medal-locked { background: rgba(148,163,184,0.08); color: var(--text-muted); border-color: var(--border-color); filter: grayscale(1); opacity: 0.5; box-shadow: none; }
+        @keyframes achievementPop { 0% { transform: scale(0.4); opacity: 0; } 60% { transform: scale(1.12); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+        .achievement-pop { animation: achievementPop 0.4s cubic-bezier(.34,1.56,.64,1) both; }
+        @keyframes toastSlideIn { 0% { transform: translateY(-16px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+        .achievement-toast { animation: toastSlideIn 0.35s ease-out both; }
+
+        /* ===== レベルアップ（ティア突破）演出：バーが満タンになった瞬間の輝き ===== */
+        @keyframes levelUpFlash {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(250,204,21,0); }
+            35% { box-shadow: 0 0 16px 4px rgba(250,204,21,0.85), 0 0 30px 8px rgba(250,204,21,0.4); }
+        }
+        .level-up-flash { animation: levelUpFlash 0.9s ease-out; }
+        .xp-bar-fill { transition: none; }
+
+        /* ===== 全論点ヒートマップ ===== */
+        .heatmap-cell {
+            border-radius: 6px; transition: background-color .5s ease, transform .15s ease, box-shadow .3s ease;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .heatmap-cell:active { transform: scale(0.9); }
+        .heatmap-cell.is-selected { box-shadow: 0 0 0 2px #facc15; }
     </style>
 </head>
 <body>
@@ -325,9 +366,53 @@
                 '保証業務・内部統制監査', '公認会計士法・監査制度'
             ]
         };
+        // ===== 論文式試験の論点（ユーザー提供の範囲表に基づく） =====
+        const RONBUN_SUBJECTS = ['経営学', '租税法'];
+        const RONBUN_TOPICS = {
+            '経営学': [
+                'ファイナンス概要', 'コーポレート・ファイナンス', 'インベストメント', 'デリバティブ',
+                '企業評価と財務分析', 'わが国の資金調達', '運転資本管理', 'ファイナンスに関するその他の論点',
+                'ファイナンス注意ポイント', '経営管理論', '経営戦略論', '経営組織論', '技術経営', '経営統制', '経営計画'
+            ],
+            '租税法': [
+                '租税法総論', '法人税法総論', '租税公課（基礎）', '税効果会計', '減価償却（基礎）',
+                '完全支配関係法人間の取引に係る損益調整', '給与（基礎）', '受取配当等', '所得税額控除',
+                '外国子会社からの配当等', '外国税額控除', '貸倒損失', '評価損益', '減価償却（応用）', '給与（応用）',
+                '交際費等', '租税公課（応用）', '寄附金', 'みなし配当', 'リース取引', '繰延資産', '有価証券等',
+                '棚卸資産等', '外貨建取引', '欠損金等の繰越控除', '組織再編税制', '圧縮記帳', '特別償却',
+                '使途秘匿金', '中小法人等', '収益認識', '別表五', '同族会社', '所得税法総論', '各種所得金額の計算',
+                '課税標準', '所得控除', '所得税額の計算', 'その他の諸論点', '消費税法総論', '取引の分類',
+                '課税標準', '仕入税額控除', 'その他の税額控除', '特定課税仕入れ', '軽減税率', '中間申告',
+                '納税義務', '控除対象仕入税額に対する調整', '簡易課税制度', '適格請求書等保存方式'
+            ]
+        };
+
         const REVIEW_THRESHOLD = 65;
         const DEFAULT_REVIEW_INTERVALS = [1, 3, 7, 14, 30, 45, 60, 60]; // 日数（8番目以降はこの値がずっと適用される）
-        const DEFAULT_SETTINGS = { weeklyGoal: 15, monthlyGoal: 60, theme: 'dark', lastLoginDate: null, currentStreak: 0, bestStreak: 0, reviewIntervals: DEFAULT_REVIEW_INTERVALS };
+        const IMPORTANCE_LEVELS = ['A', 'B', 'C', 'D'];
+        const DEFAULT_IMPORTANCE_COEFFS = { A: 1, B: 0.5, C: 0.2, D: 0.1 };
+        const DEFAULT_SETTINGS = {
+            weeklyGoal: 15, monthlyGoal: 60, theme: 'dark',
+            lastLoginDate: null, currentStreak: 0, bestStreak: 0, totalLoginDays: 0,
+            reviewIntervals: DEFAULT_REVIEW_INTERVALS,
+            useImportance: false, importanceCoeffs: DEFAULT_IMPORTANCE_COEFFS,
+            bestPercentageEver: 0, bestLap: 0
+        };
+
+        // ===== レベル帯（アチーブメント・経験値バーの豪華さに連動：銅→銀→金→プラチナ→ダイヤ→レインボー） =====
+        const LEVEL_TIERS = [
+            { key: 'bronze', label: 'ブロンズ', min: 0, max: 16, cls: 'medal-bronze' },
+            { key: 'silver', label: 'シルバー', min: 17, max: 33, cls: 'medal-silver' },
+            { key: 'gold', label: 'ゴールド', min: 34, max: 50, cls: 'medal-gold' },
+            { key: 'platinum', label: 'プラチナ', min: 51, max: 67, cls: 'medal-platinum' },
+            { key: 'diamond', label: 'ダイヤ', min: 68, max: 84, cls: 'medal-diamond' },
+            { key: 'rainbow', label: 'レインボー', min: 85, max: 100, cls: 'medal-rainbow' }
+        ];
+        const getLevelTier = (level) => LEVEL_TIERS.find(t => level >= t.min && level <= t.max) || LEVEL_TIERS[0];
+        const tierClassForIndex = (idx, total) => LEVEL_TIERS[Math.min(LEVEL_TIERS.length - 1, Math.floor((idx / Math.max(1, total)) * LEVEL_TIERS.length))].cls;
+
+        const LAP_ACHIEVEMENT_MAX = 7;
+        const RETENTION_ACHIEVEMENT_THRESHOLDS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 95];
 
         const RANKS = ['E', 'D', 'C', 'B', 'A', 'S', 'SS', 'SSS'];
         const SORT_OPTIONS = [
@@ -768,6 +853,95 @@
             return <span className={`${className} ${pulse ? 'count-pop-flash' : ''}`}>{prefix}{display}{suffix}</span>;
         };
 
+        // ===== レベル経験値バー =====
+        // レベル(0〜100)を「レベル帯（ティア）」ごとのバーとして表現する。
+        // 数字がパッと変わるだけでなく、バーが現在値→目標値まで滑らかに伸び、
+        // ティア（帯）の境界を超えるときはバーを満タンにしてから昇格演出＋効果音を鳴らし、
+        // 溢れた分の経験値を次のティアのバーへ引き継いで続けて伸ばす。
+        const LevelBar = ({ level }) => {
+            const clamped = Math.max(0, Math.min(100, level || 0));
+            const initialTier = getLevelTier(clamped);
+            const tierProgress = (lvl, t) => Math.max(0, Math.min(100, ((lvl - t.min) / Math.max(1, (t.max - t.min + 1))) * 100));
+
+            const [tier, setTier] = useState(initialTier);
+            const [barPct, setBarPct] = useState(() => tierProgress(clamped, initialTier));
+            const [flash, setFlash] = useState(false);
+            const prevLevelRef = useRef(clamped);
+            const rafRef = useRef(null);
+            const barPctRef = useRef(barPct);
+            barPctRef.current = barPct;
+            const mountedRef = useRef(false);
+
+            const animateTo = (target, onDone) => {
+                if (rafRef.current) cancelAnimationFrame(rafRef.current);
+                const start = barPctRef.current;
+                const startTime = performance.now();
+                const duration = 650;
+                const tick = (now) => {
+                    const p = Math.min(1, (now - startTime) / duration);
+                    const eased = 1 - Math.pow(1 - p, 3);
+                    setBarPct(start + (target - start) * eased);
+                    if (p < 1) {
+                        rafRef.current = requestAnimationFrame(tick);
+                    } else {
+                        setBarPct(target);
+                        if (onDone) onDone();
+                    }
+                };
+                rafRef.current = requestAnimationFrame(tick);
+            };
+
+            useEffect(() => {
+                if (!mountedRef.current) {
+                    mountedRef.current = true;
+                    prevLevelRef.current = clamped;
+                    return;
+                }
+                const from = prevLevelRef.current;
+                const to = clamped;
+                if (from === to) return;
+                prevLevelRef.current = to;
+                const fromTier = getLevelTier(from);
+                const toTier = getLevelTier(to);
+
+                if (toTier.key === fromTier.key || to < from) {
+                    // 同一ティア内の変化、またはレベルダウンはそのまま滑らかに遷移する
+                    setTier(toTier);
+                    animateTo(tierProgress(to, toTier));
+                    return;
+                }
+
+                // ティアの境界を上向きに突破した：まず現在のティアを満タンにする
+                setTier(fromTier);
+                animateTo(100, () => {
+                    setFlash(true);
+                    playRankUpSound();
+                    vibrate([0, 20, 40, 30]);
+                    setTimeout(() => {
+                        setFlash(false);
+                        // 満タンになった分の余剰経験値を次のティアへ引き継ぐ
+                        setTier(toTier);
+                        setBarPct(0);
+                        barPctRef.current = 0;
+                        requestAnimationFrame(() => animateTo(tierProgress(to, toTier)));
+                    }, 480);
+                });
+            }, [clamped]);
+
+            useEffect(() => () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); }, []);
+
+            return (
+                <div className="flex items-center gap-2 max-w-[190px]">
+                    <span className="text-[10px] font-black mono text-amber-300 shrink-0 flex items-center gap-0.5">
+                        <Icon name="Star" size={11} className="text-amber-400" />Lv<CountUpNumber value={clamped} className="tabular-nums" />
+                    </span>
+                    <div className={`flex-1 h-2 rounded-full bg-black/40 border border-amber-400/25 overflow-hidden ${flash ? 'level-up-flash' : ''}`}>
+                        <div className={`xp-bar-fill h-full rounded-full bg-gradient-to-r from-amber-500 via-amber-300 to-yellow-200`} style={{ width: `${barPct}%` }}></div>
+                    </div>
+                </div>
+            );
+        };
+
         // 論点ごとの個別復習間隔設定モーダル（全体設定より優先される）
         const TopicIntervalModal = ({ topic, globalIntervals, onClose, onSave }) => {
             const initialEnabled = Array.isArray(topic.customIntervals) && topic.customIntervals.length === DEFAULT_REVIEW_INTERVALS.length;
@@ -868,12 +1042,30 @@
             const [goalForm, setGoalForm] = useState({ weekly: DEFAULT_SETTINGS.weeklyGoal, monthly: DEFAULT_SETTINGS.monthlyGoal });
             const [showSettings, setShowSettings] = useState(false);
             const [showStreakModal, setShowStreakModal] = useState(false);
+            const [showAchievements, setShowAchievements] = useState(false);
 
             // ===== iOSオーディオアンロック用オーバーレイ =====
             const [audioUnlocked, setAudioUnlocked] = useState(false);
 
             // ===== 論点自動追加（手動トリガー） =====
             const [isSeeding, setIsSeeding] = useState(false);
+            const [isSeedingRonbun, setIsSeedingRonbun] = useState(false);
+
+            // ===== 復習アニメーション中の論点ID集合（この間は並び替えを凍結し、リストのチラつきを防ぐ） =====
+            const [animatingIds, setAnimatingIds] = useState(() => new Set());
+            const markAnimating = (id, on) => {
+                setAnimatingIds(prev => {
+                    const next = new Set(prev);
+                    if (on) next.add(id); else next.delete(id);
+                    return next;
+                });
+            };
+            const stableOrderRef = useRef([]);
+
+            // ===== アチーブメント達成トースト =====
+            const [achievementToast, setAchievementToast] = useState(null);
+            const prevBestLapRef = useRef(null);
+            const prevBestPctRef = useRef(null);
 
             // ===== 論点の編集モード（スライドで並び替え／選択して一括削除） =====
             const [editMode, setEditMode] = useState(false);
@@ -967,7 +1159,7 @@
                 }
             }, [user]);
 
-            // 連続ログイン記録（セッション中に一度だけ判定）
+            // 連続ログイン日数・累計ログイン日数の記録（セッション中に一度だけ判定）
             useEffect(() => {
                 if (!user || !settingsLoadedRef.current || streakCheckedRef.current) return;
                 streakCheckedRef.current = true;
@@ -977,9 +1169,10 @@
                 const yKey = getLocalDateKey(yesterday);
                 const newStreak = settings.lastLoginDate === yKey ? (settings.currentStreak || 0) + 1 : 1;
                 const newBest = Math.max(settings.bestStreak || 0, newStreak);
+                const newTotal = (settings.totalLoginDays || 0) + 1;
                 const { db, appId, doc, setDoc } = window.fb;
                 setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'cpa_settings', 'main'), {
-                    lastLoginDate: todayKey, currentStreak: newStreak, bestStreak: newBest
+                    lastLoginDate: todayKey, currentStreak: newStreak, bestStreak: newBest, totalLoginDays: newTotal
                 }, { merge: true }).catch(err => console.error('Streak update error:', err));
             }, [user, settings]);
 
@@ -1015,15 +1208,17 @@
                 setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'cpa_settings', 'main'), { reviewIntervals: newIntervals }, { merge: true }).catch(() => {});
             };
 
-            // ===== デフォルト論点のシード投入処理（初回ログイン時の自動実行／設定画面からの手動実行の両方から呼ばれる共通関数） =====
+            // ===== 論点シード投入処理（初回ログイン時の自動実行／設定画面からの手動実行の両方から呼ばれる共通関数） =====
             // 「その科目に紐づく論点が cpa_memory に1つも存在しない場合のみ」その科目の初期論点を追加する。
             // これにより、既にデータが存在するユーザーに対して誤って初期論点が再投入されることがない。
-            const runSeedDefaults = async () => {
+            // subjectNames / topicsMap を差し替えることで「短答式のデフォルト論点」と
+            // 「論文式試験の論点」の両方に対応する汎用関数にしている。
+            const runSeedFromData = async (subjectNames, topicsMap, orderBase = 0) => {
                 if (!user || !window.fb || !window.fb.db) return { added: 0 };
                 const { db, appId, collection, addDoc } = window.fb;
                 let addedSubjects = 0;
-                for (let i = 0; i < DEFAULT_SUBJECTS.length; i++) {
-                    const subjectName = DEFAULT_SUBJECTS[i];
+                for (let i = 0; i < subjectNames.length; i++) {
+                    const subjectName = subjectNames[i];
                     // 厳密な判定：cpa_memory 内にこの科目の論点が1件でもあればスキップ
                     const hasTopicsForSubject = topics.some(t => (t.subject || '') === subjectName);
                     if (hasTopicsForSubject) continue;
@@ -1032,21 +1227,24 @@
                     const subjectExists = subjectsDb.some(s => s.name === subjectName);
                     if (!subjectExists) {
                         await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'cpa_subjects'), {
-                            name: subjectName, order: i, createdAt: new Date().toISOString()
+                            name: subjectName, order: orderBase + i, createdAt: new Date().toISOString()
                         });
                     }
 
-                    const topicTitles = DEFAULT_TOPICS[subjectName] || [];
+                    const topicTitles = topicsMap[subjectName] || [];
                     for (let j = 0; j < topicTitles.length; j++) {
                         await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'cpa_memory'), {
                             title: topicTitles[j], subject: subjectName, lastStudiedAt: new Date().toISOString(),
-                            reviewCount: 0, createdAt: new Date().toISOString(), order: Date.now() + j
+                            reviewCount: 0, createdAt: new Date().toISOString(), order: Date.now() + j,
+                            importance: 'A', excludeFromStats: false
                         });
                     }
                     addedSubjects++;
                 }
                 return { added: addedSubjects };
             };
+            const runSeedDefaults = () => runSeedFromData(DEFAULT_SUBJECTS, DEFAULT_TOPICS, 0);
+            const runSeedRonbun = () => runSeedFromData(RONBUN_SUBJECTS, RONBUN_TOPICS, 500);
 
             // 初回ログイン時のみ、データが完全に空の場合に自動でシードを投入する。
             // 以降（2回目以降のログインや、既にデータがあるユーザー）は自動実行しない。
@@ -1076,6 +1274,23 @@
                     alert('論点の自動追加に失敗しました。');
                 } finally {
                     setIsSeeding(false);
+                }
+            };
+
+            // 論文式試験の論点の手動追加（短答式のデフォルト論点とは独立して、いつでも追加可能）
+            const handleManualSeedRonbun = async () => {
+                if (!user || isSeedingRonbun) return;
+                setIsSeedingRonbun(true);
+                try {
+                    const result = await runSeedRonbun();
+                    if (result.added === 0) {
+                        alert('追加できる論文式試験の論点はありませんでした（既にすべて登録済みです）。');
+                    }
+                } catch (e) {
+                    console.error('Manual seed (ronbun) error:', e);
+                    alert('論文式試験の論点の追加に失敗しました。');
+                } finally {
+                    setIsSeedingRonbun(false);
                 }
             };
 
@@ -1123,36 +1338,120 @@
                 return stats;
             }, [tabs, topics, intervalDays]);
 
-            // 全体の定着率：登録されている全論点の定着率の「平均値」（四捨五入）
-            // （旧ロジック：定着率>80%＝青の論点の割合 → 新ロジック：全論点の定着率の単純平均）
+            // 科目ごとの「統計に反映させない」フラグのマップ（科目タブに紐づく設定）
+            const subjectExcludeMap = useMemo(() => {
+                const map = {};
+                subjectsDb.forEach(s => { map[s.name] = !!s.excludeFromStats; });
+                return map;
+            }, [subjectsDb]);
+
+            // 統計から除外すべき論点か（論点自身のフラグ、または所属科目のフラグのいずれかがONなら除外）
+            const isExcludedFromStats = (t) => !!t.excludeFromStats || !!subjectExcludeMap[t.subject || 'その他'];
+
+            // 重要度（傾斜配点）の係数。設定でOFFの場合は常に1（＝単純平均と同じ挙動）
+            const importanceCoeffs = settings.importanceCoeffs || DEFAULT_IMPORTANCE_COEFFS;
+            const getImportanceCoeff = (t) => {
+                if (!settings.useImportance) return 1;
+                const imp = t.importance || 'A';
+                const c = importanceCoeffs[imp];
+                return (typeof c === 'number' && !isNaN(c)) ? c : 1;
+            };
+
+            // 全体の定着率：統計除外を除いた全論点の定着率の「加重平均」（四捨五入）
+            // 重要度設定がOFFの場合は係数が常に1になるため、単純平均と等価になる。
             const overallStats = useMemo(() => {
-                let blue = 0, warn = 0, red = 0, sum = 0;
+                let blue = 0, warn = 0, red = 0, weightedSum = 0, weightTotal = 0, countedTotal = 0;
                 topics.forEach(t => {
+                    if (isExcludedFromStats(t)) return;
                     const hrs = getHoursSince(t.lastStudiedAt);
                     const ret = getMemoryRetention(hrs, t.reviewCount || 0, computeSValues(getEffectiveIntervals(t)));
-                    sum += ret;
+                    const coeff = getImportanceCoeff(t);
+                    weightedSum += ret * coeff;
+                    weightTotal += coeff;
+                    countedTotal++;
                     if (ret > 80) blue++;
                     else if (ret > REVIEW_THRESHOLD) warn++;
                     else red++;
                 });
-                const total = topics.length;
-                const percentage = total ? Math.round(sum / total) : 0;
-                return { blue, warn, red, total, percentage };
-            }, [topics, intervalDays]);
+                const percentage = weightTotal > 0 ? Math.round(weightedSum / weightTotal) : 0;
+                return { blue, warn, red, total: countedTotal, percentage };
+            }, [topics, intervalDays, settings.useImportance, settings.importanceCoeffs, subjectExcludeMap]);
 
             // ===== レベル・経験値システム =====
-            // レベルは「全論点の定着率の平均（overallStats.percentage）」と完全連動する（最大Lv100）。
+            // レベルは「統計除外を除いた全論点の(加重)定着率平均（overallStats.percentage）」と完全連動する（最大Lv100）。
             // 定着率が下がればレベルも自動的に下がる（＝レベルダウンが起こる）。
             const level = Math.max(0, Math.min(100, overallStats.percentage));
 
             const perSubjectGauge = useMemo(() => {
                 return tabs.map(tab => {
-                    const items = topics.filter(t => (t.subject || 'その他') === tab.name);
+                    const items = topics.filter(t => (t.subject || 'その他') === tab.name && !isExcludedFromStats(t));
                     if (items.length === 0) return { name: tab.name, avg: null, count: 0 };
-                    const avg = items.reduce((sum, t) => sum + getMemoryRetention(getHoursSince(t.lastStudiedAt), t.reviewCount || 0, computeSValues(getEffectiveIntervals(t))), 0) / items.length;
+                    let wSum = 0, wTotal = 0;
+                    items.forEach(t => {
+                        const ret = getMemoryRetention(getHoursSince(t.lastStudiedAt), t.reviewCount || 0, computeSValues(getEffectiveIntervals(t)));
+                        const coeff = getImportanceCoeff(t);
+                        wSum += ret * coeff; wTotal += coeff;
+                    });
+                    const avg = wTotal > 0 ? wSum / wTotal : 0;
                     return { name: tab.name, avg, count: items.length };
                 });
-            }, [tabs, topics, intervalDays]);
+            }, [tabs, topics, intervalDays, settings.useImportance, settings.importanceCoeffs, subjectExcludeMap]);
+
+            // ===== アチーブメント：全体○周達成（統計除外を除く全論点のうち最小復習回数＝周回数） =====
+            const currentLap = useMemo(() => {
+                const active = topics.filter(t => !isExcludedFromStats(t));
+                if (active.length === 0) return 0;
+                return Math.max(0, Math.min(...active.map(t => t.reviewCount || 0)));
+            }, [topics, subjectExcludeMap]);
+
+            // 過去最高記録（周回数・定着率）を更新し、達成時にトースト演出を発火する。
+            // 初回読み込み時（既存ユーザーが元々高い進捗を持っている場合）は、いきなり複数のアチーブメントが
+            // 達成済み扱いになってもトーストは出さず、静かに基準値を合わせるだけにする。
+            const achievementsInitRef = useRef(false);
+            useEffect(() => {
+                if (!user) return;
+                const bestLapSoFar = settings.bestLap || 0;
+                const bestPctSoFar = settings.bestPercentageEver || 0;
+                const newBestLap = Math.min(LAP_ACHIEVEMENT_MAX, Math.max(bestLapSoFar, currentLap));
+                const newBestPct = Math.max(bestPctSoFar, overallStats.percentage);
+                if (prevBestLapRef.current === null) prevBestLapRef.current = bestLapSoFar;
+                if (prevBestPctRef.current === null) prevBestPctRef.current = bestPctSoFar;
+
+                if (!achievementsInitRef.current) {
+                    achievementsInitRef.current = true;
+                    prevBestLapRef.current = newBestLap;
+                    prevBestPctRef.current = newBestPct;
+                    if (newBestLap > bestLapSoFar || newBestPct > bestPctSoFar) {
+                        const { db, appId, doc, setDoc } = window.fb;
+                        setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'cpa_settings', 'main'), {
+                            bestLap: newBestLap, bestPercentageEver: newBestPct
+                        }, { merge: true }).catch(() => {});
+                    }
+                    return;
+                }
+
+                if (newBestLap > prevBestLapRef.current) {
+                    prevBestLapRef.current = newBestLap;
+                    playRankUpSound(); vibrate([0, 16, 30, 20]);
+                    setAchievementToast({ label: `全体 ${newBestLap}周 達成！`, tier: tierClassForIndex(newBestLap - 1, LAP_ACHIEVEMENT_MAX) });
+                    setTimeout(() => setAchievementToast(null), 2600);
+                }
+                const crossedThreshold = RETENTION_ACHIEVEMENT_THRESHOLDS.find(th => th > prevBestPctRef.current && th <= newBestPct);
+                if (crossedThreshold) {
+                    prevBestPctRef.current = newBestPct;
+                    playRankUpSound(); vibrate([0, 16, 30, 20]);
+                    const idx = RETENTION_ACHIEVEMENT_THRESHOLDS.indexOf(crossedThreshold);
+                    setAchievementToast({ label: `総合定着率 ${crossedThreshold}% 達成！`, tier: tierClassForIndex(idx, RETENTION_ACHIEVEMENT_THRESHOLDS.length) });
+                    setTimeout(() => setAchievementToast(null), 2600);
+                }
+
+                if (newBestLap > bestLapSoFar || newBestPct > bestPctSoFar) {
+                    const { db, appId, doc, setDoc } = window.fb;
+                    setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'cpa_settings', 'main'), {
+                        bestLap: newBestLap, bestPercentageEver: newBestPct
+                    }, { merge: true }).catch(() => {});
+                }
+            }, [user, currentLap, overallStats.percentage]);
 
             // 毎日の定着率（全論点の平均値）をスナップショットとして保存
             useEffect(() => {
@@ -1191,8 +1490,20 @@
                         return oa - ob;
                     });
                 }
+                // ===== 並び替え中のチラつき防止 =====
+                // 復習完了アニメーション（定着率カウントアップ〜ランクアップ演出）が進行中は、
+                // その論点の lastStudiedAt / retention が変化しても即座に並び替えを反映せず、
+                // 直前の安定した並び順を維持する（アニメーションが終わるとその時点の並びで再計算される）。
+                if (animatingIds.size > 0 && stableOrderRef.current.length > 0) {
+                    const map = new Map(list.map(t => [t.id, t]));
+                    const ordered = stableOrderRef.current.map(id => map.get(id)).filter(Boolean);
+                    const knownIds = new Set(stableOrderRef.current);
+                    const missing = list.filter(t => !knownIds.has(t.id));
+                    return [...ordered, ...missing];
+                }
+                stableOrderRef.current = list.map(t => t.id);
                 return list;
-            }, [topics, activeSubject, sortKey, intervalDays]);
+            }, [topics, activeSubject, sortKey, intervalDays, animatingIds]);
 
             // 編集モード中はドラッグで並び替え可能な独自リストを保持する。
             // ドラッグ中（dragging !== null）は外部の topics 更新で上書きしないようにし、チラつきを防ぐ。
@@ -1386,6 +1697,16 @@
                 if (activeSubject === tab.name) setActiveSubject(null);
             };
 
+            // 科目（タブ）の「統計に反映させない」フラグを切り替える。
+            // 科目タブ自体（cpa_subjects ドキュメント）が存在しない場合は切り替え不可（先にタブとして保存されるのを待つ）。
+            const handleToggleSubjectExclude = async (tab) => {
+                if (!user || !tab.id) return;
+                const { db, appId, doc, setDoc } = window.fb;
+                await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'cpa_subjects', tab.id), {
+                    excludeFromStats: !subjectExcludeMap[tab.name]
+                }, { merge: true }).catch(() => {});
+            };
+
             const handleAction = async (action, id, data) => {
                 if (!user) return;
                 if (action === 'delete') {
@@ -1483,7 +1804,7 @@
                 );
             };
 
-            const TopicCard = ({ t, onReview }) => {
+            const TopicCard = ({ t, onReview, onAnimStart, onAnimEnd }) => {
                 const [isEditing, setIsEditing] = useState(false);
                 const [isImpacting, setIsImpacting] = useState(false);
                 const [holdProgress, setHoldProgress] = useState(0);
@@ -1506,7 +1827,8 @@
                 const HOLD_DURATION = 1200;
                 const [editForm, setEditForm] = useState({
                     title: t.title, subject: t.subject,
-                    reviewCount: t.reviewCount || 0, lastStudiedAt: toDatetimeLocalValue(t.lastStudiedAt)
+                    reviewCount: t.reviewCount || 0, lastStudiedAt: toDatetimeLocalValue(t.lastStudiedAt),
+                    importance: t.importance || 'A', excludeFromStats: !!t.excludeFromStats
                 });
 
                 const isCustomInterval = Array.isArray(t.customIntervals) && t.customIntervals.length === DEFAULT_REVIEW_INTERVALS.length;
@@ -1537,19 +1859,23 @@
                         updates: {
                             title: editForm.title.trim(), subject: editForm.subject,
                             reviewCount: Math.max(0, parseInt(editForm.reviewCount, 10) || 0),
-                            lastStudiedAt: fromDatetimeLocalValue(editForm.lastStudiedAt)
+                            lastStudiedAt: fromDatetimeLocalValue(editForm.lastStudiedAt),
+                            importance: editForm.importance || 'A',
+                            excludeFromStats: !!editForm.excludeFromStats
                         }
                     });
                     setIsEditing(false);
                 };
 
                 // 実データ（Firestoreから届いた rc）が演出後に固定していたランク・定着率へ追いついたら、固定を解除する
+                // このタイミングで、リスト並び替えの凍結（チラつき防止）も解除する
                 useEffect(() => {
                     if (pendingNewRc !== null && rc >= pendingNewRc) {
                         setPendingNewRc(null);
                         setLockedRc(null);
                         setDisplayRet(null);
                         setIsCountingRet(false);
+                        if (onAnimEnd) onAnimEnd();
                     }
                 }, [rc, pendingNewRc]);
 
@@ -1566,6 +1892,8 @@
                     const willRankUp = rankAfter !== rankBefore;
 
                     // ① 即時エフェクト（視覚・聴覚・触覚）。データはまだ更新しない。
+                    // この時点でリストの並び替えを凍結し（チラつき防止）、実データ反映完了まで維持する。
+                    if (onAnimStart) onAnimStart();
                     vibrate(buildRevVibratePattern(1500));
                     playReviewSound();
                     setIsImpacting(true);
@@ -1686,6 +2014,23 @@
                                     <label className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono block mb-1">最終復習日</label>
                                     <input type="datetime-local" className="w-full h-11 min-w-0 max-w-full box-border bg-[var(--bg-input)] border border-[var(--border-strong)] px-3 rounded-xl outline-none font-bold text-[var(--text-primary)] text-xs mono" value={editForm.lastStudiedAt} onChange={e => setEditForm({ ...editForm, lastStudiedAt: e.target.value })} />
                                 </div>
+                                <div>
+                                    <label className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono block mb-1">重要度（傾斜配点）</label>
+                                    <select className="w-full h-11 min-w-0 box-border bg-[var(--bg-input)] border border-[var(--border-strong)] px-3 rounded-xl outline-none font-bold text-[var(--text-primary)] text-sm" value={editForm.importance} onChange={e => setEditForm({ ...editForm, importance: e.target.value })}>
+                                        {IMPORTANCE_LEVELS.map(lv => <option key={lv} value={lv}>{lv}</option>)}
+                                    </select>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setEditForm({ ...editForm, excludeFromStats: !editForm.excludeFromStats })}
+                                    className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl border transition-colors ${editForm.excludeFromStats ? 'bg-red-600/15 border-red-500/50 text-red-300' : 'bg-[var(--bg-card-soft)] border-[var(--border-color)] text-[var(--text-secondary)]'}`}
+                                >
+                                    <span className="text-xs font-bold flex items-center gap-2">
+                                        <Icon name={editForm.excludeFromStats ? 'ToggleRight' : 'ToggleLeft'} size={18} />
+                                        統計に反映させない
+                                    </span>
+                                    <span className="text-[10px] font-bold">{editForm.excludeFromStats ? '除外 ON' : '通常どおり集計'}</span>
+                                </button>
                             </div>
                             <div className="flex justify-end gap-2 mt-2">
                                 <button type="button" onClick={() => setIsEditing(false)} className="px-4 py-2.5 text-xs font-bold text-[var(--text-tertiary)] hover:text-[var(--text-primary)] bg-[var(--bg-card-soft)] hover:bg-[var(--bg-card-soft-hover)] rounded-xl transition-colors">キャンセル</button>
@@ -1705,6 +2050,8 @@
                                     <h3 className="text-base font-bold text-[var(--text-primary)] leading-tight">{t.title}</h3>
                                     <RankTransitionBadge rc={rc} phase={rankAnimPhase} lockedRc={lockedRc} />
                                     {isCustomInterval && <span className="text-[9px] font-black mono px-1.5 py-0.5 rounded-full border border-indigo-400/40 text-indigo-300 bg-indigo-500/10">個別</span>}
+                                    {(t.importance && t.importance !== 'A') && <span className="text-[9px] font-black mono px-1.5 py-0.5 rounded-full border border-amber-400/40 text-amber-300 bg-amber-500/10">重要度{t.importance}</span>}
+                                    {t.excludeFromStats && <span className="text-[9px] font-black mono px-1.5 py-0.5 rounded-full border border-red-400/40 text-red-300 bg-red-500/10">統計除外</span>}
                                 </div>
                                 <p className="text-xs text-[var(--text-tertiary)] mono-num">復習回数: {rc} 回 ・ 最終復習: {new Date(t.lastStudiedAt).toLocaleDateString('ja-JP')}</p>
                                 <p className="text-xs text-[var(--text-tertiary)] mono-num">次回復習目安: {new Date(new Date(t.lastStudiedAt).getTime() + targetHours * 3600 * 1000).toLocaleDateString('ja-JP')}</p>
@@ -1897,6 +2244,73 @@
                                         <Icon name={isSeeding ? "Loader2" : "FolderPlus"} size={14} className={isSeeding ? "animate-spin" : ""} />
                                         {isSeeding ? '追加中…' : 'デフォルト論点を追加'}
                                     </button>
+                                    <div className="pt-1 border-t border-[var(--border-color)]">
+                                        <p className="text-[10px] text-[var(--text-tertiary)] font-bold mt-3 mb-2">論文式試験の論点（経営学・租税法）を、短答式のデフォルト論点とは別に追加できます。</p>
+                                        <button type="button" onClick={handleManualSeedRonbun} disabled={isSeedingRonbun} className="w-full bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white font-bold py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5">
+                                            <Icon name={isSeedingRonbun ? "Loader2" : "BookOpenCheck"} size={14} className={isSeedingRonbun ? "animate-spin" : ""} />
+                                            {isSeedingRonbun ? '追加中…' : '論文式試験の論点を追加'}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-xs font-black text-[var(--text-primary)] flex items-center gap-1.5"><Icon name="Scale" size={14} className="text-sky-400" />重要度（傾斜配点）</p>
+                                            <p className="text-[10px] text-[var(--text-tertiary)] font-bold mt-1">ONにすると、各論点の定着率に重要度の係数を掛けた加重平均で総合定着率を計算します。</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => { const { db, appId, doc, setDoc } = window.fb; setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'cpa_settings', 'main'), { useImportance: !settings.useImportance }, { merge: true }).catch(() => {}); }}
+                                        className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl border transition-colors ${settings.useImportance ? 'bg-sky-600/15 border-sky-500/50 text-sky-300' : 'bg-[var(--bg-card-soft)] border-[var(--border-color)] text-[var(--text-secondary)]'}`}
+                                    >
+                                        <span className="text-xs font-bold flex items-center gap-2">
+                                            <Icon name={settings.useImportance ? 'ToggleRight' : 'ToggleLeft'} size={18} />
+                                            重要度を使用する
+                                        </span>
+                                        <span className="text-[10px] font-bold">{settings.useImportance ? 'ON' : 'OFF'}</span>
+                                    </button>
+                                    <div className={`grid grid-cols-2 gap-3 transition-opacity ${settings.useImportance ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
+                                        {IMPORTANCE_LEVELS.map(lv => (
+                                            <div key={lv}>
+                                                <label className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono block mb-1">{lv} 係数</label>
+                                                <input
+                                                    type="number" min="0" step="0.1"
+                                                    className="w-full bg-[var(--bg-input)] border border-[var(--border-strong)] p-2.5 rounded-xl outline-none font-bold text-[var(--text-primary)] text-sm mono-num"
+                                                    value={(settings.importanceCoeffs || DEFAULT_IMPORTANCE_COEFFS)[lv]}
+                                                    onChange={e => {
+                                                        const val = e.target.value;
+                                                        const nextCoeffs = { ...(settings.importanceCoeffs || DEFAULT_IMPORTANCE_COEFFS), [lv]: val === '' ? '' : parseFloat(val) };
+                                                        const { db, appId, doc, setDoc } = window.fb;
+                                                        setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'cpa_settings', 'main'), { importanceCoeffs: nextCoeffs }, { merge: true }).catch(() => {});
+                                                    }}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-3">
+                                    <div>
+                                        <p className="text-xs font-black text-[var(--text-primary)] flex items-center gap-1.5"><Icon name="EyeOff" size={14} className="text-rose-400" />科目ごとの統計除外</p>
+                                        <p className="text-[10px] text-[var(--text-tertiary)] font-bold mt-1">ONにした科目は、総合定着率・各種統計・グラフの集計対象から除外されます（論点一覧・ヒートマップには表示され続けます）。</p>
+                                    </div>
+                                    <div className="space-y-2">
+                                        {tabs.map(tab => (
+                                            <div key={tab.name} className="flex items-center justify-between gap-2 bg-[var(--bg-card-soft)] rounded-xl px-3 py-2.5">
+                                                <span className="text-xs font-bold text-[var(--text-secondary)] truncate">{tab.name}</span>
+                                                <button
+                                                    type="button"
+                                                    disabled={!tab.id}
+                                                    onClick={() => handleToggleSubjectExclude(tab)}
+                                                    className={`shrink-0 text-[10px] font-black px-2.5 py-1 rounded-full border transition-colors disabled:opacity-30 ${subjectExcludeMap[tab.name] ? 'bg-rose-600/20 border-rose-500/50 text-rose-300' : 'bg-[var(--bg-card-soft-hover)] border-[var(--border-color)] text-[var(--text-tertiary)]'}`}
+                                                >
+                                                    {subjectExcludeMap[tab.name] ? '除外中' : '通常'}
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
 
                                 <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-4">
@@ -1927,7 +2341,7 @@
             const StreakModal = () => {
                 const current = settings.currentStreak || 0;
                 const best = settings.bestStreak || 0;
-                const lastDate = settings.lastLoginDate;
+                const totalDays = settings.totalLoginDays || 0;
                 const milestones = [3, 7, 14, 30, 60, 100];
                 const nextMilestone = milestones.find(m => m > current) || null;
 
@@ -1936,7 +2350,7 @@
                         <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowStreakModal(false)}></div>
                         <div className="relative w-full sm:max-w-md max-h-[88vh] overflow-y-auto bg-[var(--bg-app-to)] border border-[var(--border-color)] rounded-t-3xl sm:rounded-3xl shadow-2xl animate-in">
                             <div className="sticky top-0 bg-[var(--bg-header)] backdrop-blur border-b border-[var(--border-color)] px-5 py-4 flex items-center justify-between z-10">
-                                <h2 className="text-sm font-black text-[var(--text-primary)] flex items-center gap-2"><Icon name="Flame" size={16} className="text-orange-400" />連続記録</h2>
+                                <h2 className="text-sm font-black text-[var(--text-primary)] flex items-center gap-2"><Icon name="Flame" size={16} className="text-orange-400" />連続ログイン日数</h2>
                                 <button type="button" onClick={() => setShowStreakModal(false)} className="h-8 w-8 flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--text-primary)] bg-[var(--bg-card-soft)] rounded-full transition-colors active:scale-90">
                                     <Icon name="X" size={14} />
                                 </button>
@@ -1945,7 +2359,7 @@
                             <div className="p-5 space-y-5">
                                 <div className="bg-gradient-to-b from-orange-500/15 to-transparent border border-orange-400/30 rounded-3xl p-6 text-center shadow-lg">
                                     <Icon name="Flame" size={40} className="text-orange-400 mx-auto mb-2 flame-pulse" />
-                                    <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest mb-1">現在の連続日数</p>
+                                    <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest mb-1">連続ログイン</p>
                                     <p className="text-6xl mono-num tracking-tighter text-orange-400"><CountUpNumber value={current} suffix=" 日" /></p>
                                 </div>
 
@@ -1957,8 +2371,8 @@
                                     </div>
                                     <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-4 text-center shadow-lg">
                                         <Icon name="CalendarCheck" size={16} className="text-indigo-400 mx-auto mb-1.5" />
-                                        <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono mb-1">最終ログイン</p>
-                                        <p className="text-sm mono-num font-black text-[var(--text-primary)]">{lastDate || '—'}</p>
+                                        <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono mb-1">累計ログイン</p>
+                                        <p className="text-2xl mono-num font-black text-[var(--text-primary)]">{totalDays} 日</p>
                                     </div>
                                 </div>
 
@@ -1982,6 +2396,109 @@
                                 <p className="text-[10px] text-[var(--text-muted)] font-bold leading-relaxed text-center">毎日ログインして復習することで連続記録が伸びます。1日でも間隔が空くと記録はリセットされます。</p>
                             </div>
                         </div>
+                    </div>
+                );
+            };
+
+            // ===== アチーブメント一覧モーダル =====
+            // ・全体○周達成（統計除外を除く全論点の最小復習回数が基準。1〜7周）
+            // ・総合定着率アチーブメント（過去最高の総合定着率が基準。10%〜95%）
+            // レベル帯（銅→銀→金→プラチナ→ダイヤ→レインボー）に応じてメダルの見た目が豪華になる。
+            const AchievementsModal = () => {
+                const bestLap = Math.min(LAP_ACHIEVEMENT_MAX, settings.bestLap || 0);
+                const bestPct = settings.bestPercentageEver || 0;
+                const lapMedals = Array.from({ length: LAP_ACHIEVEMENT_MAX }, (_, i) => {
+                    const n = i + 1;
+                    const unlocked = bestLap >= n;
+                    return { key: `lap-${n}`, label: `${n}周`, sub: '全体制覇', unlocked, cls: tierClassForIndex(i, LAP_ACHIEVEMENT_MAX) };
+                });
+                const retMedals = RETENTION_ACHIEVEMENT_THRESHOLDS.map((th, i) => {
+                    const unlocked = bestPct >= th;
+                    return { key: `ret-${th}`, label: `${th}%`, sub: th === 95 ? '最高到達' : '総合定着率', unlocked, cls: tierClassForIndex(i, RETENTION_ACHIEVEMENT_THRESHOLDS.length) };
+                });
+
+                const MedalGrid = ({ items }) => (
+                    <div className="grid grid-cols-3 gap-2.5">
+                        {items.map(m => (
+                            <div key={m.key} className={`medal-badge achievement-pop ${m.unlocked ? m.cls : 'medal-locked'}`}>
+                                <Icon name={m.unlocked ? 'Medal' : 'Lock'} size={18} />
+                                <span className="font-black text-sm mono-num">{m.label}</span>
+                                <span className="text-[9px] font-bold opacity-80">{m.sub}</span>
+                            </div>
+                        ))}
+                    </div>
+                );
+
+                return (
+                    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center">
+                        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowAchievements(false)}></div>
+                        <div className="relative w-full sm:max-w-md max-h-[88vh] overflow-y-auto bg-[var(--bg-app-to)] border border-[var(--border-color)] rounded-t-3xl sm:rounded-3xl shadow-2xl animate-in">
+                            <div className="sticky top-0 bg-[var(--bg-header)] backdrop-blur border-b border-[var(--border-color)] px-5 py-4 flex items-center justify-between z-10">
+                                <h2 className="text-sm font-black text-[var(--text-primary)] flex items-center gap-2"><Icon name="Trophy" size={16} className="text-amber-400" />アチーブメント</h2>
+                                <button type="button" onClick={() => setShowAchievements(false)} className="h-8 w-8 flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--text-primary)] bg-[var(--bg-card-soft)] rounded-full transition-colors active:scale-90">
+                                    <Icon name="X" size={14} />
+                                </button>
+                            </div>
+                            <div className="p-5 space-y-6">
+                                <div className="space-y-3">
+                                    <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest flex items-center gap-1.5"><Icon name="RotateCw" size={12} className="text-indigo-400" />全体○周達成</p>
+                                    <MedalGrid items={lapMedals} />
+                                </div>
+                                <div className="space-y-3">
+                                    <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest flex items-center gap-1.5"><Icon name="Gauge" size={12} className="text-indigo-400" />総合定着率アチーブメント</p>
+                                    <MedalGrid items={retMedals} />
+                                </div>
+                                <p className="text-[10px] text-[var(--text-muted)] font-bold leading-relaxed">※一度達成した記録は、その後定着率や周回数が下がっても保持されます。メダルの見た目はレベル帯（銅→銀→金→プラチナ→ダイヤ→レインボー）に応じて豪華になります。</p>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            // ===== 全論点ヒートマップ：定着率が高いほど濃い色、下がるほど色褪せる。タップで論点名と定着率を表示 =====
+            const HeatmapCard = () => {
+                const [selected, setSelected] = useState(null);
+                const cells = topics.map(t => {
+                    const hrs = getHoursSince(t.lastStudiedAt);
+                    const ret = getMemoryRetention(hrs, t.reviewCount || 0, computeSValues(getEffectiveIntervals(t)));
+                    return { id: t.id, title: t.title, subject: t.subject || 'その他', ret };
+                });
+
+                const colorFor = (ret) => {
+                    if (ret <= REVIEW_THRESHOLD) {
+                        const p = Math.max(0, Math.min(1, ret / REVIEW_THRESHOLD));
+                        return `rgba(239,68,68,${(0.22 + p * 0.4).toFixed(2)})`;
+                    }
+                    const p = Math.max(0, Math.min(1, (ret - REVIEW_THRESHOLD) / (100 - REVIEW_THRESHOLD)));
+                    const r = Math.round(250 - (250 - 129) * p);
+                    const g = Math.round(204 - (204 - 140) * p);
+                    const b = Math.round(21 + (248 - 21) * p);
+                    return `rgba(${r},${g},${b},${(0.35 + p * 0.5).toFixed(2)})`;
+                };
+
+                if (cells.length === 0) return null;
+
+                return (
+                    <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-3">
+                        <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest flex items-center gap-1.5"><Icon name="Grid3x3" size={13} className="text-indigo-400" />全論点ヒートマップ</p>
+                        <div className="grid grid-cols-8 gap-1.5">
+                            {cells.map(c => (
+                                <button
+                                    type="button" key={c.id}
+                                    onClick={() => { playTapSound(); setSelected(c); }}
+                                    style={{ backgroundColor: colorFor(c.ret) }}
+                                    className={`heatmap-cell aspect-square ${selected && selected.id === c.id ? 'is-selected' : ''}`}
+                                    title={c.title}
+                                ></button>
+                            ))}
+                        </div>
+                        {selected && (
+                            <div className="bg-black/25 rounded-xl p-3 animate-in">
+                                <p className="text-xs font-bold text-[var(--text-primary)] truncate">{selected.title}</p>
+                                <p className="text-[10px] text-[var(--text-tertiary)] font-bold mt-0.5">{selected.subject} ・ 定着率 {Math.floor(selected.ret)}%</p>
+                            </div>
+                        )}
+                        <p className="text-[9px] text-[var(--text-muted)] font-bold">濃いほど定着率が高く、色褪せているほど復習が必要です。マスをタップすると詳細を表示します。</p>
                     </div>
                 );
             };
@@ -2164,6 +2681,8 @@
                             </div>
                         )}
 
+                        <HeatmapCard />
+
                         <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg">
                             <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest mb-3">日別推移{n > 0 ? `（直近${n}日）` : ''}</p>
                             {n === 0 ? (
@@ -2198,6 +2717,15 @@
                 <div className="min-h-screen pb-12 bg-gradient-to-b from-[var(--bg-app-from)] to-[var(--bg-app-to)]">
                     {showSettings && <SettingsModal />}
                     {showStreakModal && <StreakModal />}
+                    {showAchievements && <AchievementsModal />}
+                    {achievementToast && (
+                        <div className="fixed top-4 left-0 right-0 z-[250] flex justify-center px-4 pointer-events-none">
+                            <div className={`achievement-toast pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-2xl border shadow-2xl ${achievementToast.tier}`}>
+                                <Icon name="Trophy" size={18} />
+                                <span className="text-xs font-black">{achievementToast.label}</span>
+                            </div>
+                        </div>
+                    )}
                     {showBulkCountModal && (
                         <div className="fixed inset-0 z-[120] flex items-end sm:items-center justify-center">
                             <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => !isBulkSettingCount && setShowBulkCountModal(false)}></div>
@@ -2236,15 +2764,8 @@
                                 <h1 className="text-sm font-black text-[var(--text-primary)] tracking-widest flex items-center gap-2 min-w-0 truncate">
                                     <Icon name="Brain" size={18} className="text-indigo-400 shrink-0" /> <span className="truncate">復習管理</span>
                                 </h1>
-                                {/* ===== 経験値バー：全論点の平均定着率と完全連動するレベル表示 ===== */}
-                                <div className="flex items-center gap-2 max-w-[190px]">
-                                    <span className="text-[10px] font-black mono text-amber-300 shrink-0 flex items-center gap-0.5">
-                                        <Icon name="Star" size={11} className="text-amber-400" />Lv<CountUpNumber value={level} className="tabular-nums" />
-                                    </span>
-                                    <div className="flex-1 h-2 rounded-full bg-black/40 border border-amber-400/25 overflow-hidden">
-                                        <div className="h-full rounded-full bg-gradient-to-r from-amber-500 via-amber-300 to-yellow-200 transition-all duration-700 ease-out" style={{ width: `${level}%` }}></div>
-                                    </div>
-                                </div>
+                                {/* ===== 経験値バー：全論点の(加重)定着率平均と完全連動するレベル表示（レベル帯を跨ぐと昇格演出） ===== */}
+                                <LevelBar level={level} />
                             </div>
                             <div className="flex items-center gap-1.5 shrink-0">
                                 {(settings.currentStreak || 0) > 0 && (
@@ -2252,6 +2773,9 @@
                                         <Icon name="Flame" size={13} className="flame-pulse" />{settings.currentStreak}
                                     </button>
                                 )}
+                                <button type="button" onClick={() => { playTapSound(); setShowAchievements(true); }} className="h-9 w-9 flex items-center justify-center text-[var(--text-tertiary)] hover:text-amber-400 bg-[var(--bg-card-soft)] rounded-full transition-colors active:scale-90">
+                                    <Icon name="Trophy" size={14} />
+                                </button>
                                 <button type="button" onClick={() => { playTapSound(); handleToggleTheme(); }} className="h-9 w-9 flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--text-primary)] bg-[var(--bg-card-soft)] rounded-full transition-colors active:scale-90">
                                     <Icon name={settings.theme === 'light' ? 'Moon' : 'Sun'} size={14} />
                                 </button>
@@ -2376,7 +2900,7 @@
                                         <div className="text-center py-16 text-[var(--text-tertiary)] text-sm font-bold border-2 border-dashed border-[var(--border-color)] rounded-3xl">論点を登録して記憶をトラッキングしましょう</div>
                                     ) : (
                                         <div className="space-y-4">
-                                            {visibleTopics.map((t) => <TopicCard key={t.id} t={t} onReview={handleReviewAction} />)}
+                                            {visibleTopics.map((t) => <TopicCard key={t.id} t={t} onReview={handleReviewAction} onAnimStart={() => markAnimating(t.id, true)} onAnimEnd={() => markAnimating(t.id, false)} />)}
                                         </div>
                                     )
                                 )}
@@ -2440,7 +2964,7 @@
                                 </button>
                                 <button type="button" onClick={() => { playTapSound(); setView('stats'); }} className={`flex flex-col items-center gap-1 py-2 rounded-2xl text-xs font-bold transition-colors ${view === 'stats' ? 'bg-indigo-600 text-white' : 'text-[var(--text-tertiary)] hover:bg-[var(--bg-card-soft)]'}`}>
                                     <Icon name="LineChart" size={20} />
-                                    グラフ
+                                    統計
                                 </button>
                             </div>
                         </nav>
