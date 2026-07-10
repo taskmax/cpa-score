@@ -338,6 +338,34 @@
             border-width: 7px 7px 0 7px; border-style: solid; border-color: var(--bg-card) transparent transparent transparent;
             filter: drop-shadow(0 2px 1px rgba(0,0,0,0.15));
         }
+
+        /* =====================================================================
+           パフォーマンス最適化（発熱・バッテリー消費対策）
+           1) 画面が非表示（バックグラウンド化・スリープ・タブ非アクティブ）の間は、
+              常時ループしているCSSアニメーション（ランクバッジの発光・グラデーション等）
+              を一括で一時停止する。JS側で document の visibilitychange を監視し、
+              <html> に .app-hidden クラスを付け外しするだけで実現する（描画・機能は
+              一切変更せず、見えていない間だけ止めるため副作用がない）。
+           2) 画面外にスクロールされた論点カード・編集行は content-visibility:auto で
+              ブラウザ側の描画・アニメーション計算をスキップさせ、リストが長い科目でも
+              常時アニメーションによる負荷が積み上がらないようにする。
+           ===================================================================== */
+        html.app-hidden *,
+        html.app-hidden *::before,
+        html.app-hidden *::after {
+            animation-play-state: paused !important;
+        }
+        .topic-card-perf {
+            content-visibility: auto;
+            contain-intrinsic-size: 1px 260px;
+        }
+        .edit-row-perf {
+            content-visibility: auto;
+            contain-intrinsic-size: 1px 76px;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; }
+        }
     </style>
 </head>
 <body>
@@ -1511,7 +1539,7 @@
                 }
 
                 return (
-                    <div className={`relative rounded-2xl border p-5 flex flex-col gap-4 shadow-lg transition-colors overflow-hidden ${isNeedsReview ? 'border-red-500/50' : 'border-[var(--border-color)]'} ${isImpacting ? 'card-impact-glow' : ''}`} style={{ backgroundColor: isNeedsReview ? 'var(--bg-danger-card)' : 'var(--bg-card)' }}>
+                    <div className={`topic-card-perf relative rounded-2xl border p-5 flex flex-col gap-4 shadow-lg transition-colors overflow-hidden ${isNeedsReview ? 'border-red-500/50' : 'border-[var(--border-color)]'} ${isImpacting ? 'card-impact-glow' : ''}`} style={{ backgroundColor: isNeedsReview ? 'var(--bg-danger-card)' : 'var(--bg-card)' }}>
                         {isNeedsReview && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)] z-10" />}
 
                         <div className="flex justify-between items-start">
@@ -1735,6 +1763,20 @@
             useEffect(() => {
                 document.documentElement.classList.toggle('light', settings.theme === 'light');
             }, [settings.theme]);
+
+            // ===== 発熱・バッテリー対策：画面が非表示の間は常時ループのCSSアニメーションを一時停止 =====
+            // アプリがバックグラウンドに回った／画面がロックされた／タブが非アクティブになった時、
+            // ランクバッジやピラミッドの発光アニメーションなど「常時動き続ける演出」は視覚的に無意味な
+            // 上にCPU/GPUを消費し続けるため、Page Visibility API でまとめて一時停止する。
+            // 画面に戻れば自動的に再開されるため、見た目・機能への影響はない。
+            useEffect(() => {
+                const applyVisibility = () => {
+                    document.documentElement.classList.toggle('app-hidden', document.hidden);
+                };
+                applyVisibility();
+                document.addEventListener('visibilitychange', applyVisibility);
+                return () => document.removeEventListener('visibilitychange', applyVisibility);
+            }, []);
 
             useEffect(() => {
                 setGoalForm({ weekly: settings.weeklyGoal, monthly: settings.monthlyGoal });
@@ -2365,7 +2407,7 @@
                     <div
                         ref={(el) => { if (el) rowRefs.current[t.id] = el; else delete rowRefs.current[t.id]; }}
                         style={style}
-                        className={`edit-row relative flex items-center gap-2 bg-[var(--bg-card)] border rounded-2xl px-3 py-3 shadow-lg ${isDraggingThis ? 'is-dragging border-indigo-500/60 shadow-2xl' : 'border-[var(--border-color)]'} ${isSelected ? 'ring-2 ring-indigo-500/60' : ''}`}
+                        className={`edit-row edit-row-perf relative flex items-center gap-2 bg-[var(--bg-card)] border rounded-2xl px-3 py-3 shadow-lg ${isDraggingThis ? 'is-dragging border-indigo-500/60 shadow-2xl' : 'border-[var(--border-color)]'} ${isSelected ? 'ring-2 ring-indigo-500/60' : ''}`}
                     >
                         <button
                             type="button"
