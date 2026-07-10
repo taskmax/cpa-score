@@ -262,14 +262,27 @@
             background: linear-gradient(115deg, transparent 25%, rgba(255,255,255,0.4) 50%, transparent 75%);
             background-size: 260% 100%;
             mix-blend-mode: overlay;
-            animation: pyramidAuraSweep 6s ease-in-out infinite;
+            animation: pyramidAuraSweep 30s ease-in-out infinite;
         }
-        .pyramid-row.rank-c::after { animation-duration: 5.4s; }
-        .pyramid-row.rank-b::after { animation-duration: 4.8s; }
-        .pyramid-row.rank-a::after { animation-duration: 4.2s; }
-        .pyramid-row.rank-s::after { animation-duration: 3.6s; }
-        .pyramid-row.rank-ss::after { animation-duration: 3.2s; }
-        .pyramid-row.rank-sss::after { animation-duration: 2.8s; }
+        .pyramid-row.rank-c::after { animation-duration: 27s; }
+        .pyramid-row.rank-b::after { animation-duration: 24s; }
+        .pyramid-row.rank-a::after { animation-duration: 21s; }
+        .pyramid-row.rank-s::after { animation-duration: 18s; }
+        .pyramid-row.rank-ss::after { animation-duration: 16s; }
+        .pyramid-row.rank-sss::after { animation-duration: 14s; }
+
+        /* ===== ピラミッド背景そのもの（各ランクの地の色）のグラデーションも、通常のバッジより
+           大幅にゆっくり・自然に流れるようにする（切り替わりを意識しないくらい落ち着いた速度）。
+           このセレクタは .pyramid-row と組み合わさった要素にのみ適用され、他画面のランクバッジ
+           （例：論点カードのバッジ）の速度には影響しない。 */
+        .pyramid-row.rank-e { animation: gradientDrift 48s ease-in-out infinite; }
+        .pyramid-row.rank-d { animation: gradientDrift 44s ease-in-out infinite; }
+        .pyramid-row.rank-c { animation: gradientDrift 40s ease-in-out infinite; }
+        .pyramid-row.rank-b { animation: gradientDrift 36s ease-in-out infinite; }
+        .pyramid-row.rank-a { animation: gradientDrift 32s ease-in-out infinite; }
+        .pyramid-row.rank-s { animation: gradientDrift 28s ease-in-out infinite, auraGlowPulse 16s ease-in-out infinite; }
+        .pyramid-row.rank-ss { animation: gradientDrift 26s ease-in-out infinite, auraGlowPulse 14s ease-in-out infinite; }
+        .pyramid-row.rank-sss { animation: rainbowShift 34s ease-in-out infinite, auraGlowPulseRainbow 22s ease-in-out infinite; }
 
         /* ===== アチーブメント・メダル（レベル帯に応じて豪華になる：銅→銀→金→プラチナ→ダイヤ→レインボー） ===== */
         .medal-badge {
@@ -310,6 +323,21 @@
         }
         .heatmap-cell:active { transform: scale(0.9); }
         .heatmap-cell.is-selected { box-shadow: 0 0 0 2px #facc15; }
+        .heatmap-cell-label {
+            width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+            font-size: 8px; font-weight: 900; line-height: 1; letter-spacing: -0.02em; user-select: none;
+        }
+
+        /* ===== ヒートマップ：タップ時のふきだし（吹き出し） ===== */
+        .heatmap-bubble {
+            background: var(--bg-card); border: 1px solid var(--border-strong); border-radius: 14px;
+            padding: 8px 12px; box-shadow: 0 10px 24px rgba(0,0,0,0.35); white-space: nowrap;
+        }
+        .heatmap-bubble::after {
+            content: ''; position: absolute; left: 50%; top: 100%; transform: translateX(-50%);
+            border-width: 7px 7px 0 7px; border-style: solid; border-color: var(--bg-card) transparent transparent transparent;
+            filter: drop-shadow(0 2px 1px rgba(0,0,0,0.15));
+        }
     </style>
 </head>
 <body>
@@ -413,6 +441,34 @@
 
         const LAP_ACHIEVEMENT_MAX = 7;
         const RETENTION_ACHIEVEMENT_THRESHOLDS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 95];
+
+        // ===== ヒートマップの配色（0%:白 → 100%:焦茶色）。各段の間は線形補間で滑らかにつなぐ =====
+        const HEATMAP_COLOR_STOPS = [
+            { pct: 0, rgb: [255, 255, 255] },   // 白
+            { pct: 10, rgb: [253, 226, 232] },  // ごく薄いピンク
+            { pct: 20, rgb: [249, 197, 208] },  // 薄いピンク
+            { pct: 30, rgb: [240, 148, 143] },  // サーモンピンク
+            { pct: 40, rgb: [224, 96, 92] },    // ピンクレッド
+            { pct: 50, rgb: [199, 42, 42] },    // 赤
+            { pct: 60, rgb: [163, 27, 27] },    // 深い赤
+            { pct: 70, rgb: [128, 58, 40] },    // 赤茶
+            { pct: 80, rgb: [102, 58, 37] },    // 茶色
+            { pct: 90, rgb: [72, 42, 27] },     // ダークブラウン
+            { pct: 100, rgb: [40, 22, 14] }     // 焦茶色
+        ];
+        const getHeatmapColor = (ret) => {
+            const clamped = Math.max(0, Math.min(100, ret || 0));
+            let lo = HEATMAP_COLOR_STOPS[0], hi = HEATMAP_COLOR_STOPS[HEATMAP_COLOR_STOPS.length - 1];
+            for (let i = 0; i < HEATMAP_COLOR_STOPS.length - 1; i++) {
+                if (clamped >= HEATMAP_COLOR_STOPS[i].pct && clamped <= HEATMAP_COLOR_STOPS[i + 1].pct) {
+                    lo = HEATMAP_COLOR_STOPS[i]; hi = HEATMAP_COLOR_STOPS[i + 1]; break;
+                }
+            }
+            const span = (hi.pct - lo.pct) || 1;
+            const t = (clamped - lo.pct) / span;
+            const rgb = lo.rgb.map((c, i) => Math.round(c + (hi.rgb[i] - c) * t));
+            return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+        };
 
         const RANKS = ['E', 'D', 'C', 'B', 'A', 'S', 'SS', 'SSS'];
         const SORT_OPTIONS = [
@@ -853,6 +909,17 @@
             return <span className={`${className} ${pulse ? 'count-pop-flash' : ''}`}>{prefix}{display}{suffix}</span>;
         };
 
+        // ===== 共通トグルスイッチ =====
+        const Switch = ({ checked, onChange, disabled = false }) => (
+            <button
+                type="button" role="switch" aria-checked={checked} disabled={disabled}
+                onClick={onChange}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-30 ${checked ? 'bg-indigo-600' : 'bg-[var(--bg-card-soft-hover)] border border-[var(--border-strong)]'}`}
+            >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`}></span>
+            </button>
+        );
+
         // ===== レベル経験値バー =====
         // レベル(0〜100)を「レベル帯（ティア）」ごとのバーとして表現する。
         // 数字がパッと変わるだけでなく、バーが現在値→目標値まで滑らかに伸び、
@@ -931,9 +998,9 @@
             useEffect(() => () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); }, []);
 
             return (
-                <div className="flex items-center gap-2 max-w-[190px]">
-                    <span className="text-[10px] font-black mono text-amber-300 shrink-0 flex items-center gap-0.5">
-                        <Icon name="Star" size={11} className="text-amber-400" />Lv<CountUpNumber value={clamped} className="tabular-nums" />
+                <div className="flex items-center gap-2 max-w-[230px]">
+                    <span className="text-[10px] font-black mono text-amber-300 shrink-0">
+                        Lv<CountUpNumber value={clamped} className="tabular-nums" />
                     </span>
                     <div className={`flex-1 h-2 rounded-full bg-black/40 border border-amber-400/25 overflow-hidden ${flash ? 'level-up-flash' : ''}`}>
                         <div className={`xp-bar-fill h-full rounded-full bg-gradient-to-r from-amber-500 via-amber-300 to-yellow-200`} style={{ width: `${barPct}%` }}></div>
@@ -1867,23 +1934,29 @@
                     setIsEditing(false);
                 };
 
-                // 実データ（Firestoreから届いた rc）が演出後に固定していたランク・定着率へ追いついたら、固定を解除する
-                // このタイミングで、リスト並び替えの凍結（チラつき防止）も解除する
+                // 実データ（Firestoreから届いた rc）が演出後に固定していたランク・定着率へ追いついたら、固定を解除する。
+                // データ確定は演出より先に完了することがあるため、ランクアップ演出（'exploding'/'entering'）の
+                // 途中では解除せず、演出が 'idle' に戻ってから解除することで、旧ランクが一瞬すり替わって
+                // 見えるのを防ぐ。このタイミングで、リスト並び替えの凍結（チラつき防止）も解除する。
                 useEffect(() => {
-                    if (pendingNewRc !== null && rc >= pendingNewRc) {
+                    if (pendingNewRc !== null && rc >= pendingNewRc && rankAnimPhase === 'idle') {
                         setPendingNewRc(null);
                         setLockedRc(null);
                         setDisplayRet(null);
                         setIsCountingRet(false);
                         if (onAnimEnd) onAnimEnd();
                     }
-                }, [rc, pendingNewRc]);
+                }, [rc, pendingNewRc, rankAnimPhase]);
 
-                // 復習完了フロー（各演出は前の演出が完全に終わってから次を開始する）：
+                // 復習完了フロー：
                 // ① 長押し完了（この関数の呼び出し時点） → 視覚/聴覚/触覚エフェクトが即時発火
-                // ② 定着率が「フューン」という上昇SEと共に、揺れずスムーズにカウントアップ（約1.5秒）
-                // ③ カウントアップが完全に終わった後 → ランクアップしていれば専用SE付きの昇格演出（破裂→爆誕）
-                // ④ ランクアップ演出（無ければ③の直後）が終わった後 → 実データを確定し、経験値バー増加・レベル更新
+                // ④ 実データ（定着率・ランク）は、演出の完了を待たずこの時点で即座に確定させる。
+                //    （以前は演出シーケンスの一番最後にFirestoreへ書き込んでいたため、演出のどこかで
+                //     中断・失敗するとデータが確定されず「定着率が上がらない／ランクが変わらない」
+                //     という不具合につながっていた。演出はあくまで見た目の効果とし、データ確定とは
+                //     切り離すことで、ボタン操作は常に確実に反映されるようにする。）
+                // ②／③ 定着率のカウントアップ、ランクアップの破裂→爆誕演出は、確定したデータとは
+                //    独立した「見た目だけの演出」として、この後も引き続き再生される。
                 const fireReview = () => {
                     const startRet = ret;
                     const newRc = rc + 1;
@@ -1891,7 +1964,7 @@
                     const rankAfter = getRank(newRc);
                     const willRankUp = rankAfter !== rankBefore;
 
-                    // ① 即時エフェクト（視覚・聴覚・触覚）。データはまだ更新しない。
+                    // ① 即時エフェクト（視覚・聴覚・触覚）。
                     // この時点でリストの並び替えを凍結し（チラつき防止）、実データ反映完了まで維持する。
                     if (onAnimStart) onAnimStart();
                     vibrate(buildRevVibratePattern(1500));
@@ -1900,14 +1973,15 @@
                     setPendingNewRc(newRc);
                     setTimeout(() => setIsImpacting(false), 600);
 
-                    // ④ 実データ更新（この時点で経験値バー・レベルが連動して更新される）
-                    const commitReview = () => {
-                        onReview(t, startRet);
-                    };
+                    // ④ 実データ更新は演出を待たず即座に確定する（経験値バー・レベルもこれに連動して更新される）
+                    onReview(t, startRet);
 
-                    // ③ ランクアップ演出（破裂→爆誕の2段階。新旧が重なって見える瞬間は一切無い）
-                    const runRankUpThenCommit = () => {
-                        if (!willRankUp) { commitReview(); return; }
+                    // ③ ランクアップ演出（破裂→爆誕の2段階。データ確定とは無関係な見た目のみの演出）。
+                    // データはすでに確定済みで rc が先に新しい値へ届いている可能性があるため、
+                    // 「破裂」段階では明示的に旧ランクをロックしておき、新旧が入れ替わって見えるのを防ぐ。
+                    const runRankUpVisual = () => {
+                        if (!willRankUp) return;
+                        setLockedRc(rc);
                         setRankAnimPhase('exploding');
                         vibrate([0, 12, 30, 10]);
                         setTimeout(() => {
@@ -1917,7 +1991,6 @@
                             vibrate([0, 20, 40, 30]);
                             setTimeout(() => {
                                 setRankAnimPhase('idle');
-                                commitReview();
                             }, 460);
                         }, 360);
                     };
@@ -1938,8 +2011,8 @@
                         } else {
                             setDisplayRet(100);
                             setIsCountingRet(false);
-                            // カウントアップが完全に終わってから、次の演出（ランクアップ→データ確定）へ進む
-                            runRankUpThenCommit();
+                            // カウントアップが終わったら、ランクアップの見た目演出を続けて再生する
+                            runRankUpVisual();
                         }
                     };
                     retRafRef.current = requestAnimationFrame(tickRet);
@@ -2254,23 +2327,19 @@
                                 </div>
 
                                 <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-4">
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex items-center justify-between gap-3">
                                         <div>
                                             <p className="text-xs font-black text-[var(--text-primary)] flex items-center gap-1.5"><Icon name="Scale" size={14} className="text-sky-400" />重要度（傾斜配点）</p>
                                             <p className="text-[10px] text-[var(--text-tertiary)] font-bold mt-1">ONにすると、各論点の定着率に重要度の係数を掛けた加重平均で総合定着率を計算します。</p>
                                         </div>
                                     </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => { const { db, appId, doc, setDoc } = window.fb; setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'cpa_settings', 'main'), { useImportance: !settings.useImportance }, { merge: true }).catch(() => {}); }}
-                                        className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl border transition-colors ${settings.useImportance ? 'bg-sky-600/15 border-sky-500/50 text-sky-300' : 'bg-[var(--bg-card-soft)] border-[var(--border-color)] text-[var(--text-secondary)]'}`}
-                                    >
-                                        <span className="text-xs font-bold flex items-center gap-2">
-                                            <Icon name={settings.useImportance ? 'ToggleRight' : 'ToggleLeft'} size={18} />
-                                            重要度を使用する
-                                        </span>
-                                        <span className="text-[10px] font-bold">{settings.useImportance ? 'ON' : 'OFF'}</span>
-                                    </button>
+                                    <div className="flex items-center justify-between px-4 py-3 rounded-2xl border bg-[var(--bg-card-soft)] border-[var(--border-color)]">
+                                        <span className="text-xs font-bold text-[var(--text-secondary)]">重要度を使用する</span>
+                                        <Switch
+                                            checked={!!settings.useImportance}
+                                            onChange={() => { const { db, appId, doc, setDoc } = window.fb; setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'cpa_settings', 'main'), { useImportance: !settings.useImportance }, { merge: true }).catch(() => {}); }}
+                                        />
+                                    </div>
                                     <div className={`grid grid-cols-2 gap-3 transition-opacity ${settings.useImportance ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
                                         {IMPORTANCE_LEVELS.map(lv => (
                                             <div key={lv}>
@@ -2300,14 +2369,11 @@
                                         {tabs.map(tab => (
                                             <div key={tab.name} className="flex items-center justify-between gap-2 bg-[var(--bg-card-soft)] rounded-xl px-3 py-2.5">
                                                 <span className="text-xs font-bold text-[var(--text-secondary)] truncate">{tab.name}</span>
-                                                <button
-                                                    type="button"
+                                                <Switch
+                                                    checked={!!subjectExcludeMap[tab.name]}
                                                     disabled={!tab.id}
-                                                    onClick={() => handleToggleSubjectExclude(tab)}
-                                                    className={`shrink-0 text-[10px] font-black px-2.5 py-1 rounded-full border transition-colors disabled:opacity-30 ${subjectExcludeMap[tab.name] ? 'bg-rose-600/20 border-rose-500/50 text-rose-300' : 'bg-[var(--bg-card-soft-hover)] border-[var(--border-color)] text-[var(--text-tertiary)]'}`}
-                                                >
-                                                    {subjectExcludeMap[tab.name] ? '除外中' : '通常'}
-                                                </button>
+                                                    onChange={() => handleToggleSubjectExclude(tab)}
+                                                />
                                             </div>
                                         ))}
                                     </div>
@@ -2441,64 +2507,88 @@
                             </div>
                             <div className="p-5 space-y-6">
                                 <div className="space-y-3">
-                                    <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest flex items-center gap-1.5"><Icon name="RotateCw" size={12} className="text-indigo-400" />全体○周達成</p>
+                                    <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest flex items-center gap-1.5"><Icon name="RotateCw" size={12} className="text-indigo-400" />全体週回数</p>
                                     <MedalGrid items={lapMedals} />
                                 </div>
                                 <div className="space-y-3">
                                     <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest flex items-center gap-1.5"><Icon name="Gauge" size={12} className="text-indigo-400" />総合定着率アチーブメント</p>
                                     <MedalGrid items={retMedals} />
                                 </div>
-                                <p className="text-[10px] text-[var(--text-muted)] font-bold leading-relaxed">※一度達成した記録は、その後定着率や周回数が下がっても保持されます。メダルの見た目はレベル帯（銅→銀→金→プラチナ→ダイヤ→レインボー）に応じて豪華になります。</p>
                             </div>
                         </div>
                     </div>
                 );
             };
 
-            // ===== 全論点ヒートマップ：定着率が高いほど濃い色、下がるほど色褪せる。タップで論点名と定着率を表示 =====
+            // ===== 全論点ヒートマップ =====
+            // ・0%(白)→100%(焦茶色)へ滑らかなグラデーションで変化する配色
+            // ・マス内には論点名の略称（先頭2文字）を表示するかどうかを切り替え可能
+            // ・タップすると、そのマスの上にふきだしで論点名と定着率を表示する
             const HeatmapCard = () => {
-                const [selected, setSelected] = useState(null);
+                const [selected, setSelected] = useState(null); // { id, title, subject, ret, x, y }
+                const [showAbbrev, setShowAbbrev] = useState(true);
+                const gridWrapRef = useRef(null);
+
                 const cells = topics.map(t => {
                     const hrs = getHoursSince(t.lastStudiedAt);
                     const ret = getMemoryRetention(hrs, t.reviewCount || 0, computeSValues(getEffectiveIntervals(t)));
-                    return { id: t.id, title: t.title, subject: t.subject || 'その他', ret };
+                    return { id: t.id, title: t.title, subject: t.subject || 'その他', ret, abbrev: (t.title || '').trim().slice(0, 2) };
                 });
-
-                const colorFor = (ret) => {
-                    if (ret <= REVIEW_THRESHOLD) {
-                        const p = Math.max(0, Math.min(1, ret / REVIEW_THRESHOLD));
-                        return `rgba(239,68,68,${(0.22 + p * 0.4).toFixed(2)})`;
-                    }
-                    const p = Math.max(0, Math.min(1, (ret - REVIEW_THRESHOLD) / (100 - REVIEW_THRESHOLD)));
-                    const r = Math.round(250 - (250 - 129) * p);
-                    const g = Math.round(204 - (204 - 140) * p);
-                    const b = Math.round(21 + (248 - 21) * p);
-                    return `rgba(${r},${g},${b},${(0.35 + p * 0.5).toFixed(2)})`;
-                };
 
                 if (cells.length === 0) return null;
 
+                const handleCellClick = (e, c) => {
+                    playTapSound();
+                    const cellRect = e.currentTarget.getBoundingClientRect();
+                    const wrapRect = gridWrapRef.current.getBoundingClientRect();
+                    setSelected({
+                        ...c,
+                        x: cellRect.left - wrapRect.left + cellRect.width / 2,
+                        y: cellRect.top - wrapRect.top
+                    });
+                };
+
                 return (
                     <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-3">
-                        <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest flex items-center gap-1.5"><Icon name="Grid3x3" size={13} className="text-indigo-400" />全論点ヒートマップ</p>
-                        <div className="grid grid-cols-8 gap-1.5">
-                            {cells.map(c => (
-                                <button
-                                    type="button" key={c.id}
-                                    onClick={() => { playTapSound(); setSelected(c); }}
-                                    style={{ backgroundColor: colorFor(c.ret) }}
-                                    className={`heatmap-cell aspect-square ${selected && selected.id === c.id ? 'is-selected' : ''}`}
-                                    title={c.title}
-                                ></button>
-                            ))}
+                        <div className="flex items-center justify-between gap-2">
+                            <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest flex items-center gap-1.5"><Icon name="Grid3x3" size={13} className="text-indigo-400" />全論点ヒートマップ</p>
+                            <button
+                                type="button"
+                                onClick={() => { playTapSound(); setShowAbbrev(v => !v); }}
+                                className={`shrink-0 text-[9px] font-black px-2.5 py-1 rounded-full border transition-colors flex items-center gap-1 ${showAbbrev ? 'bg-indigo-600/20 border-indigo-500/50 text-indigo-300' : 'bg-[var(--bg-card-soft)] border-[var(--border-color)] text-[var(--text-tertiary)]'}`}
+                            >
+                                <Icon name={showAbbrev ? 'ToggleRight' : 'ToggleLeft'} size={12} />
+                                略称表示
+                            </button>
                         </div>
-                        {selected && (
-                            <div className="bg-black/25 rounded-xl p-3 animate-in">
-                                <p className="text-xs font-bold text-[var(--text-primary)] truncate">{selected.title}</p>
-                                <p className="text-[10px] text-[var(--text-tertiary)] font-bold mt-0.5">{selected.subject} ・ 定着率 {Math.floor(selected.ret)}%</p>
+                        <div className="relative" ref={gridWrapRef}>
+                            <div className="grid grid-cols-8 gap-1.5">
+                                {cells.map(c => {
+                                    const textColor = c.ret >= 45 ? 'rgba(255,255,255,0.92)' : 'rgba(15,23,42,0.7)';
+                                    return (
+                                        <button
+                                            type="button" key={c.id}
+                                            onClick={(e) => handleCellClick(e, c)}
+                                            style={{ backgroundColor: getHeatmapColor(c.ret) }}
+                                            className={`heatmap-cell aspect-square ${selected && selected.id === c.id ? 'is-selected' : ''}`}
+                                            title={c.title}
+                                        >
+                                            {showAbbrev && <span className="heatmap-cell-label" style={{ color: textColor }}>{c.abbrev}</span>}
+                                        </button>
+                                    );
+                                })}
                             </div>
-                        )}
-                        <p className="text-[9px] text-[var(--text-muted)] font-bold">濃いほど定着率が高く、色褪せているほど復習が必要です。マスをタップすると詳細を表示します。</p>
+                            {selected && (
+                                <div
+                                    className="heatmap-bubble absolute z-20 animate-in"
+                                    style={{ left: selected.x, top: selected.y - 10, transform: 'translate(-50%, -100%)' }}
+                                >
+                                    <p className="text-xs font-bold text-[var(--text-primary)]">{selected.title}</p>
+                                    <p className="text-[10px] text-[var(--text-tertiary)] font-bold mt-0.5">{selected.subject} ・ 定着率 {Math.floor(selected.ret)}%</p>
+                                </div>
+                            )}
+                        </div>
+                        <p className="text-[9px] text-[var(--text-muted)] font-bold">白→ピンク→赤→茶色→焦茶色の順に定着率が高いことを示します。マスをタップすると詳細を表示します。</p>
                     </div>
                 );
             };
@@ -2630,11 +2720,10 @@
                                 )}
                             </div>
 
-                            <p className="text-[10px] text-[var(--text-muted)] font-bold leading-relaxed">※実際の公認会計士試験の得点率(%)別人数分布に、あなたの「定着率」を仮に得点率とみなして重ね合わせた参考値です。実際の試験結果や合否を保証・示唆するものではありません。</p>
                         </div>
 
                         <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-4">
-                            <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest flex items-center gap-1.5"><Icon name="Crosshair" size={13} className="text-red-400" />撃墜人数（順位争い）</p>
+                            <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest flex items-center gap-1.5"><Icon name="Crosshair" size={13} className="text-red-400" />撃墜人数</p>
                             <div className="grid grid-cols-3 gap-2">
                                 {[{ label: '今日', value: dailyKills }, { label: '今週', value: weeklyKills }, { label: '今月', value: monthlyKills }].map(k => (
                                     <div key={k.label} className={`rounded-2xl p-2.5 border ${k.value >= 0 ? 'bg-indigo-500/10 border-indigo-400/30' : 'bg-red-500/10 border-red-400/30'}`}>
@@ -2655,7 +2744,6 @@
                                     <span className="text-xl text-emerald-400 font-black flex items-center gap-1"><Icon name="Trophy" size={16} />合格圏内！</span>
                                 )}
                             </div>
-                            <p className="text-[10px] text-[var(--text-muted)] font-bold leading-relaxed">※各期間が始まる直前の定着率と現在の定着率をそれぞれ得点分布に照らし合わせ、順位の変動から算出した参考値です。</p>
                         </div>
 
                         {perSubjectGauge.length > 0 && (
@@ -2727,9 +2815,12 @@
                         </div>
                     )}
                     {showBulkCountModal && (
-                        <div className="fixed inset-0 z-[120] flex items-end sm:items-center justify-center">
+                        // 数値入力時にモバイルのキーボードが開くと画面下部が隠れてしまうため、
+                        // このモーダルだけは画面上部寄りに表示し、入力欄とボタンがキーボードに
+                        // 隠れないようにする（他のモーダルのような下からのシート表示にしない）。
+                        <div className="fixed inset-0 z-[120] flex items-start justify-center overflow-y-auto px-4 pt-16 pb-4">
                             <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => !isBulkSettingCount && setShowBulkCountModal(false)}></div>
-                            <div className="relative w-full sm:max-w-sm bg-[var(--bg-app-to)] border border-[var(--border-color)] rounded-t-3xl sm:rounded-3xl shadow-2xl animate-in p-5 space-y-4">
+                            <div className="relative w-full sm:max-w-sm bg-[var(--bg-app-to)] border border-[var(--border-color)] rounded-3xl shadow-2xl animate-in p-5 space-y-4">
                                 <h2 className="text-sm font-black text-[var(--text-primary)] flex items-center gap-2"><Icon name="Hash" size={16} className="text-indigo-400" />復習回数をまとめて設定</h2>
                                 <p className="text-[10px] text-[var(--text-tertiary)] font-bold leading-relaxed">選択中の{selectedIds.size}件すべての「復習回数」を、指定した値に一括で書き換えます。初めて論点を登録するときの手間を減らすための機能です。</p>
                                 <div>
