@@ -33,7 +33,8 @@ console.warn("Firebase not initialized", e);
 }
 const appId = 'score-chart-stable';
 window.fb = { auth, db, appId, collection, query, onSnapshot, addDoc, deleteDoc, updateDoc, setDoc, doc, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged };</script>
-<style>@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;900&family=Inter:wght@400;700;900&display=swap');:root{--bg-app-from:#0a0a0f;--bg-app-to:#000000;--bg-header:rgba(0,0,0,0.95);--bg-card:#111111;--bg-card-soft:rgba(255,255,255,0.05);--bg-card-soft-hover:rgba(255,255,255,0.1);--bg-input:#000000;--bg-danger-card:#2a0808;--border-color:rgba(255,255,255,0.1);--border-strong:rgba(255,255,255,0.2);--text-primary:#ffffff;--text-secondary:#cbd5e1;--text-tertiary:#94a3b8;--text-muted:#64748b;}html.light{--bg-app-from:#eef2ff;--bg-app-to:#f8fafc;--bg-header:rgba(255,255,255,0.92);--bg-card:#ffffff;--bg-card-soft:rgba(15,23,42,0.05);--bg-card-soft-hover:rgba(15,23,42,0.09);--bg-input:#f1f5f9;--bg-danger-card:#fef2f2;--border-color:rgba(15,23,42,0.08);--border-strong:rgba(15,23,42,0.16);--text-primary:#0f172a;--text-secondary:#334155;--text-tertiary:#64748b;--text-muted:#94a3b8;}body{font-family:'Inter',sans-serif;background-color:var(--bg-app-to);color:var(--text-secondary);-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none;transition:background-color .3s ease,color .3s ease;}.mono{font-family:'JetBrains Mono',monospace;}.mono-num{font-family:'Inter',-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:-0.03em;}.animate-in{animation:fadeIn 0.35s ease-out forwards;}@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}::-webkit-scrollbar{display:none;}.pb-safe{padding-bottom:calc(env(safe-area-inset-bottom) + 10px);}.pt-safe{padding-top:calc(env(safe-area-inset-top) + 14px);}.no-scrollbar::-webkit-scrollbar{display:none;}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none;}input[type="datetime-local"]::-webkit-calendar-picker-indicator{filter:invert(1);opacity:0.6;}html.light input[type="datetime-local"]::-webkit-calendar-picker-indicator{filter:invert(0.6);}@keyframes cardImpactGlow{0%{box-shadow:0 0 0 0 rgba(129,140,248,0);}30%{box-shadow:0 0 0 3px rgba(129,140,248,0.35),0 0 24px 4px rgba(129,140,248,0.28);}100%{box-shadow:0 0 0 0 rgba(129,140,248,0);}}.card-impact-glow{animation:cardImpactGlow 0.6s ease-out both;}@keyframes retentionGlow{0%,100%{text-shadow:0 0 6px currentColor;}50%{text-shadow:0 0 16px currentColor;}}.retention-counting{animation:retentionGlow 0.5s ease-in-out infinite;}@keyframes flamePulse{0%,100%{opacity:0.85;transform:scale(1);}50%{opacity:1;transform:scale(1.12);}}.flame-pulse{animation:flamePulse 1.6s ease-in-out infinite;}@keyframes gradientDrift{0%,100%{background-position:0% 50%;}50%{background-position:100% 50%;}}@keyframes auraGlowPulse{0%,100%{filter:brightness(1);}50%{filter:brightness(1.3);}}@keyframes auraGlowPulseRainbow{0%{filter:brightness(1.1) hue-rotate(0deg);}50%{filter:brightness(1.35) hue-rotate(180deg);}100%{filter:brightness(1.1) hue-rotate(360deg);}}@keyframes rainbowShift{0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;}}.rank-badge{background-size:260% 100%;transition:filter .3s ease;}.rank-e{background-image:linear-gradient(120deg,rgba(100,116,139,0.14),rgba(148,163,184,0.24),rgba(100,116,139,0.14));color:#94a3b8;border-color:rgba(148,163,184,0.28);animation:gradientDrift 11s ease-in-out infinite;}.rank-d{background-image:linear-gradient(120deg,rgba(16,185,129,0.14),rgba(52,211,153,0.28),rgba(16,185,129,0.14));color:#34d399;border-color:rgba(52,211,153,0.32);box-shadow:0 0 4px 0px rgba(52,211,153,0.3);animation:gradientDrift 9.5s ease-in-out infinite;}.rank-c{background-image:linear-gradient(120deg,rgba(14,165,233,0.15),rgba(56,189,248,0.3),rgba(14,165,233,0.15));color:#38bdf8;border-color:rgba(56,189,248,0.38);box-shadow:0 0 7px 1px rgba(56,189,248,0.4);animation:gradientDrift 8s ease-in-out infinite;}.rank-b{background-image:linear-gradient(120deg,rgba(99,102,241,0.17),rgba(129,140,248,0.34),rgba(99,102,241,0.17));color:#818cf8;border-color:rgba(129,140,248,0.42);box-shadow:0 0 10px 1.5px rgba(129,140,248,0.45);animation:gradientDrift 6.5s ease-in-out infinite;}.rank-a{background-image:linear-gradient(120deg,rgba(168,85,247,0.2),rgba(192,132,252,0.38),rgba(168,85,247,0.2));color:#c084fc;border-color:rgba(192,132,252,0.48);box-shadow:0 0 13px 2px rgba(192,132,252,0.5);animation:gradientDrift 5s ease-in-out infinite;}.rank-s{background-image:linear-gradient(100deg,#f1f5f9,#cbd5e1,#94a3b8,#e2e8f0,#f1f5f9);background-size:320% 100%;color:#1e293b;border-color:rgba(203,213,225,0.75);font-weight:900;box-shadow:0 0 17px 3px rgba(203,213,225,0.6),0 0 30px 7px rgba(148,163,184,0.28);animation:gradientDrift 4s ease-in-out infinite,auraGlowPulse 2.2s ease-in-out infinite;}.rank-ss{background-image:linear-gradient(100deg,#fff3c4,#ffd700,#f59e0b,#ffe066,#ffd700,#fff3c4);background-size:340% 100%;color:#3d2900;border-color:rgba(255,193,7,0.85);font-weight:900;box-shadow:0 0 22px 4px rgba(255,193,7,0.7),0 0 40px 10px rgba(255,152,0,0.35);animation:gradientDrift 3.1s ease-in-out infinite,auraGlowPulse 1.8s ease-in-out infinite;}.rank-sss{background-image:linear-gradient(90deg,#ff6b6b,#feca57,#1dd1a1,#54a0ff,#c56cf0,#ff6b6b);background-size:300% 100%;color:#0b0b0f;border-color:rgba(255,255,255,0.6);font-weight:900;box-shadow:0 0 26px 5px rgba(255,255,255,0.7),0 0 46px 13px rgba(129,140,248,0.4),0 0 62px 20px rgba(232,121,249,0.25);animation:rainbowShift 4.5s ease-in-out infinite,auraGlowPulseRainbow 3s ease-in-out infinite;}.count-pop-flash{display:inline-block;animation:countPopFlash 0.55s ease-out;}@keyframes countPopFlash{0%{text-shadow:0 0 0 rgba(129,140,248,0);transform:scale(1);}30%{text-shadow:0 0 20px rgba(129,140,248,0.95),0 0 34px rgba(129,140,248,0.5);transform:scale(1.14);}100%{text-shadow:0 0 0 rgba(129,140,248,0);transform:scale(1);}}.perfect-glow{background:linear-gradient(90deg,#a5b4fc,#ffffff,#818cf8,#ffffff,#a5b4fc);background-size:220% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:perfectShine 5s ease-in-out infinite;filter:drop-shadow(0 0 16px rgba(129,140,248,0.75));}@keyframes perfectShine{0%{background-position:0% 50%;}50%{background-position:220% 50%;}100%{background-position:0% 50%;}}@keyframes holdGlowPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0);}50%{box-shadow:inset 0 0 18px 2px rgba(255,255,255,0.22);}}.hold-glow{animation:holdGlowPulse 0.85s ease-in-out infinite;}.hold-progress-fill{position:absolute;inset:0;background:rgba(255,255,255,0.28);transform-origin:left center;pointer-events:none;}@keyframes rankExplodeOut{0%{transform:scale(1);opacity:1;filter:brightness(1);}35%{transform:scale(1.4);opacity:1;filter:brightness(1.7);}100%{transform:scale(0.15);opacity:0;filter:brightness(2.2);}}.rank-explode-out{animation:rankExplodeOut 0.36s cubic-bezier(.55,0,1,0.45) both;display:inline-block;}@keyframes rankBurstIn{0%{transform:scale(0.1);opacity:0;}55%{transform:scale(1.3);opacity:1;}75%{transform:scale(0.9);opacity:1;}100%{transform:scale(1);opacity:1;}}.rank-burst-in{animation:rankBurstIn 0.46s cubic-bezier(.34,1.56,.64,1) both;display:inline-block;}@keyframes rankUpBurst{0%{opacity:0;transform:scale(0.6);}30%{opacity:1;transform:scale(1.15);}100%{opacity:0;transform:scale(1.6);}}.rank-up-burst{position:absolute;inset:-6px;border-radius:999px;pointer-events:none;border:2px solid rgba(250,204,21,0.85);animation:rankUpBurst 0.7s ease-out forwards;}.edit-row{touch-action:pan-y;}.edit-row.is-dragging{z-index:40;touch-action:none;}.drag-handle{touch-action:none;cursor:grab;}.drag-handle:active{cursor:grabbing;}@keyframes checkPop{0%{transform:scale(0.6);opacity:0;}60%{transform:scale(1.15);}100%{transform:scale(1);opacity:1;}}.check-pop{animation:checkPop 0.2s ease-out;}.pyramid-row{position:relative;overflow:hidden;white-space:nowrap;flex-wrap:nowrap;}.pyramid-row > span{white-space:nowrap;position:relative;z-index:1;}@keyframes pyramidAuraSweep{0%{background-position:220% 0;opacity:0;}18%{opacity:0.7;}50%{background-position:-40% 0;opacity:0.45;}82%{opacity:0.7;}100%{background-position:-220% 0;opacity:0;}}.pyramid-row.rank-d::after,.pyramid-row.rank-c::after,.pyramid-row.rank-b::after,.pyramid-row.rank-a::after,.pyramid-row.rank-s::after,.pyramid-row.rank-ss::after,.pyramid-row.rank-sss::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;background:linear-gradient(115deg,transparent 25%,rgba(255,255,255,0.4) 50%,transparent 75%);background-size:260% 100%;mix-blend-mode:overlay;animation:pyramidAuraSweep 30s ease-in-out infinite;}.pyramid-row.rank-c::after{animation-duration:27s;}.pyramid-row.rank-b::after{animation-duration:24s;}.pyramid-row.rank-a::after{animation-duration:21s;}.pyramid-row.rank-s::after{animation-duration:18s;}.pyramid-row.rank-ss::after{animation-duration:16s;}.pyramid-row.rank-sss::after{animation-duration:14s;}.pyramid-row.rank-e{animation:gradientDrift 48s ease-in-out infinite;}.pyramid-row.rank-d{animation:gradientDrift 44s ease-in-out infinite;}.pyramid-row.rank-c{animation:gradientDrift 40s ease-in-out infinite;}.pyramid-row.rank-b{animation:gradientDrift 36s ease-in-out infinite;}.pyramid-row.rank-a{animation:gradientDrift 32s ease-in-out infinite;}.pyramid-row.rank-s{animation:gradientDrift 28s ease-in-out infinite,auraGlowPulse 16s ease-in-out infinite;}.pyramid-row.rank-ss{animation:gradientDrift 26s ease-in-out infinite,auraGlowPulse 14s ease-in-out infinite;}.pyramid-row.rank-sss{animation:rainbowShift 34s ease-in-out infinite,auraGlowPulseRainbow 22s ease-in-out infinite;}.medal-badge{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-radius:18px;border:1px solid;padding:12px 6px;box-shadow:0 4px 10px rgba(0,0,0,0.25);transition:transform .15s ease;}.medal-badge:active{transform:scale(0.94);}.medal-bronze{background:linear-gradient(135deg,#c9884f,#e0a06a,#a9673a);color:#2e1705;border-color:rgba(205,133,63,0.65);}.medal-silver{background:linear-gradient(135deg,#cbd5e1,#f1f5f9,#94a3b8);color:#1e293b;border-color:rgba(203,213,225,0.75);}.medal-gold{background:linear-gradient(135deg,#fff3c4,#ffd700,#f59e0b);color:#3d2900;border-color:rgba(255,193,7,0.85);}.medal-platinum{background:linear-gradient(135deg,#e0e7ff,#cbd5e1,#94a3b8,#e0e7ff);color:#1e293b;border-color:rgba(203,213,225,0.9);box-shadow:0 0 12px 2px rgba(203,213,225,0.4),0 4px 10px rgba(0,0,0,0.25);}.medal-diamond{background:linear-gradient(135deg,#a5f3fc,#67e8f9,#22d3ee,#a5f3fc);color:#0c4a6e;border-color:rgba(103,232,249,0.9);box-shadow:0 0 16px 3px rgba(103,232,249,0.45),0 4px 10px rgba(0,0,0,0.25);}.medal-rainbow{background:linear-gradient(90deg,#ff6b6b,#feca57,#1dd1a1,#54a0ff,#c56cf0,#ff6b6b);background-size:300% 100%;color:#0b0b0f;border-color:rgba(255,255,255,0.7);box-shadow:0 0 20px 4px rgba(255,255,255,0.4),0 4px 10px rgba(0,0,0,0.25);animation:rainbowShift 4s ease-in-out infinite;}.medal-locked{background:rgba(148,163,184,0.08);color:var(--text-muted);border-color:var(--border-color);filter:grayscale(1);opacity:0.5;box-shadow:none;}@keyframes achievementPop{0%{transform:scale(0.4);opacity:0;}60%{transform:scale(1.12);opacity:1;}100%{transform:scale(1);opacity:1;}}.achievement-pop{animation:achievementPop 0.4s cubic-bezier(.34,1.56,.64,1) both;}@keyframes toastSlideIn{0%{transform:translateY(-16px);opacity:0;}100%{transform:translateY(0);opacity:1;}}.achievement-toast{animation:toastSlideIn 0.35s ease-out both;}@keyframes levelUpFlash{0%,100%{box-shadow:0 0 0 0 rgba(250,204,21,0);}35%{box-shadow:0 0 16px 4px rgba(250,204,21,0.85),0 0 30px 8px rgba(250,204,21,0.4);}}.level-up-flash{animation:levelUpFlash 0.9s ease-out;}.xp-bar-fill{transition:none;}.heatmap-cell{border-radius:6px;transition:background-color .5s ease,transform .15s ease,box-shadow .3s ease;border:1px solid rgba(255,255,255,0.06);}.heatmap-cell:active{transform:scale(0.9);}.heatmap-cell.is-selected{box-shadow:0 0 0 2px #facc15;}.heatmap-cell-label{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:9px;font-weight:900;line-height:1.25;letter-spacing:-0.02em;user-select:none;gap:1px;}.heatmap-bubble{background:var(--bg-card);border:1px solid var(--border-strong);border-radius:14px;padding:8px 12px;box-shadow:0 10px 24px rgba(0,0,0,0.35);white-space:nowrap;}.heatmap-bubble::after{content:'';position:absolute;left:50%;top:100%;transform:translateX(-50%);border-width:7px 7px 0 7px;border-style:solid;border-color:var(--bg-card) transparent transparent transparent;filter:drop-shadow(0 2px 1px rgba(0,0,0,0.15));}html.app-bg-paused *{animation-play-state:paused !important;}</style>
+<style>@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;900&family=Inter:wght@400;700;900&display=swap');:root{--bg-app-from:#0a0a0f;--bg-app-to:#000000;--bg-header:rgba(0,0,0,0.95);--bg-card:#111111;--bg-card-soft:rgba(255,255,255,0.05);--bg-card-soft-hover:rgba(255,255,255,0.1);--bg-input:#000000;--bg-danger-card:#2a0808;--border-color:rgba(255,255,255,0.1);--border-strong:rgba(255,255,255,0.2);--text-primary:#ffffff;--text-secondary:#cbd5e1;--text-tertiary:#94a3b8;--text-muted:#64748b;}html.light{--bg-app-from:#eef2ff;--bg-app-to:#f8fafc;--bg-header:rgba(255,255,255,0.92);--bg-card:#ffffff;--bg-card-soft:rgba(15,23,42,0.05);--bg-card-soft-hover:rgba(15,23,42,0.09);--bg-input:#f1f5f9;--bg-danger-card:#fef2f2;--border-color:rgba(15,23,42,0.08);--border-strong:rgba(15,23,42,0.16);--text-primary:#0f172a;--text-secondary:#334155;--text-tertiary:#64748b;--text-muted:#94a3b8;}body{font-family:'Inter',sans-serif;background-color:var(--bg-app-to);color:var(--text-secondary);-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none;transition:background-color .3s ease,color .3s ease;}.mono{font-family:'JetBrains Mono',monospace;}.mono-num{font-family:'Inter',-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:-0.03em;}.animate-in{animation:fadeIn 0.35s ease-out forwards;}@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}::-webkit-scrollbar{display:none;}.pb-safe{padding-bottom:calc(env(safe-area-inset-bottom) + 10px);}.pt-safe{padding-top:calc(env(safe-area-inset-top) + 14px);}.no-scrollbar::-webkit-scrollbar{display:none;}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none;}input[type="datetime-local"]::-webkit-calendar-picker-indicator{filter:invert(1);opacity:0.6;}html.light input[type="datetime-local"]::-webkit-calendar-picker-indicator{filter:invert(0.6);}@keyframes cardImpactGlow{0%{box-shadow:0 0 0 0 rgba(129,140,248,0);}30%{box-shadow:0 0 0 3px rgba(129,140,248,0.35),0 0 24px 4px rgba(129,140,248,0.28);}100%{box-shadow:0 0 0 0 rgba(129,140,248,0);}}.card-impact-glow{animation:cardImpactGlow 0.6s ease-out both;}@keyframes retentionGlow{0%,100%{text-shadow:0 0 6px currentColor;}50%{text-shadow:0 0 16px currentColor;}}.retention-counting{animation:retentionGlow 0.5s ease-in-out infinite;}@keyframes flamePulse{0%,100%{opacity:0.85;transform:scale(1);}50%{opacity:1;transform:scale(1.12);}}.flame-pulse{animation:flamePulse 1.6s ease-in-out infinite;}@keyframes gradientDrift{0%,100%{background-position:0% 50%;}50%{background-position:100% 50%;}}@keyframes auraGlowPulse{0%,100%{filter:brightness(1);}50%{filter:brightness(1.3);}}@keyframes auraGlowPulseRainbow{0%{filter:brightness(1.1) hue-rotate(0deg);}50%{filter:brightness(1.35) hue-rotate(180deg);}100%{filter:brightness(1.1) hue-rotate(360deg);}}@keyframes rainbowShift{0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;}}.rank-badge{background-size:260% 100%;transition:filter .3s ease;}.rank-e{background-image:linear-gradient(120deg,rgba(100,116,139,0.14),rgba(148,163,184,0.24),rgba(100,116,139,0.14));color:#94a3b8;border-color:rgba(148,163,184,0.28);animation:gradientDrift 11s ease-in-out infinite;}.rank-d{background-image:linear-gradient(120deg,rgba(16,185,129,0.14),rgba(52,211,153,0.28),rgba(16,185,129,0.14));color:#34d399;border-color:rgba(52,211,153,0.32);box-shadow:0 0 4px 0px rgba(52,211,153,0.3);animation:gradientDrift 9.5s ease-in-out infinite;}.rank-c{background-image:linear-gradient(120deg,rgba(14,165,233,0.15),rgba(56,189,248,0.3),rgba(14,165,233,0.15));color:#38bdf8;border-color:rgba(56,189,248,0.38);box-shadow:0 0 7px 1px rgba(56,189,248,0.4);animation:gradientDrift 8s ease-in-out infinite;}.rank-b{background-image:linear-gradient(120deg,rgba(99,102,241,0.17),rgba(129,140,248,0.34),rgba(99,102,241,0.17));color:#818cf8;border-color:rgba(129,140,248,0.42);box-shadow:0 0 10px 1.5px rgba(129,140,248,0.45);animation:gradientDrift 6.5s ease-in-out infinite;}.rank-a{background-image:linear-gradient(120deg,rgba(168,85,247,0.2),rgba(192,132,252,0.38),rgba(168,85,247,0.2));color:#c084fc;border-color:rgba(192,132,252,0.48);box-shadow:0 0 13px 2px rgba(192,132,252,0.5);animation:gradientDrift 5s ease-in-out infinite;}.rank-s{background-image:linear-gradient(100deg,#f1f5f9,#cbd5e1,#94a3b8,#e2e8f0,#f1f5f9);background-size:320% 100%;color:#1e293b;border-color:rgba(203,213,225,0.75);font-weight:900;box-shadow:0 0 17px 3px rgba(203,213,225,0.6),0 0 30px 7px rgba(148,163,184,0.28);animation:gradientDrift 4s ease-in-out infinite,auraGlowPulse 2.2s ease-in-out infinite;}.rank-ss{background-image:linear-gradient(100deg,#fff3c4,#ffd700,#f59e0b,#ffe066,#ffd700,#fff3c4);background-size:340% 100%;color:#3d2900;border-color:rgba(255,193,7,0.85);font-weight:900;box-shadow:0 0 22px 4px rgba(255,193,7,0.7),0 0 40px 10px rgba(255,152,0,0.35);animation:gradientDrift 3.1s ease-in-out infinite,auraGlowPulse 1.8s ease-in-out infinite;}.rank-sss{background-image:linear-gradient(90deg,#ff6b6b,#feca57,#1dd1a1,#54a0ff,#c56cf0,#ff6b6b);background-size:300% 100%;color:#0b0b0f;border-color:rgba(255,255,255,0.6);font-weight:900;box-shadow:0 0 26px 5px rgba(255,255,255,0.7),0 0 46px 13px rgba(129,140,248,0.4),0 0 62px 20px rgba(232,121,249,0.25);animation:rainbowShift 4.5s ease-in-out infinite,auraGlowPulseRainbow 3s ease-in-out infinite;}.count-pop-flash{display:inline-block;animation:countPopFlash 0.55s ease-out;}@keyframes countPopFlash{0%{text-shadow:0 0 0 rgba(129,140,248,0);transform:scale(1);}30%{text-shadow:0 0 20px rgba(129,140,248,0.95),0 0 34px rgba(129,140,248,0.5);transform:scale(1.14);}100%{text-shadow:0 0 0 rgba(129,140,248,0);transform:scale(1);}}.perfect-glow{background:linear-gradient(90deg,#a5b4fc,#ffffff,#818cf8,#ffffff,#a5b4fc);background-size:220% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:perfectShine 5s ease-in-out infinite;filter:drop-shadow(0 0 16px rgba(129,140,248,0.75));}@keyframes perfectShine{0%{background-position:0% 50%;}50%{background-position:220% 50%;}100%{background-position:0% 50%;}}@keyframes holdGlowPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0);}50%{box-shadow:inset 0 0 18px 2px rgba(255,255,255,0.22);}}.hold-glow{animation:holdGlowPulse 0.85s ease-in-out infinite;}.hold-progress-fill{position:absolute;inset:0;background:rgba(255,255,255,0.28);transform-origin:left center;pointer-events:none;}@keyframes rankExplodeOut{0%{transform:scale(1);opacity:1;filter:brightness(1);}35%{transform:scale(1.4);opacity:1;filter:brightness(1.7);}100%{transform:scale(0.15);opacity:0;filter:brightness(2.2);}}.rank-explode-out{animation:rankExplodeOut 0.36s cubic-bezier(.55,0,1,0.45) both;display:inline-block;}@keyframes rankBurstIn{0%{transform:scale(0.1);opacity:0;}55%{transform:scale(1.3);opacity:1;}75%{transform:scale(0.9);opacity:1;}100%{transform:scale(1);opacity:1;}}.rank-burst-in{animation:rankBurstIn 0.46s cubic-bezier(.34,1.56,.64,1) both;display:inline-block;}@keyframes rankUpBurst{0%{opacity:0;transform:scale(0.6);}30%{opacity:1;transform:scale(1.15);}100%{opacity:0;transform:scale(1.6);}}.rank-up-burst{position:absolute;inset:-6px;border-radius:999px;pointer-events:none;border:2px solid rgba(250,204,21,0.85);animation:rankUpBurst 0.7s ease-out forwards;}.edit-row{touch-action:pan-y;}.edit-row.is-dragging{z-index:40;touch-action:none;}.drag-handle{touch-action:none;cursor:grab;}.drag-handle:active{cursor:grabbing;}@keyframes checkPop{0%{transform:scale(0.6);opacity:0;}60%{transform:scale(1.15);}100%{transform:scale(1);opacity:1;}}.check-pop{animation:checkPop 0.2s ease-out;}.pyramid-row{position:relative;overflow:hidden;white-space:nowrap;flex-wrap:nowrap;}.pyramid-row > span{white-space:nowrap;position:relative;z-index:1;}@keyframes pyramidAuraSweep{0%{background-position:220% 0;opacity:0;}18%{opacity:0.7;}50%{background-position:-40% 0;opacity:0.45;}82%{opacity:0.7;}100%{background-position:-220% 0;opacity:0;}}.pyramid-row.rank-d::after,.pyramid-row.rank-c::after,.pyramid-row.rank-b::after,.pyramid-row.rank-a::after,.pyramid-row.rank-s::after,.pyramid-row.rank-ss::after,.pyramid-row.rank-sss::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;background:linear-gradient(115deg,transparent 25%,rgba(255,255,255,0.4) 50%,transparent 75%);background-size:260% 100%;mix-blend-mode:overlay;animation:pyramidAuraSweep 30s ease-in-out infinite;}.pyramid-row.rank-c::after{animation-duration:27s;}.pyramid-row.rank-b::after{animation-duration:24s;}.pyramid-row.rank-a::after{animation-duration:21s;}.pyramid-row.rank-s::after{animation-duration:18s;}.pyramid-row.rank-ss::after{animation-duration:16s;}.pyramid-row.rank-sss::after{animation-duration:14s;}.pyramid-row.rank-e{animation:gradientDrift 48s ease-in-out infinite;}.pyramid-row.rank-d{animation:gradientDrift 44s ease-in-out infinite;}.pyramid-row.rank-c{animation:gradientDrift 40s ease-in-out infinite;}.pyramid-row.rank-b{animation:gradientDrift 36s ease-in-out infinite;}.pyramid-row.rank-a{animation:gradientDrift 32s ease-in-out infinite;}.pyramid-row.rank-s{animation:gradientDrift 28s ease-in-out infinite,auraGlowPulse 16s ease-in-out infinite;}.pyramid-row.rank-ss{animation:gradientDrift 26s ease-in-out infinite,auraGlowPulse 14s ease-in-out infinite;}.pyramid-row.rank-sss{animation:rainbowShift 34s ease-in-out infinite,auraGlowPulseRainbow 22s ease-in-out infinite;}.medal-badge{position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-radius:20px;border:1.5px solid;padding:14px 6px;box-shadow:0 6px 16px rgba(0,0,0,0.38),inset 0 1px 0 rgba(255,255,255,0.3);transition:transform .15s ease;}
+.medal-badge:not(.medal-locked)::before{content:'';position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,0.55) 50%,transparent 70%);background-size:250% 100%;animation:pyramidAuraSweep 6.5s ease-in-out infinite;mix-blend-mode:overlay;pointer-events:none;}.medal-badge:active{transform:scale(0.94);}.medal-bronze{background:linear-gradient(135deg,#c9884f,#e0a06a,#a9673a);color:#2e1705;border-color:rgba(205,133,63,0.65);}.medal-silver{background:linear-gradient(135deg,#cbd5e1,#f1f5f9,#94a3b8);color:#1e293b;border-color:rgba(203,213,225,0.75);}.medal-gold{background:linear-gradient(135deg,#fff3c4,#ffd700,#f59e0b);color:#3d2900;border-color:rgba(255,193,7,0.85);}.medal-platinum{background:linear-gradient(135deg,#e0e7ff,#cbd5e1,#94a3b8,#e0e7ff);color:#1e293b;border-color:rgba(203,213,225,0.9);box-shadow:0 0 12px 2px rgba(203,213,225,0.4),0 4px 10px rgba(0,0,0,0.25);}.medal-diamond{background:linear-gradient(135deg,#a5f3fc,#67e8f9,#22d3ee,#a5f3fc);color:#0c4a6e;border-color:rgba(103,232,249,0.9);box-shadow:0 0 16px 3px rgba(103,232,249,0.45),0 4px 10px rgba(0,0,0,0.25);}.medal-rainbow{background:linear-gradient(90deg,#ff6b6b,#feca57,#1dd1a1,#54a0ff,#c56cf0,#ff6b6b);background-size:300% 100%;color:#0b0b0f;border-color:rgba(255,255,255,0.7);box-shadow:0 0 20px 4px rgba(255,255,255,0.4),0 4px 10px rgba(0,0,0,0.25);animation:rainbowShift 4s ease-in-out infinite;}.medal-locked{background:rgba(148,163,184,0.08);color:var(--text-muted);border-color:var(--border-color);filter:grayscale(1);opacity:0.5;box-shadow:none;}@keyframes achievementPop{0%{transform:scale(0.4);opacity:0;}60%{transform:scale(1.12);opacity:1;}100%{transform:scale(1);opacity:1;}}.achievement-pop{animation:achievementPop 0.4s cubic-bezier(.34,1.56,.64,1) both;}@keyframes toastSlideIn{0%{transform:translateY(-16px);opacity:0;}100%{transform:translateY(0);opacity:1;}}.achievement-toast{animation:toastSlideIn 0.35s ease-out both;}@keyframes levelUpFlash{0%,100%{box-shadow:0 0 0 0 rgba(250,204,21,0);}35%{box-shadow:0 0 16px 4px rgba(250,204,21,0.85),0 0 30px 8px rgba(250,204,21,0.4);}}.level-up-flash{animation:levelUpFlash 0.9s ease-out;}.xp-bar-fill{transition:none;}.heatmap-cell{border-radius:6px;transition:background-color .5s ease,transform .15s ease,box-shadow .3s ease;border:1px solid rgba(255,255,255,0.06);}.heatmap-cell:active{transform:scale(0.9);}.heatmap-cell.is-selected{box-shadow:0 0 0 2px #facc15;}.heatmap-cell-label{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:9px;font-weight:900;line-height:1.25;letter-spacing:-0.02em;user-select:none;gap:1px;}.heatmap-bubble{background:var(--bg-card);border:1px solid var(--border-strong);border-radius:14px;padding:8px 12px;box-shadow:0 10px 24px rgba(0,0,0,0.35);white-space:nowrap;}.heatmap-bubble::after{content:'';position:absolute;left:50%;top:100%;transform:translateX(-50%);border-width:7px 7px 0 7px;border-style:solid;border-color:var(--bg-card) transparent transparent transparent;filter:drop-shadow(0 2px 1px rgba(0,0,0,0.15));}html.app-bg-paused *{animation-play-state:paused !important;}</style>
 </head>
 <body>
 <div id="root"></div>
@@ -115,6 +116,9 @@ const REVIEW_THRESHOLD = 65;
 const DEFAULT_REVIEW_INTERVALS = [1, 3, 7, 14, 30, 45, 60, 60];
 const IMPORTANCE_LEVELS = ['A', 'B', 'C', 'D'];
 const DEFAULT_IMPORTANCE_COEFFS = { A: 1, B: 0.5, C: 0.2, D: 0.1 };
+const DEFAULT_SUBJECT_POINTS = {
+'財務会計論(計算)': 115, '財務会計論(理論)': 85, '管理会計論': 100, '企業法': 100, '監査論': 100
+};
 const DEFAULT_SETTINGS = {
 weeklyGoal: 15, monthlyGoal: 60, theme: 'dark',
 lastLoginDate: null, currentStreak: 0, bestStreak: 0, totalLoginDays: 0,
@@ -333,18 +337,83 @@ const playTapSound = () => {
 const ctx = getAudioCtx();
 if (!ctx) return;
 const now = ctx.currentTime;
-const baseFreq = 720;
+const filter = ctx.createBiquadFilter();
+filter.type = 'lowpass';
+filter.frequency.setValueAtTime(2600, now);
 const osc = ctx.createOscillator();
 const gain = ctx.createGain();
 osc.type = 'sine';
-osc.frequency.setValueAtTime(baseFreq, now);
-osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.28, now + 0.05);
+osc.frequency.setValueAtTime(980, now);
+osc.frequency.exponentialRampToValueAtTime(480, now + 0.1);
 gain.gain.setValueAtTime(0.0001, now);
-gain.gain.exponentialRampToValueAtTime(0.16, now + 0.008);
-gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
-osc.connect(gain).connect(ctx.destination);
+gain.gain.exponentialRampToValueAtTime(0.2, now + 0.006);
+gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
+osc.connect(filter).connect(gain).connect(ctx.destination);
 osc.start(now);
-osc.stop(now + 0.1);
+osc.stop(now + 0.17);
+const osc2 = ctx.createOscillator();
+const gain2 = ctx.createGain();
+osc2.type = 'sine';
+osc2.frequency.setValueAtTime(2100, now + 0.012);
+osc2.frequency.exponentialRampToValueAtTime(1500, now + 0.07);
+gain2.gain.setValueAtTime(0.0001, now + 0.012);
+gain2.gain.exponentialRampToValueAtTime(0.055, now + 0.018);
+gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+osc2.connect(gain2).connect(ctx.destination);
+osc2.start(now + 0.012);
+osc2.stop(now + 0.1);
+};
+const playStartWarpSound = () => {
+const ctx = getAudioCtx();
+if (!ctx) return;
+const now = ctx.currentTime;
+try {
+const bufferSize = Math.floor(ctx.sampleRate * 1.1);
+const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+const data = noiseBuffer.getChannelData(0);
+for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * 0.6;
+const noise = ctx.createBufferSource();
+noise.buffer = noiseBuffer;
+const bandpass = ctx.createBiquadFilter();
+bandpass.type = 'bandpass';
+bandpass.frequency.setValueAtTime(280, now);
+bandpass.frequency.exponentialRampToValueAtTime(2600, now + 0.9);
+bandpass.Q.value = 0.9;
+const noiseGain = ctx.createGain();
+noiseGain.gain.setValueAtTime(0.0001, now);
+noiseGain.gain.exponentialRampToValueAtTime(0.32, now + 0.25);
+noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.0);
+noise.connect(bandpass).connect(noiseGain).connect(ctx.destination);
+noise.start(now);
+noise.stop(now + 1.1);
+} catch (e) {}
+const osc = ctx.createOscillator();
+const oscGain = ctx.createGain();
+osc.type = 'sine';
+osc.frequency.setValueAtTime(150, now);
+osc.frequency.exponentialRampToValueAtTime(1050, now + 0.85);
+oscGain.gain.setValueAtTime(0.0001, now);
+oscGain.gain.exponentialRampToValueAtTime(0.3, now + 0.12);
+oscGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.95);
+osc.connect(oscGain).connect(ctx.destination);
+osc.start(now);
+osc.stop(now + 1.0);
+const sparkleCount = 5;
+for (let i = 0; i < sparkleCount; i++) {
+const t = now + 0.72 + i * 0.065;
+const freq = 1600 + i * 220 + Math.random() * 100;
+const dOsc = ctx.createOscillator();
+const dGain = ctx.createGain();
+dOsc.type = 'sine';
+dOsc.frequency.setValueAtTime(freq, t);
+dOsc.frequency.exponentialRampToValueAtTime(freq * 0.7, t + 0.1);
+dGain.gain.setValueAtTime(0.0001, t);
+dGain.gain.exponentialRampToValueAtTime(0.16, t + 0.008);
+dGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
+dOsc.connect(dGain).connect(ctx.destination);
+dOsc.start(t);
+dOsc.stop(t + 0.16);
+}
 };
 let __retentionRiseDroplets = [];
 const playRetentionRiseSound = (durationMs = 1500) => {
@@ -682,8 +751,13 @@ const SettingsModal = ({
 onClose, intervalDays, onSaveIntervals,
 isSeeding, onManualSeed, isSeedingRonbun, onManualSeedRonbun,
 settings, onToggleUseImportance, onChangeImportanceCoeff,
-tabs, subjectExcludeMap, onToggleSubjectExclude, onDeleteSubject, tabStats
+tabs, subjectExcludeMap, onToggleSubjectExclude, onDeleteSubject, tabStats,
+subjectPoints, onChangeSubjectPoints
 }) => {
+const totalSubjectPoints = tabs.reduce((sum, tab) => {
+const v = (subjectPoints && subjectPoints[tab.name] != null && subjectPoints[tab.name] !== '') ? parseFloat(subjectPoints[tab.name]) : (DEFAULT_SUBJECT_POINTS[tab.name] || 0);
+return sum + (isNaN(v) ? 0 : v);
+}, 0);
 const [form, setForm] = useState(intervalDays.slice());
 const [saved, setSaved] = useState(false);
 const updateField = (idx, val) => {
@@ -780,6 +854,32 @@ onChange={e => onChangeImportanceCoeff(lv, e.target.value)}
 ))}
 </div>
 </div>
+<div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-4">
+<div>
+<p className="text-xs font-black text-[var(--text-primary)] flex items-center gap-1.5"><Icon name="ListOrdered" size={14} className="text-amber-400" />科目別配点設定（順位計算用）</p>
+<p className="text-[10px] text-[var(--text-tertiary)] font-bold mt-1">公認会計士試験の配点に合わせて、各科目の「定着率 × 配点」で総合スコアを計算し、科目別ランキングを表示します。初期値は短答式の配点（合計500点）です。</p>
+</div>
+<div className="space-y-2.5">
+{tabs.map(tab => (
+<div key={tab.name} className="flex items-center justify-between gap-2 bg-[var(--bg-card-soft)] rounded-xl px-3 py-2.5">
+<span className="text-xs font-bold text-[var(--text-secondary)] truncate flex-1">{tab.name}</span>
+<div className="relative w-24 shrink-0">
+<input
+type="number" min="0" step="1"
+className="w-full bg-[var(--bg-input)] border border-[var(--border-strong)] p-2 pr-7 rounded-lg outline-none font-bold text-[var(--text-primary)] text-xs mono-num text-right"
+value={(subjectPoints && subjectPoints[tab.name] != null) ? subjectPoints[tab.name] : (DEFAULT_SUBJECT_POINTS[tab.name] || 0)}
+onChange={e => onChangeSubjectPoints(tab.name, e.target.value)}
+/>
+<span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-bold text-[var(--text-muted)] mono">点</span>
+</div>
+</div>
+))}
+</div>
+<div className="flex items-center justify-between pt-3 border-t border-[var(--border-color)]">
+<span className="text-[10px] font-bold text-[var(--text-tertiary)]">合計配点</span>
+<span className="text-sm font-black text-[var(--text-primary)] mono-num">{totalSubjectPoints}点</span>
+</div>
+</div>
 <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-3">
 <div>
 <p className="text-xs font-black text-[var(--text-primary)] flex items-center gap-1.5"><Icon name="EyeOff" size={14} className="text-rose-400" />科目ごとの統計除外・タブ削除</p>
@@ -839,9 +939,9 @@ const displayRc = lockedRc !== null ? lockedRc : rc;
 const rank = getRank(displayRc);
 const animClass = phase === 'exploding' ? 'rank-explode-out' : phase === 'entering' ? 'rank-burst-in' : '';
 return (
-<span className="relative inline-block">
+<span className="relative inline-flex items-center">
 {phase === 'entering' && <span className="rank-up-burst"></span>}
-<span className={`text-[10px] font-black mono px-2 py-0.5 rounded-full border shrink-0 ${RANK_STYLES[rank]} ${animClass}`}>{rank}</span>
+<span className={`text-[10px] font-black mono leading-none px-2 py-1 rounded-full border shrink-0 inline-flex items-center justify-center ${RANK_STYLES[rank]} ${animClass}`}>{rank}</span>
 </span>
 );
 };
@@ -865,6 +965,15 @@ title: t.title, subject: t.subject,
 reviewCount: t.reviewCount || 0, lastStudiedAt: toDatetimeLocalValue(t.lastStudiedAt),
 importance: t.importance || 'A', excludeFromStats: !!t.excludeFromStats
 });
+useEffect(() => {
+if (isEditing) {
+setEditForm({
+title: t.title, subject: t.subject,
+reviewCount: t.reviewCount || 0, lastStudiedAt: toDatetimeLocalValue(t.lastStudiedAt),
+importance: t.importance || 'A', excludeFromStats: !!t.excludeFromStats
+});
+}
+}, [isEditing]);
 const isCustomInterval = Array.isArray(t.customIntervals) && t.customIntervals.length === DEFAULT_REVIEW_INTERVALS.length;
 const effIntervalDays = getEffectiveIntervals(t, intervalDays);
 const effSValues = useMemo(() => computeSValues(effIntervalDays), [effIntervalDays]);
@@ -1117,7 +1226,7 @@ className={`shrink-0 h-6 w-6 rounded-full border-2 flex items-center justify-cen
 <div className="flex-1 min-w-0">
 <div className="flex items-center gap-2 flex-wrap">
 <h3 className="text-sm font-bold text-[var(--text-primary)] truncate">{t.title}</h3>
-<span className={`text-[10px] font-black mono px-2 py-0.5 rounded-full border shrink-0 ${RANK_STYLES[rank]}`}>{rank}</span>
+<span className={`text-[10px] font-black mono leading-none px-2 py-1 rounded-full border shrink-0 inline-flex items-center justify-center ${RANK_STYLES[rank]}`}>{rank}</span>
 {isCustomInterval && <span className="text-[9px] font-black mono px-1.5 py-0.5 rounded-full border border-indigo-400/40 text-indigo-300 bg-indigo-500/10 shrink-0">個別</span>}
 </div>
 <p className="text-[10px] text-[var(--text-tertiary)] mono-num mt-0.5">復習回数: {t.reviewCount || 0} 回</p>
@@ -1216,24 +1325,24 @@ const MedalGrid = ({ items }) => (
 <div className="grid grid-cols-3 gap-2.5">
 {items.map(m => (
 <div key={m.key} className={`medal-badge achievement-pop ${m.unlocked ? m.cls : 'medal-locked'}`}>
-<Icon name={m.unlocked ? 'Medal' : 'Lock'} size={18} />
-<span className="font-black text-sm mono-num">{m.label}</span>
-<span className="text-[9px] font-bold opacity-80">{m.sub}</span>
+<Icon name={m.unlocked ? 'Medal' : 'Lock'} size={20} />
+<span className="font-black text-base mono-num">{m.label}</span>
+{m.sub ? <span className="text-[9px] font-bold opacity-80">{m.sub}</span> : null}
 </div>
 ))}
 </div>
 );
-const AchievementsModal = ({ settings, onClose }) => {
+const AchievementsModal = ({ settings, currentPercentage, onClose }) => {
 const bestLap = Math.min(LAP_ACHIEVEMENT_MAX, settings.bestLap || 0);
-const bestPct = settings.bestPercentageEver || 0;
+const currentPct = currentPercentage || 0;
 const lapMedals = Array.from({ length: LAP_ACHIEVEMENT_MAX }, (_, i) => {
 const n = i + 1;
 const unlocked = bestLap >= n;
 return { key: `lap-${n}`, label: `${n}周`, sub: '全体制覇', unlocked, cls: tierClassForIndex(i, LAP_ACHIEVEMENT_MAX) };
 });
 const retMedals = RETENTION_ACHIEVEMENT_THRESHOLDS.map((th, i) => {
-const unlocked = bestPct >= th;
-return { key: `ret-${th}`, label: `${th}%`, sub: th === 95 ? '最高到達' : '総合定着率', unlocked, cls: tierClassForIndex(i, RETENTION_ACHIEVEMENT_THRESHOLDS.length) };
+const unlocked = currentPct >= th;
+return { key: `ret-${th}`, label: `${th}%`, sub: '', unlocked, cls: tierClassForIndex(i, RETENTION_ACHIEVEMENT_THRESHOLDS.length) };
 });
 return (
 <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center">
@@ -1308,7 +1417,7 @@ title={c.title}
 </div>
 );
 };
-const StatsView = ({ overallStats, statsHistory, weeklyRecovered, perSubjectGauge, topics, intervalDays }) => {
+const StatsView = ({ overallStats, statsHistory, weeklyRecovered, perSubjectGauge, topics, intervalDays, subjectRanking = [] }) => {
 const { blue, warn, red, total, percentage } = overallStats;
 const color = percentage > 80 ? 'text-indigo-400' : percentage > REVIEW_THRESHOLD ? 'text-yellow-400' : 'text-red-400';
 const stroke = percentage > 80 ? '#818cf8' : percentage > REVIEW_THRESHOLD ? '#facc15' : '#ef4444';
@@ -1424,13 +1533,9 @@ return <circle key={r.date} cx={x} cy={y} r="2.2" fill="#facc15" stroke="#000" s
 <p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest flex items-center gap-1.5"><Icon name="Crosshair" size={13} className="text-red-400" />撃墜人数</p>
 <div className="grid grid-cols-3 gap-2">
 {[{ label: '今日', value: dailyKills }, { label: '今週', value: weeklyKills }, { label: '今月', value: monthlyKills }].map(k => (
-<div key={k.label} className={`rounded-2xl p-2.5 border ${k.value >= 0 ? 'bg-indigo-500/10 border-indigo-400/30' : 'bg-red-500/10 border-red-400/30'}`}>
+<div key={k.label} className={`rounded-2xl p-2.5 border text-center ${k.value >= 0 ? 'bg-indigo-500/10 border-indigo-400/30' : 'bg-red-500/10 border-red-400/30'}`}>
 <p className="text-[10px] font-bold text-[var(--text-tertiary)] mb-1">{k.label}</p>
-{k.value >= 0 ? (
-<p className="text-xs font-black mono-num text-indigo-300 leading-snug flex items-center gap-1"><Icon name="Swords" size={12} className="shrink-0" />撃墜した人数：{k.value}人</p>
-) : (
-<p className="text-xs font-black mono-num text-red-300 leading-snug flex items-center gap-1"><Icon name="Skull" size={12} className="shrink-0" />抜かれた人数：{Math.abs(k.value)}人</p>
-)}
+<p className={`text-xl font-black mono-num ${k.value >= 0 ? 'text-indigo-300' : 'text-red-300'}`}>{Math.abs(k.value)}人</p>
 </div>
 ))}
 </div>
@@ -1463,6 +1568,23 @@ return (
 );
 })}
 </div>
+</div>
+)}
+{subjectRanking.length > 0 && (
+<div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-5 shadow-lg space-y-3">
+<p className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase mono tracking-widest flex items-center gap-1.5"><Icon name="ListOrdered" size={13} className="text-amber-400" />科目別配点ランキング</p>
+<div className="space-y-2">
+{subjectRanking.map((s, i) => (
+<div key={s.name} className="flex items-center justify-between gap-2 bg-[var(--bg-card-soft)] rounded-xl px-3 py-2.5">
+<div className="flex items-center gap-2.5 min-w-0">
+<span className={`text-xs font-black mono-num w-6 text-center shrink-0 ${i === 0 ? 'text-amber-300' : i === 1 ? 'text-slate-300' : i === 2 ? 'text-orange-300' : 'text-[var(--text-tertiary)]'}`}>{i + 1}</span>
+<span className="text-xs font-bold text-[var(--text-secondary)] truncate">{s.name}</span>
+</div>
+<span className="text-xs mono-num font-black text-[var(--text-primary)] shrink-0">{s.score.toFixed(1)} / {s.points}点</span>
+</div>
+))}
+</div>
+<p className="text-[9px] text-[var(--text-muted)] font-bold">スコア = 定着率 × 配点。設定画面から各科目の配点を変更できます。</p>
 </div>
 )}
 <HeatmapCard topics={topics} intervalDays={intervalDays} />
@@ -1662,6 +1784,10 @@ const handleChangeImportanceCoeff = useCallback((lv, val) => {
 const nextCoeffs = { ...(settings.importanceCoeffs || DEFAULT_IMPORTANCE_COEFFS), [lv]: val === '' ? '' : parseFloat(val) };
 updateSettings({ importanceCoeffs: nextCoeffs });
 }, [settings.importanceCoeffs, updateSettings]);
+const handleChangeSubjectPoints = useCallback((name, val) => {
+const nextPoints = { ...(settings.subjectPoints || {}), [name]: val === '' ? '' : parseFloat(val) };
+updateSettings({ subjectPoints: nextPoints });
+}, [settings.subjectPoints, updateSettings]);
 const runSeedFromData = useCallback(async (subjectNames, topicsMap, orderBase = 0) => {
 if (!user || !window.fb || !window.fb.db) return { added: 0 };
 let addedSubjects = 0;
@@ -1804,6 +1930,18 @@ const avg = wTotal > 0 ? wSum / wTotal : 0;
 return { name: tab.name, avg, count: items.length };
 });
 }, [tabs, topics, intervalDays, settings.useImportance, settings.importanceCoeffs, subjectExcludeMap]);
+const subjectRanking = useMemo(() => {
+const list = tabs.map(tab => {
+const g = perSubjectGauge.find(p => p.name === tab.name);
+const avg = (g && g.avg !== null && g.avg !== undefined) ? g.avg : 0;
+const rawPoints = (settings.subjectPoints && settings.subjectPoints[tab.name] != null && settings.subjectPoints[tab.name] !== '') ? parseFloat(settings.subjectPoints[tab.name]) : (DEFAULT_SUBJECT_POINTS[tab.name] || 0);
+const points = isNaN(rawPoints) ? 0 : rawPoints;
+const score = (avg / 100) * points;
+return { name: tab.name, avg, points, score };
+});
+list.sort((a, b) => b.score - a.score);
+return list;
+}, [tabs, perSubjectGauge, settings.subjectPoints]);
 const currentLap = useMemo(() => {
 const active = topics.filter(t => !isExcludedFromStats(t));
 if (active.length === 0) return 0;
@@ -2085,7 +2223,7 @@ return (
 </div>
 <button
 type="button"
-onClick={() => { unlockAudioContext(); vibrate(10); setAudioUnlocked(true); }}
+onClick={() => { unlockAudioContext(); setTimeout(() => playStartWarpSound(), 30); vibrate([0, 15, 30, 50, 90]); setAudioUnlocked(true); }}
 className="bg-indigo-600 hover:bg-indigo-500 text-white font-black py-4 px-10 rounded-2xl shadow-xl active:scale-[0.98] transition-all flex items-center gap-3 w-full max-w-sm justify-center"
 >
 <Icon name="Play" size={20} /> 学習を開始する
@@ -2112,10 +2250,12 @@ subjectExcludeMap={subjectExcludeMap}
 onToggleSubjectExclude={handleToggleSubjectExclude}
 onDeleteSubject={handleDeleteSubject}
 tabStats={tabStats}
+subjectPoints={settings.subjectPoints}
+onChangeSubjectPoints={handleChangeSubjectPoints}
 />
 )}
 {showStreakModal && <StreakModal settings={settings} onClose={() => setShowStreakModal(false)} />}
-{showAchievements && <AchievementsModal settings={settings} onClose={() => setShowAchievements(false)} />}
+{showAchievements && <AchievementsModal settings={settings} currentPercentage={overallStats.percentage} onClose={() => setShowAchievements(false)} />}
 {showBulkCountModal && (
 <div className="fixed inset-0 z-[120] flex items-start justify-center overflow-y-auto px-4 pt-16 pb-4">
 <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => !isBulkSettingCount && setShowBulkCountModal(false)}></div>
@@ -2323,6 +2463,7 @@ weeklyRecovered={weeklyRecovered}
 perSubjectGauge={perSubjectGauge}
 topics={topics}
 intervalDays={intervalDays}
+subjectRanking={subjectRanking}
 />
 )}
 </main>
