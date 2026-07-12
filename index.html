@@ -7,6 +7,29 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+theme: {
+extend: {
+colors: {
+indigo: {
+50: 'rgb(var(--accent-50) / <alpha-value>)',
+100: 'rgb(var(--accent-100) / <alpha-value>)',
+200: 'rgb(var(--accent-200) / <alpha-value>)',
+300: 'rgb(var(--accent-300) / <alpha-value>)',
+400: 'rgb(var(--accent-400) / <alpha-value>)',
+500: 'rgb(var(--accent-500) / <alpha-value>)',
+600: 'rgb(var(--accent-600) / <alpha-value>)',
+700: 'rgb(var(--accent-700) / <alpha-value>)',
+800: 'rgb(var(--accent-800) / <alpha-value>)',
+900: 'rgb(var(--accent-900) / <alpha-value>)',
+950: 'rgb(var(--accent-950) / <alpha-value>)'
+}
+}
+}
+}
+};
+</script>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -33,8 +56,8 @@ console.warn("Firebase not initialized", e);
 }
 const appId = 'score-chart-stable';
 window.fb = { auth, db, appId, collection, query, onSnapshot, addDoc, deleteDoc, updateDoc, setDoc, doc, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail };</script>
-<style>@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;900&family=Inter:wght@400;700;900&display=swap');:root{--bg-app-from:#0a0a0f;--bg-app-to:#000000;--bg-header:rgba(0,0,0,0.95);--bg-card:#111111;--bg-card-soft:rgba(255,255,255,0.05);--bg-card-soft-hover:rgba(255,255,255,0.1);--bg-input:#000000;--bg-danger-card:#2a0808;--border-color:rgba(255,255,255,0.1);--border-strong:rgba(255,255,255,0.2);--text-primary:#ffffff;--text-secondary:#cbd5e1;--text-tertiary:#94a3b8;--text-muted:#64748b;}html.light{--bg-app-from:#eef2ff;--bg-app-to:#f8fafc;--bg-header:rgba(255,255,255,0.92);--bg-card:#ffffff;--bg-card-soft:rgba(15,23,42,0.05);--bg-card-soft-hover:rgba(15,23,42,0.09);--bg-input:#f1f5f9;--bg-danger-card:#fef2f2;--border-color:rgba(15,23,42,0.08);--border-strong:rgba(15,23,42,0.16);--text-primary:#0f172a;--text-secondary:#334155;--text-tertiary:#64748b;--text-muted:#94a3b8;}body{font-family:'Inter',sans-serif;background-color:var(--bg-app-to);color:var(--text-secondary);-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none;transition:background-color .3s ease,color .3s ease;}.mono{font-family:'JetBrains Mono',monospace;}.mono-num{font-family:'Inter',-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:-0.03em;}.animate-in{animation:fadeIn 0.35s ease-out forwards;}@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}::-webkit-scrollbar{display:none;}.pb-safe{padding-bottom:calc(env(safe-area-inset-bottom) + 10px);}.pt-safe{padding-top:calc(env(safe-area-inset-top) + 14px);}.no-scrollbar::-webkit-scrollbar{display:none;}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none;}input[type="datetime-local"]::-webkit-calendar-picker-indicator{filter:invert(1);opacity:0.6;}html.light input[type="datetime-local"]::-webkit-calendar-picker-indicator{filter:invert(0.6);}input[type="datetime-local"]{display:flex;align-items:center;}input[type="datetime-local"]::-webkit-datetime-edit{display:flex;align-items:center;height:100%;padding:0;}input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper{display:flex;align-items:center;}@keyframes cardImpactGlow{0%{box-shadow:0 0 0 0 rgba(129,140,248,0);}30%{box-shadow:0 0 0 3px rgba(129,140,248,0.35),0 0 24px 4px rgba(129,140,248,0.28);}100%{box-shadow:0 0 0 0 rgba(129,140,248,0);}}.card-impact-glow{animation:cardImpactGlow 0.6s ease-out both;}@keyframes retentionGlow{0%,100%{text-shadow:0 0 6px currentColor;}50%{text-shadow:0 0 16px currentColor;}}.retention-counting{animation:retentionGlow 0.5s ease-in-out infinite;}@keyframes flamePulse{0%,100%{opacity:0.85;transform:scale(1);}50%{opacity:1;transform:scale(1.12);}}.flame-pulse{animation:flamePulse 1.6s ease-in-out infinite;}@keyframes gradientDrift{0%,100%{background-position:0% 50%;}50%{background-position:100% 50%;}}@keyframes auraGlowPulse{0%,100%{filter:brightness(1);}50%{filter:brightness(1.3);}}@keyframes auraGlowPulseRainbow{0%{filter:brightness(1.1) hue-rotate(0deg);}50%{filter:brightness(1.35) hue-rotate(180deg);}100%{filter:brightness(1.1) hue-rotate(360deg);}}@keyframes rainbowShift{0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;}}.rank-badge{background-size:260% 100%;transition:filter .3s ease;}.rank-e{background-image:linear-gradient(120deg,rgba(100,116,139,0.14),rgba(148,163,184,0.24),rgba(100,116,139,0.14));color:#94a3b8;border-color:rgba(148,163,184,0.28);animation:gradientDrift 11s ease-in-out infinite;}.rank-d{background-image:linear-gradient(120deg,rgba(16,185,129,0.14),rgba(52,211,153,0.28),rgba(16,185,129,0.14));color:#34d399;border-color:rgba(52,211,153,0.32);box-shadow:0 0 4px 0px rgba(52,211,153,0.3);animation:gradientDrift 9.5s ease-in-out infinite;}.rank-c{background-image:linear-gradient(120deg,rgba(14,165,233,0.15),rgba(56,189,248,0.3),rgba(14,165,233,0.15));color:#38bdf8;border-color:rgba(56,189,248,0.38);box-shadow:0 0 7px 1px rgba(56,189,248,0.4);animation:gradientDrift 8s ease-in-out infinite;}.rank-b{background-image:linear-gradient(120deg,rgba(99,102,241,0.17),rgba(129,140,248,0.34),rgba(99,102,241,0.17));color:#818cf8;border-color:rgba(129,140,248,0.42);box-shadow:0 0 10px 1.5px rgba(129,140,248,0.45);animation:gradientDrift 6.5s ease-in-out infinite;}.rank-a{background-image:linear-gradient(120deg,rgba(168,85,247,0.2),rgba(192,132,252,0.38),rgba(168,85,247,0.2));color:#c084fc;border-color:rgba(192,132,252,0.48);box-shadow:0 0 13px 2px rgba(192,132,252,0.5);animation:gradientDrift 5s ease-in-out infinite;}.rank-s{background-image:linear-gradient(100deg,#f1f5f9,#cbd5e1,#94a3b8,#e2e8f0,#f1f5f9);background-size:320% 100%;color:#1e293b;border-color:rgba(203,213,225,0.75);font-weight:900;box-shadow:0 0 17px 3px rgba(203,213,225,0.6),0 0 30px 7px rgba(148,163,184,0.28);animation:gradientDrift 4s ease-in-out infinite,auraGlowPulse 2.2s ease-in-out infinite;}.rank-ss{background-image:linear-gradient(100deg,#fff3c4,#ffd700,#f59e0b,#ffe066,#ffd700,#fff3c4);background-size:340% 100%;color:#3d2900;border-color:rgba(255,193,7,0.85);font-weight:900;box-shadow:0 0 22px 4px rgba(255,193,7,0.7),0 0 40px 10px rgba(255,152,0,0.35);animation:gradientDrift 3.1s ease-in-out infinite,auraGlowPulse 1.8s ease-in-out infinite;}.rank-sss{background-image:linear-gradient(90deg,#ff6b6b,#feca57,#1dd1a1,#54a0ff,#c56cf0,#ff6b6b);background-size:300% 100%;color:#0b0b0f;border-color:rgba(255,255,255,0.6);font-weight:900;box-shadow:0 0 26px 5px rgba(255,255,255,0.7),0 0 46px 13px rgba(129,140,248,0.4),0 0 62px 20px rgba(232,121,249,0.25);animation:rainbowShift 4.5s ease-in-out infinite,auraGlowPulseRainbow 3s ease-in-out infinite;}.count-pop-flash{display:inline-block;animation:countPopFlash 0.55s ease-out;}@keyframes countPopFlash{0%{text-shadow:0 0 0 rgba(129,140,248,0);transform:scale(1);}30%{text-shadow:0 0 20px rgba(129,140,248,0.95),0 0 34px rgba(129,140,248,0.5);transform:scale(1.14);}100%{text-shadow:0 0 0 rgba(129,140,248,0);transform:scale(1);}}.perfect-glow{background:linear-gradient(90deg,#a5b4fc,#ffffff,#818cf8,#ffffff,#a5b4fc);background-size:220% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:perfectShine 5s ease-in-out infinite;filter:drop-shadow(0 0 16px rgba(129,140,248,0.75));}@keyframes perfectShine{0%{background-position:0% 50%;}50%{background-position:220% 50%;}100%{background-position:0% 50%;}}@keyframes holdGlowPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0);}50%{box-shadow:inset 0 0 18px 2px rgba(255,255,255,0.22);}}.hold-glow{animation:holdGlowPulse 0.85s ease-in-out infinite;}.hold-progress-fill{position:absolute;inset:0;background:rgba(255,255,255,0.28);transform-origin:left center;pointer-events:none;}@keyframes rankExplodeOut{0%{transform:scale(1);opacity:1;filter:brightness(1);}35%{transform:scale(1.4);opacity:1;filter:brightness(1.7);}100%{transform:scale(0.15);opacity:0;filter:brightness(2.2);}}.rank-explode-out{animation:rankExplodeOut 0.36s cubic-bezier(.55,0,1,0.45) both;display:inline-block;}@keyframes rankBurstIn{0%{transform:scale(0.1);opacity:0;}55%{transform:scale(1.3);opacity:1;}75%{transform:scale(0.9);opacity:1;}100%{transform:scale(1);opacity:1;}}.rank-burst-in{animation:rankBurstIn 0.46s cubic-bezier(.34,1.56,.64,1) both;display:inline-block;}@keyframes rankUpBurst{0%{opacity:0;transform:scale(0.6);}30%{opacity:1;transform:scale(1.15);}100%{opacity:0;transform:scale(1.6);}}.rank-up-burst{position:absolute;inset:-6px;border-radius:999px;pointer-events:none;border:2px solid rgba(250,204,21,0.85);animation:rankUpBurst 0.7s ease-out forwards;}.edit-row{touch-action:pan-y;}.edit-row.is-dragging{z-index:40;touch-action:none;}.drag-handle{touch-action:none;cursor:grab;}.drag-handle:active{cursor:grabbing;}@keyframes checkPop{0%{transform:scale(0.6);opacity:0;}60%{transform:scale(1.15);}100%{transform:scale(1);opacity:1;}}.check-pop{animation:checkPop 0.2s ease-out;}.pyramid-row{position:relative;overflow:hidden;white-space:nowrap;flex-wrap:nowrap;}.pyramid-row > span{white-space:nowrap;position:relative;z-index:1;}@keyframes pyramidAuraSweep{0%{background-position:220% 0;opacity:0;}18%{opacity:0.7;}50%{background-position:-40% 0;opacity:0.45;}82%{opacity:0.7;}100%{background-position:-220% 0;opacity:0;}}.pyramid-row.rank-d::after,.pyramid-row.rank-c::after,.pyramid-row.rank-b::after,.pyramid-row.rank-a::after,.pyramid-row.rank-s::after,.pyramid-row.rank-ss::after,.pyramid-row.rank-sss::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;background:linear-gradient(115deg,transparent 25%,rgba(255,255,255,0.4) 50%,transparent 75%);background-size:260% 100%;mix-blend-mode:overlay;animation:pyramidAuraSweep 30s ease-in-out infinite;}.pyramid-row.rank-c::after{animation-duration:27s;}.pyramid-row.rank-b::after{animation-duration:24s;}.pyramid-row.rank-a::after{animation-duration:21s;}.pyramid-row.rank-s::after{animation-duration:18s;}.pyramid-row.rank-ss::after{animation-duration:16s;}.pyramid-row.rank-sss::after{animation-duration:14s;}.pyramid-row.rank-e{animation:gradientDrift 48s ease-in-out infinite;}.pyramid-row.rank-d{animation:gradientDrift 44s ease-in-out infinite;}.pyramid-row.rank-c{animation:gradientDrift 40s ease-in-out infinite;}.pyramid-row.rank-b{animation:gradientDrift 36s ease-in-out infinite;}.pyramid-row.rank-a{animation:gradientDrift 32s ease-in-out infinite;}.pyramid-row.rank-s{animation:gradientDrift 28s ease-in-out infinite,auraGlowPulse 16s ease-in-out infinite;}.pyramid-row.rank-ss{animation:gradientDrift 26s ease-in-out infinite,auraGlowPulse 14s ease-in-out infinite;}.pyramid-row.rank-sss{animation:rainbowShift 34s ease-in-out infinite,auraGlowPulseRainbow 22s ease-in-out infinite;}.medal-badge{position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-radius:20px;border:1.5px solid;padding:14px 6px;box-shadow:0 6px 16px rgba(0,0,0,0.38),inset 0 1px 0 rgba(255,255,255,0.3);transition:transform .15s ease;}
-.medal-badge:not(.medal-locked)::before{content:'';position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,0.55) 50%,transparent 70%);background-size:250% 100%;animation:pyramidAuraSweep 6.5s ease-in-out infinite;mix-blend-mode:overlay;pointer-events:none;}.medal-badge:active{transform:scale(0.94);}.medal-bronze{background:linear-gradient(135deg,#c9884f,#e0a06a,#a9673a);color:#2e1705;border-color:rgba(205,133,63,0.65);}.medal-silver{background:linear-gradient(135deg,#cbd5e1,#f1f5f9,#94a3b8);color:#1e293b;border-color:rgba(203,213,225,0.75);}.medal-gold{background:linear-gradient(135deg,#fff3c4,#ffd700,#f59e0b);color:#3d2900;border-color:rgba(255,193,7,0.85);}.medal-platinum{background:linear-gradient(135deg,#e0e7ff,#cbd5e1,#94a3b8,#e0e7ff);color:#1e293b;border-color:rgba(203,213,225,0.9);box-shadow:0 0 12px 2px rgba(203,213,225,0.4),0 4px 10px rgba(0,0,0,0.25);}.medal-diamond{background:linear-gradient(135deg,#a5f3fc,#67e8f9,#22d3ee,#a5f3fc);color:#0c4a6e;border-color:rgba(103,232,249,0.9);box-shadow:0 0 16px 3px rgba(103,232,249,0.45),0 4px 10px rgba(0,0,0,0.25);}.medal-rainbow{background:linear-gradient(90deg,#ff6b6b,#feca57,#1dd1a1,#54a0ff,#c56cf0,#ff6b6b);background-size:300% 100%;color:#0b0b0f;border-color:rgba(255,255,255,0.7);box-shadow:0 0 20px 4px rgba(255,255,255,0.4),0 4px 10px rgba(0,0,0,0.25);animation:rainbowShift 4s ease-in-out infinite;}.medal-locked{background:rgba(148,163,184,0.08);color:var(--text-muted);border-color:var(--border-color);filter:grayscale(1);opacity:0.5;box-shadow:none;}@keyframes achievementPop{0%{transform:scale(0.4);opacity:0;}60%{transform:scale(1.12);opacity:1;}100%{transform:scale(1);opacity:1;}}.achievement-pop{animation:achievementPop 0.4s cubic-bezier(.34,1.56,.64,1) both;}@keyframes toastSlideIn{0%{transform:translateY(-16px);opacity:0;}100%{transform:translateY(0);opacity:1;}}.achievement-toast{animation:toastSlideIn 0.35s ease-out both;}@keyframes levelUpFlash{0%,100%{box-shadow:0 0 0 0 rgba(250,204,21,0);}35%{box-shadow:0 0 16px 4px rgba(250,204,21,0.85),0 0 30px 8px rgba(250,204,21,0.4);}}.level-up-flash{animation:levelUpFlash 0.9s ease-out;}.xp-bar-fill{transition:none;}.heatmap-cell{border-radius:6px;transition:background-color .5s ease,transform .15s ease,box-shadow .3s ease;border:1px solid rgba(255,255,255,0.06);}.heatmap-cell:active{transform:scale(0.9);}.heatmap-cell.is-selected{box-shadow:0 0 0 2px #facc15;}.heatmap-cell-label{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;font-weight:900;line-height:1.2;letter-spacing:-0.01em;user-select:none;gap:2px;text-shadow:0 1px 2px rgba(0,0,0,0.45);}.heatmap-bubble{background:var(--bg-card);border:1px solid var(--border-strong);border-radius:14px;padding:8px 12px;box-shadow:0 10px 24px rgba(0,0,0,0.35);white-space:nowrap;}.heatmap-bubble::after{content:'';position:absolute;left:50%;top:100%;transform:translateX(-50%);border-width:7px 7px 0 7px;border-style:solid;border-color:var(--bg-card) transparent transparent transparent;filter:drop-shadow(0 2px 1px rgba(0,0,0,0.15));}html.app-bg-paused *{animation-play-state:paused !important;}</style>
+<style>@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;900&family=Inter:wght@400;700;900&family=Outfit:wght@600;700;800&display=swap');:root{--bg-app-from:#0a0a0f;--bg-app-to:#000000;--bg-header:rgba(0,0,0,0.95);--bg-card:#111111;--bg-card-soft:rgba(255,255,255,0.05);--bg-card-soft-hover:rgba(255,255,255,0.1);--bg-input:#000000;--bg-danger-card:#2a0808;--border-color:rgba(255,255,255,0.1);--border-strong:rgba(255,255,255,0.2);--text-primary:#ffffff;--text-secondary:#cbd5e1;--text-tertiary:#94a3b8;--text-muted:#64748b;--accent-50:240 253 244;--accent-100:220 252 231;--accent-200:187 247 208;--accent-300:134 239 172;--accent-400:74 222 128;--accent-500:34 197 94;--accent-600:22 163 74;--accent-700:21 128 61;--accent-800:22 101 52;--accent-900:20 83 45;--accent-950:5 46 22;--accent-shadow-tab:rgba(34,197,94,0.4);}html.light{--bg-app-from:#eef2ff;--bg-app-to:#f8fafc;--bg-header:rgba(255,255,255,0.92);--bg-card:#ffffff;--bg-card-soft:rgba(15,23,42,0.05);--bg-card-soft-hover:rgba(15,23,42,0.09);--bg-input:#f1f5f9;--bg-danger-card:#fef2f2;--border-color:rgba(15,23,42,0.08);--border-strong:rgba(15,23,42,0.16);--text-primary:#0f172a;--text-secondary:#334155;--text-tertiary:#64748b;--text-muted:#94a3b8;--accent-50:238 242 255;--accent-100:224 231 255;--accent-200:199 210 254;--accent-300:165 180 252;--accent-400:129 140 248;--accent-500:99 102 241;--accent-600:79 70 229;--accent-700:67 56 202;--accent-800:55 48 163;--accent-900:49 46 129;--accent-950:30 27 75;--accent-shadow-tab:rgba(99,102,241,0.4);}body{font-family:'Inter',sans-serif;background-color:var(--bg-app-to);color:var(--text-secondary);-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none;transition:background-color .3s ease,color .3s ease;}.mono{font-family:'JetBrains Mono',monospace;}.mono-num{font-family:'Inter',-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:-0.03em;}.animate-in{animation:fadeIn 0.35s ease-out forwards;}@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}::-webkit-scrollbar{display:none;}.pb-safe{padding-bottom:calc(env(safe-area-inset-bottom) + 10px);}.pt-safe{padding-top:calc(env(safe-area-inset-top) + 14px);}.no-scrollbar::-webkit-scrollbar{display:none;}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none;}input[type="datetime-local"]::-webkit-calendar-picker-indicator{filter:invert(1);opacity:0.6;}html.light input[type="datetime-local"]::-webkit-calendar-picker-indicator{filter:invert(0.6);}input[type="datetime-local"]{display:flex;align-items:center;}input[type="datetime-local"]::-webkit-datetime-edit{display:flex;align-items:center;height:100%;padding:0;}input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper{display:flex;align-items:center;}@keyframes cardImpactGlow{0%{box-shadow:0 0 0 0 rgb(var(--accent-400) / 0);}30%{box-shadow:0 0 0 3px rgb(var(--accent-400) / 0.35),0 0 24px 4px rgb(var(--accent-400) / 0.28);}100%{box-shadow:0 0 0 0 rgb(var(--accent-400) / 0);}}.card-impact-glow{animation:cardImpactGlow 0.6s ease-out both;}@keyframes retentionGlow{0%,100%{text-shadow:0 0 6px currentColor;}50%{text-shadow:0 0 16px currentColor;}}.retention-counting{animation:retentionGlow 0.5s ease-in-out infinite;}@keyframes flamePulse{0%,100%{opacity:0.85;transform:scale(1);}50%{opacity:1;transform:scale(1.12);}}.flame-pulse{animation:flamePulse 1.6s ease-in-out infinite;}@keyframes gradientDrift{0%,100%{background-position:0% 50%;}50%{background-position:100% 50%;}}@keyframes auraGlowPulse{0%,100%{filter:brightness(1);}50%{filter:brightness(1.3);}}@keyframes auraGlowPulseRainbow{0%{filter:brightness(1.1) hue-rotate(0deg);}50%{filter:brightness(1.35) hue-rotate(180deg);}100%{filter:brightness(1.1) hue-rotate(360deg);}}@keyframes rainbowShift{0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;}}.rank-badge{background-size:260% 100%;transition:filter .3s ease;}.rank-e{background-image:linear-gradient(120deg,rgba(100,116,139,0.14),rgba(148,163,184,0.24),rgba(100,116,139,0.14));color:#94a3b8;border-color:rgba(148,163,184,0.28);animation:gradientDrift 11s ease-in-out infinite;}.rank-d{background-image:linear-gradient(120deg,rgba(16,185,129,0.14),rgba(52,211,153,0.28),rgba(16,185,129,0.14));color:#34d399;border-color:rgba(52,211,153,0.32);box-shadow:0 0 4px 0px rgba(52,211,153,0.3);animation:gradientDrift 9.5s ease-in-out infinite;}.rank-c{background-image:linear-gradient(120deg,rgba(14,165,233,0.15),rgba(56,189,248,0.3),rgba(14,165,233,0.15));color:#38bdf8;border-color:rgba(56,189,248,0.38);box-shadow:0 0 7px 1px rgba(56,189,248,0.4);animation:gradientDrift 8s ease-in-out infinite;}.rank-b{background-image:linear-gradient(120deg,rgba(99,102,241,0.17),rgba(129,140,248,0.34),rgba(99,102,241,0.17));color:#818cf8;border-color:rgba(129,140,248,0.42);box-shadow:0 0 10px 1.5px rgba(129,140,248,0.45);animation:gradientDrift 6.5s ease-in-out infinite;}.rank-a{background-image:linear-gradient(120deg,rgba(168,85,247,0.2),rgba(192,132,252,0.38),rgba(168,85,247,0.2));color:#c084fc;border-color:rgba(192,132,252,0.48);box-shadow:0 0 13px 2px rgba(192,132,252,0.5);animation:gradientDrift 5s ease-in-out infinite;}.rank-s{background-image:linear-gradient(100deg,#f1f5f9,#cbd5e1,#94a3b8,#e2e8f0,#f1f5f9);background-size:320% 100%;color:#1e293b;border-color:rgba(203,213,225,0.75);font-weight:900;box-shadow:0 0 17px 3px rgba(203,213,225,0.6),0 0 30px 7px rgba(148,163,184,0.28);animation:gradientDrift 4s ease-in-out infinite,auraGlowPulse 2.2s ease-in-out infinite;}.rank-ss{background-image:linear-gradient(100deg,#fff3c4,#ffd700,#f59e0b,#ffe066,#ffd700,#fff3c4);background-size:340% 100%;color:#3d2900;border-color:rgba(255,193,7,0.85);font-weight:900;box-shadow:0 0 22px 4px rgba(255,193,7,0.7),0 0 40px 10px rgba(255,152,0,0.35);animation:gradientDrift 3.1s ease-in-out infinite,auraGlowPulse 1.8s ease-in-out infinite;}.rank-sss{background-image:linear-gradient(90deg,#ff6b6b,#feca57,#1dd1a1,#54a0ff,#c56cf0,#ff6b6b);background-size:300% 100%;color:#0b0b0f;border-color:rgba(255,255,255,0.6);font-weight:900;box-shadow:0 0 26px 5px rgba(255,255,255,0.7),0 0 46px 13px rgba(129,140,248,0.4),0 0 62px 20px rgba(232,121,249,0.25);animation:rainbowShift 4.5s ease-in-out infinite,auraGlowPulseRainbow 3s ease-in-out infinite;}.count-pop-flash{display:inline-block;animation:countPopFlash 0.55s ease-out;}@keyframes countPopFlash{0%{text-shadow:0 0 0 rgb(var(--accent-400) / 0);transform:scale(1);}30%{text-shadow:0 0 20px rgb(var(--accent-400) / 0.95),0 0 34px rgb(var(--accent-400) / 0.5);transform:scale(1.14);}100%{text-shadow:0 0 0 rgb(var(--accent-400) / 0);transform:scale(1);}}.perfect-glow{background:linear-gradient(90deg,rgb(var(--accent-300)),#ffffff,rgb(var(--accent-400)),#ffffff,rgb(var(--accent-300)));background-size:220% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:perfectShine 5s ease-in-out infinite;filter:drop-shadow(0 0 16px rgb(var(--accent-400) / 0.75));}@keyframes perfectShine{0%{background-position:0% 50%;}50%{background-position:220% 50%;}100%{background-position:0% 50%;}}@keyframes holdGlowPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0);}50%{box-shadow:inset 0 0 18px 2px rgba(255,255,255,0.22);}}.hold-glow{animation:holdGlowPulse 0.85s ease-in-out infinite;}.hold-progress-fill{position:absolute;inset:0;background:rgba(255,255,255,0.28);transform-origin:left center;pointer-events:none;}@keyframes rankExplodeOut{0%{transform:scale(1);opacity:1;filter:brightness(1);}35%{transform:scale(1.4);opacity:1;filter:brightness(1.7);}100%{transform:scale(0.15);opacity:0;filter:brightness(2.2);}}.rank-explode-out{animation:rankExplodeOut 0.36s cubic-bezier(.55,0,1,0.45) both;display:inline-block;}@keyframes rankBurstIn{0%{transform:scale(0.1);opacity:0;}55%{transform:scale(1.3);opacity:1;}75%{transform:scale(0.9);opacity:1;}100%{transform:scale(1);opacity:1;}}.rank-burst-in{animation:rankBurstIn 0.46s cubic-bezier(.34,1.56,.64,1) both;display:inline-block;}@keyframes rankUpBurst{0%{opacity:0;transform:scale(0.6);}30%{opacity:1;transform:scale(1.15);}100%{opacity:0;transform:scale(1.6);}}.rank-up-burst{position:absolute;inset:-6px;border-radius:999px;pointer-events:none;border:2px solid rgba(250,204,21,0.85);animation:rankUpBurst 0.7s ease-out forwards;}.edit-row{touch-action:pan-y;}.edit-row.is-dragging{z-index:40;touch-action:none;}.drag-handle{touch-action:none;cursor:grab;}.drag-handle:active{cursor:grabbing;}@keyframes checkPop{0%{transform:scale(0.6);opacity:0;}60%{transform:scale(1.15);}100%{transform:scale(1);opacity:1;}}.check-pop{animation:checkPop 0.2s ease-out;}.pyramid-row{position:relative;overflow:hidden;white-space:nowrap;flex-wrap:nowrap;}.pyramid-row > span{white-space:nowrap;position:relative;z-index:1;}@keyframes pyramidAuraSweep{0%{background-position:220% 0;opacity:0;}18%{opacity:0.7;}50%{background-position:-40% 0;opacity:0.45;}82%{opacity:0.7;}100%{background-position:-220% 0;opacity:0;}}.pyramid-row.rank-d::after,.pyramid-row.rank-c::after,.pyramid-row.rank-b::after,.pyramid-row.rank-a::after,.pyramid-row.rank-s::after,.pyramid-row.rank-ss::after,.pyramid-row.rank-sss::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;background:linear-gradient(115deg,transparent 25%,rgba(255,255,255,0.4) 50%,transparent 75%);background-size:260% 100%;mix-blend-mode:overlay;animation:pyramidAuraSweep 30s ease-in-out infinite;}.pyramid-row.rank-c::after{animation-duration:27s;}.pyramid-row.rank-b::after{animation-duration:24s;}.pyramid-row.rank-a::after{animation-duration:21s;}.pyramid-row.rank-s::after{animation-duration:18s;}.pyramid-row.rank-ss::after{animation-duration:16s;}.pyramid-row.rank-sss::after{animation-duration:14s;}.pyramid-row.rank-e{animation:gradientDrift 48s ease-in-out infinite;}.pyramid-row.rank-d{animation:gradientDrift 44s ease-in-out infinite;}.pyramid-row.rank-c{animation:gradientDrift 40s ease-in-out infinite;}.pyramid-row.rank-b{animation:gradientDrift 36s ease-in-out infinite;}.pyramid-row.rank-a{animation:gradientDrift 32s ease-in-out infinite;}.pyramid-row.rank-s{animation:gradientDrift 28s ease-in-out infinite,auraGlowPulse 16s ease-in-out infinite;}.pyramid-row.rank-ss{animation:gradientDrift 26s ease-in-out infinite,auraGlowPulse 14s ease-in-out infinite;}.pyramid-row.rank-sss{animation:rainbowShift 34s ease-in-out infinite,auraGlowPulseRainbow 22s ease-in-out infinite;}.medal-badge{position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-radius:20px;border:1.5px solid;padding:14px 6px;box-shadow:0 6px 16px rgba(0,0,0,0.38),inset 0 1px 0 rgba(255,255,255,0.3);transition:transform .15s ease;}
+.medal-badge:not(.medal-locked)::before{content:'';position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,0.55) 50%,transparent 70%);background-size:250% 100%;animation:pyramidAuraSweep 6.5s ease-in-out infinite;mix-blend-mode:overlay;pointer-events:none;}.medal-badge:active{transform:scale(0.94);}.medal-bronze{background:linear-gradient(135deg,#c9884f,#e0a06a,#a9673a);color:#2e1705;border-color:rgba(205,133,63,0.65);}.medal-silver{background:linear-gradient(135deg,#cbd5e1,#f1f5f9,#94a3b8);color:#1e293b;border-color:rgba(203,213,225,0.75);}.medal-gold{background:linear-gradient(135deg,#fff3c4,#ffd700,#f59e0b);color:#3d2900;border-color:rgba(255,193,7,0.85);}.medal-platinum{background:linear-gradient(135deg,#e0e7ff,#cbd5e1,#94a3b8,#e0e7ff);color:#1e293b;border-color:rgba(203,213,225,0.9);box-shadow:0 0 12px 2px rgba(203,213,225,0.4),0 4px 10px rgba(0,0,0,0.25);}.medal-diamond{background:linear-gradient(135deg,#a5f3fc,#67e8f9,#22d3ee,#a5f3fc);color:#0c4a6e;border-color:rgba(103,232,249,0.9);box-shadow:0 0 16px 3px rgba(103,232,249,0.45),0 4px 10px rgba(0,0,0,0.25);}.medal-rainbow{background:linear-gradient(90deg,#ff6b6b,#feca57,#1dd1a1,#54a0ff,#c56cf0,#ff6b6b);background-size:300% 100%;color:#0b0b0f;border-color:rgba(255,255,255,0.7);box-shadow:0 0 20px 4px rgba(255,255,255,0.4),0 4px 10px rgba(0,0,0,0.25);animation:rainbowShift 4s ease-in-out infinite;}.medal-locked{background:rgba(148,163,184,0.08);color:var(--text-muted);border-color:var(--border-color);filter:grayscale(1);opacity:0.5;box-shadow:none;}@keyframes achievementPop{0%{transform:scale(0.4);opacity:0;}60%{transform:scale(1.12);opacity:1;}100%{transform:scale(1);opacity:1;}}.achievement-pop{animation:achievementPop 0.4s cubic-bezier(.34,1.56,.64,1) both;}@keyframes toastSlideIn{0%{transform:translateY(-16px);opacity:0;}100%{transform:translateY(0);opacity:1;}}.achievement-toast{animation:toastSlideIn 0.35s ease-out both;}@keyframes levelUpFlash{0%,100%{box-shadow:0 0 0 0 rgba(250,204,21,0);}35%{box-shadow:0 0 16px 4px rgba(250,204,21,0.85),0 0 30px 8px rgba(250,204,21,0.4);}}.level-up-flash{animation:levelUpFlash 0.9s ease-out;}.xp-bar-fill{transition:none;}.heatmap-cell{border-radius:6px;transition:background-color .5s ease,transform .15s ease,box-shadow .3s ease;border:1px solid rgba(255,255,255,0.06);}.heatmap-cell:active{transform:scale(0.9);}.heatmap-cell.is-selected{box-shadow:0 0 0 2px #facc15;}.heatmap-cell-label{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:900;line-height:1.2;letter-spacing:-0.01em;user-select:none;gap:2px;text-shadow:0 1px 2px rgba(0,0,0,0.45);}.heatmap-label-text{font-family:'Outfit',sans-serif;letter-spacing:-0.02em;}.heatmap-bubble{background:var(--bg-card);border:1px solid var(--border-strong);border-radius:14px;padding:8px 12px;box-shadow:0 10px 24px rgba(0,0,0,0.35);white-space:nowrap;}.heatmap-bubble::after{content:'';position:absolute;left:50%;top:100%;transform:translateX(-50%);border-width:7px 7px 0 7px;border-style:solid;border-color:var(--bg-card) transparent transparent transparent;filter:drop-shadow(0 2px 1px rgba(0,0,0,0.15));}html.app-bg-paused *{animation-play-state:paused !important;}</style>
 </head>
 <body>
 <div id="root"></div>
@@ -520,6 +543,52 @@ lfo.stop(now + 1.2);
 osc3.start(now + 0.08);
 osc3.stop(now + 1.2);
 };
+const playLevelUpSound = () => {
+const ctx = getAudioCtx();
+if (!ctx) return;
+const now = ctx.currentTime;
+const notes = [523.25, 659.25, 783.99, 1046.5];
+notes.forEach((freq, i) => {
+const t = now + i * 0.09;
+const osc = ctx.createOscillator();
+const gain = ctx.createGain();
+osc.type = 'triangle';
+osc.frequency.setValueAtTime(freq, t);
+gain.gain.setValueAtTime(0.0001, t);
+gain.gain.exponentialRampToValueAtTime(0.28, t + 0.02);
+gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.28);
+osc.connect(gain).connect(getMasterBus(ctx));
+osc.start(t);
+osc.stop(t + 0.3);
+});
+const subOsc = ctx.createOscillator();
+const subGain = ctx.createGain();
+subOsc.type = 'sine';
+subOsc.frequency.setValueAtTime(160, now);
+subOsc.frequency.exponentialRampToValueAtTime(80, now + 0.4);
+subGain.gain.setValueAtTime(0.0001, now);
+subGain.gain.exponentialRampToValueAtTime(0.5, now + 0.02);
+subGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
+subOsc.connect(subGain).connect(getMasterBus(ctx));
+subOsc.start(now);
+subOsc.stop(now + 0.5);
+const sparkleCount = 5;
+for (let i = 0; i < sparkleCount; i++) {
+const t = now + 0.32 + i * 0.05;
+const freq = 1800 + i * 180 + Math.random() * 90;
+const dOsc = ctx.createOscillator();
+const dGain = ctx.createGain();
+dOsc.type = 'sine';
+dOsc.frequency.setValueAtTime(freq, t);
+dOsc.frequency.exponentialRampToValueAtTime(freq * 0.75, t + 0.1);
+dGain.gain.setValueAtTime(0.0001, t);
+dGain.gain.exponentialRampToValueAtTime(0.14, t + 0.008);
+dGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
+dOsc.connect(dGain).connect(getMasterBus(ctx));
+dOsc.start(t);
+dOsc.stop(t + 0.16);
+}
+};
 const playXpGainSound = () => {
 const ctx = getAudioCtx();
 if (!ctx) return;
@@ -683,7 +752,7 @@ return;
 setTier(fromTier);
 animateTo(100, () => {
 setFlash(true);
-playRankUpSound();
+playLevelUpSound();
 vibrate([0, 20, 40, 30]);
 setTimeout(() => {
 setFlash(false);
@@ -1062,26 +1131,8 @@ vibrate(buildRevVibratePattern(1500));
 playReviewSound();
 setIsImpacting(true);
 setPendingNewRc(newRc);
-if (willRankUp) {
-setLockedRc(rc);
-setRankAnimPhase('locked');
-}
 setTimeout(() => setIsImpacting(false), 600);
-onReview(t, startRet);
-const runRankUpVisual = () => {
-if (!willRankUp) return;
-setRankAnimPhase('exploding');
-vibrate([0, 12, 30, 10]);
-setTimeout(() => {
-setLockedRc(newRc);
-setRankAnimPhase('entering');
-playRankUpSound();
-vibrate([0, 20, 40, 30]);
-setTimeout(() => {
-setRankAnimPhase('idle');
-}, 460);
-}, 360);
-};
+const startRetentionCount = () => {
 if (retRafRef.current) cancelAnimationFrame(retRafRef.current);
 setIsCountingRet(true);
 const COUNT_DURATION = 1500;
@@ -1096,10 +1147,32 @@ retRafRef.current = requestAnimationFrame(tickRet);
 } else {
 setDisplayRet(100);
 setIsCountingRet(false);
-runRankUpVisual();
+// Persist last, so the header's level-up animation follows the rank-up and retention animations
+onReview(t, startRet);
 }
 };
 retRafRef.current = requestAnimationFrame(tickRet);
+};
+if (willRankUp) {
+setLockedRc(rc);
+setRankAnimPhase('locked');
+setTimeout(() => {
+setRankAnimPhase('exploding');
+vibrate([0, 12, 30, 10]);
+setTimeout(() => {
+setLockedRc(newRc);
+setRankAnimPhase('entering');
+playRankUpSound();
+vibrate([0, 20, 40, 30]);
+setTimeout(() => {
+setRankAnimPhase('idle');
+startRetentionCount();
+}, 460);
+}, 360);
+}, 0);
+} else {
+startRetentionCount();
+}
 };
 const cancelCharge = () => {
 if (chargeRafRef.current) cancelAnimationFrame(chargeRafRef.current);
@@ -1214,8 +1287,8 @@ return (
 <div className="h-20 w-full relative bg-black/30 rounded-xl border border-[var(--border-color)] p-2 overflow-visible z-10">
 <svg viewBox="0 0 200 50" className="w-full h-full overflow-visible">
 <line x1="0" y1={50 - (REVIEW_THRESHOLD / 100) * 40} x2="200" y2={50 - (REVIEW_THRESHOLD / 100) * 40} stroke="#ef4444" strokeOpacity="0.3" strokeDasharray="4,4" strokeWidth="1" />
-<polyline fill="none" stroke={isNeedsReview ? "#ef4444" : "#6366f1"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" points={pts} opacity={isNeedsReview ? "0.8" : "0.6"} />
-<circle cx={(Math.min(hrs, targetHours) / targetHours) * 200} cy={50 - (ret / 100) * 40} r="4" fill={isGood ? '#818cf8' : isWarn ? '#facc15' : '#ef4444'} stroke="#000" strokeWidth="1.5" className="transition-all duration-300" />
+<polyline fill="none" stroke={isNeedsReview ? "#ef4444" : "rgb(var(--accent-500))"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" points={pts} opacity={isNeedsReview ? "0.8" : "0.6"} />
+<circle cx={(Math.min(hrs, targetHours) / targetHours) * 200} cy={50 - (ret / 100) * 40} r="4" fill={isGood ? 'rgb(var(--accent-400))' : isWarn ? '#facc15' : '#ef4444'} stroke="#000" strokeWidth="1.5" className="transition-all duration-300" />
 </svg>
 <div className="absolute bottom-1 left-2 right-2 flex justify-between text-[9px] mono text-[var(--text-muted)] font-bold"><span>0h</span><span>{targetHours / 24} days</span></div>
 </div>
@@ -1450,7 +1523,7 @@ className={`heatmap-cell aspect-square ${selected && selected.id === c.id ? 'is-
 title={c.title}
 >
 <span className="heatmap-cell-label" style={{ color: textColor }}>
-<span className="block">{c.abbrev}</span>
+<span className="block heatmap-label-text">{c.abbrev}</span>
 <span className="block text-[10px] font-black">{Math.floor(c.ret)}%</span>
 </span>
 </button>
@@ -1464,7 +1537,7 @@ title={c.title}
 const StatsView = ({ overallStats, statsHistory, weeklyRecovered, perSubjectGauge, topics, intervalDays, subjectRanking = [] }) => {
 const { blue, warn, red, total, percentage } = overallStats;
 const color = percentage > 80 ? 'text-indigo-400' : percentage > REVIEW_THRESHOLD ? 'text-yellow-400' : 'text-red-400';
-const stroke = percentage > 80 ? '#818cf8' : percentage > REVIEW_THRESHOLD ? '#facc15' : '#ef4444';
+const stroke = percentage > 80 ? 'rgb(var(--accent-400))' : percentage > REVIEW_THRESHOLD ? '#facc15' : '#ef4444';
 const recent = statsHistory.slice(-30);
 const n = recent.length;
 const graphPts = recent.map((h, i) => {
@@ -1536,7 +1609,7 @@ return (
 {distSorted.map((d, i) => {
 const w = (d.count / SCORE_DISTRIBUTION_MAX_COUNT) * (DIST_CHART_W - 6);
 const y = DIST_CHART_H - (i + 1) * distBarH;
-return <rect key={d.rate} x="0" y={y + 0.4} width={Math.max(0.6, w)} height={Math.max(0.6, distBarH - 0.8)} fill="#6366f1" opacity="0.5" rx="0.6" />;
+return <rect key={d.rate} x="0" y={y + 0.4} width={Math.max(0.6, w)} height={Math.max(0.6, distBarH - 0.8)} fill="rgb(var(--accent-500))" opacity="0.5" rx="0.6" />;
 })}
 <line x1="0" y1={distMarkerY} x2={DIST_CHART_W} y2={distMarkerY} stroke="#facc15" strokeWidth="2" strokeDasharray="4,3" />
 <circle cx={DIST_CHART_W - 6} cy={distMarkerY} r="3.2" fill="#facc15" stroke="#000" strokeWidth="0.8" />
@@ -1616,7 +1689,7 @@ return <circle key={r.date} cx={x} cy={y} r="2.2" fill="#facc15" stroke="#000" s
 <div className="space-y-3">
 {perSubjectGauge.map(s => {
 const val = s.avg === null ? 0 : Math.round(s.avg);
-const gcolor = s.avg === null ? '#475569' : val > 80 ? '#818cf8' : val > REVIEW_THRESHOLD ? '#facc15' : '#ef4444';
+const gcolor = s.avg === null ? '#475569' : val > 80 ? 'rgb(var(--accent-400))' : val > REVIEW_THRESHOLD ? '#facc15' : '#ef4444';
 return (
 <div key={s.name}>
 <div className="flex justify-between items-center mb-1">
@@ -1641,12 +1714,12 @@ return (
 <div className="relative h-40 w-full bg-black/20 rounded-xl border border-[var(--border-color)] p-2 overflow-visible">
 <svg viewBox="0 0 300 120" className="w-full h-full overflow-visible" preserveAspectRatio="none">
 <line x1="0" y1={110 - (REVIEW_THRESHOLD / 100) * 90} x2="300" y2={110 - (REVIEW_THRESHOLD / 100) * 90} stroke="#ef4444" strokeOpacity="0.25" strokeDasharray="4,4" strokeWidth="1" />
-<line x1="0" y1={110 - 0.8 * 90} x2="300" y2={110 - 0.8 * 90} stroke="#818cf8" strokeOpacity="0.2" strokeDasharray="4,4" strokeWidth="1" />
+<line x1="0" y1={110 - 0.8 * 90} x2="300" y2={110 - 0.8 * 90} stroke="rgb(var(--accent-400))" strokeOpacity="0.2" strokeDasharray="4,4" strokeWidth="1" />
 {n > 1 && <polyline fill="none" stroke={stroke} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" points={graphPts} opacity="0.85" />}
 {recent.map((h, i) => {
 const x = n > 1 ? (i / (n - 1)) * 300 : 150;
 const y = 110 - (Math.max(0, Math.min(100, h.percentage)) / 100) * 90;
-const dotColor = h.percentage > 80 ? '#818cf8' : h.percentage > REVIEW_THRESHOLD ? '#facc15' : '#ef4444';
+const dotColor = h.percentage > 80 ? 'rgb(var(--accent-400))' : h.percentage > REVIEW_THRESHOLD ? '#facc15' : '#ef4444';
 return <circle key={h.id} cx={x} cy={y} r="3" fill={dotColor} stroke="#000" strokeWidth="1" />;
 })}
 </svg>
@@ -1864,6 +1937,14 @@ if (!user) return;
 updateSettings({ theme: settings.theme === 'light' ? 'dark' : 'light' });
 vibrate(10);
 }, [user, settings.theme, updateSettings]);
+const handleNavTap = useCallback((targetView) => {
+playTapSound();
+if (view === targetView) {
+window.scrollTo({ top: 0, behavior: 'smooth' });
+} else {
+setView(targetView);
+}
+}, [view]);
 const handleSaveIntervals = useCallback((newIntervals) => {
 updateSettings({ reviewIntervals: newIntervals });
 }, [updateSettings]);
@@ -2449,7 +2530,7 @@ onClick={() => { playTapSound(); setActiveSubject(tab.name); }}
 onContextMenu={(e) => { e.preventDefault(); handleDeleteSubject(tab); }}
 className={`relative shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all whitespace-nowrap border ${
 active
-? 'bg-indigo-600 text-white border-indigo-500 shadow-[0_0_16px_rgba(99,102,241,0.4)]'
+? 'bg-indigo-600 text-white border-indigo-500 shadow-[0_0_16px_var(--accent-shadow-tab)]'
 : stat.needReview > 0
 ? 'bg-red-500/10 text-red-400 border-red-500/40'
 : 'bg-[var(--bg-card-soft)] text-[var(--text-secondary)] border-[var(--border-color)] hover:bg-[var(--bg-card-soft-hover)]'
@@ -2619,11 +2700,11 @@ className="text-xs font-bold flex items-center gap-1.5 px-4 py-2 rounded-xl bg-r
 ) : (
 <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[var(--bg-header)] backdrop-blur border-t border-[var(--border-color)] pb-safe">
 <div className="max-w-md mx-auto grid grid-cols-2 gap-2 p-3">
-<button type="button" onClick={() => { playTapSound(); setView('review'); }} className={`flex flex-col items-center gap-1 py-2 rounded-2xl text-xs font-bold transition-colors ${view === 'review' ? 'bg-indigo-600 text-white' : 'text-[var(--text-tertiary)] hover:bg-[var(--bg-card-soft)]'}`}>
+<button type="button" onClick={() => handleNavTap('review')} className={`flex flex-col items-center gap-1 py-2 rounded-2xl text-xs font-bold transition-colors ${view === 'review' ? 'bg-indigo-600 text-white' : 'text-[var(--text-tertiary)] hover:bg-[var(--bg-card-soft)]'}`}>
 <Icon name="Brain" size={20} />
 復習
 </button>
-<button type="button" onClick={() => { playTapSound(); setView('stats'); }} className={`flex flex-col items-center gap-1 py-2 rounded-2xl text-xs font-bold transition-colors ${view === 'stats' ? 'bg-indigo-600 text-white' : 'text-[var(--text-tertiary)] hover:bg-[var(--bg-card-soft)]'}`}>
+<button type="button" onClick={() => handleNavTap('stats')} className={`flex flex-col items-center gap-1 py-2 rounded-2xl text-xs font-bold transition-colors ${view === 'stats' ? 'bg-indigo-600 text-white' : 'text-[var(--text-tertiary)] hover:bg-[var(--bg-card-soft)]'}`}>
 <Icon name="LineChart" size={20} />
 統計
 </button>
